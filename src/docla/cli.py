@@ -3,7 +3,7 @@ import shutil
 import sys
 
 from docla import __version__
-from docla.render.typst import TYPST_VERSION, typst_version
+from docla.render.typst import INSTALL_COMMAND, TYPST_VERSION, typst_version
 
 MIN_PYTHON = (3, 12)
 
@@ -19,7 +19,7 @@ def _python_line() -> tuple[str, bool]:
 def _typst_lines() -> list[str]:
     executable = shutil.which("typst")
     if executable is None:
-        return ["typst: missing", "install: brew install typst"]
+        return ["typst: missing", f"install: {INSTALL_COMMAND}"]
     found = typst_version(executable)
     if found != TYPST_VERSION:
         return [f"typst: {found}", f"needs: typst {TYPST_VERSION}"]

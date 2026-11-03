@@ -5,6 +5,7 @@ from collections.abc import Sequence
 from pathlib import Path
 
 TYPST_VERSION = "0.15.1"
+INSTALL_COMMAND = "brew install typst"
 
 
 class TypstError(Exception):
@@ -24,7 +25,7 @@ class TypstCompileError(TypstError):
 
 
 def parse_version(version_output: str) -> str:
-    """Return the second word of the first line of `typst --version`."""
+    """`typst --version` prints a line such as `typst 0.15.1 (abc123)`, so the version is its second word."""
     words = (version_output.splitlines() or [""])[0].split()
     return words[1] if len(words) > 1 else "unknown"
 
@@ -37,7 +38,7 @@ def typst_version(executable: str) -> str:
 def typst_command() -> str:
     executable = shutil.which("typst")
     if executable is None:
-        raise TypstNotFound("typst is not on PATH; install it with: brew install typst")
+        raise TypstNotFound(f"typst is not on PATH; install it with: {INSTALL_COMMAND}")
     found = typst_version(executable)
     if found != TYPST_VERSION:
         raise TypstVersionError(f"typst {found} is installed; docla needs typst {TYPST_VERSION}")
