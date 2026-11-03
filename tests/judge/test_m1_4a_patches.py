@@ -141,7 +141,7 @@ def test_D3_lock_all_rejects(make_op):
 
 def test_D4_set_fields_identity_changes_rejected():
     for field, value in [("id", "zzzzz"), ("intent", "other"), ("section", "other-line")]:
-        _rejected(_doc(), _patch(_op("set_fields", A, fields={field: value})), "identity-changed")
+        assert _rejected(_doc(), _patch(_op("set_fields", A, fields={field: value})), "identity-changed")
 
 
 def test_D4_replace_section_identity_changes_rejected():
@@ -149,7 +149,7 @@ def test_D4_replace_section_identity_changes_rejected():
     for field, value in [("id", "zzzzz"), ("intent", "other"), ("section", "other-line")]:
         kwargs = dict(id=A, intent=f"intent-{A}", section=f"line-{A}", title="New")
         kwargs[field] = value
-        _rejected(_doc(), _patch(_op("replace_section", A, value=model.Section(**kwargs))), "identity-changed")
+        assert _rejected(_doc(), _patch(_op("replace_section", A, value=model.Section(**kwargs))), "identity-changed")
 
 
 def test_D4_replace_section_with_same_identity_accepted():
