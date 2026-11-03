@@ -24,7 +24,7 @@ Repository = "https://github.com/gwpicard/doclo"
 packages = ["src/doclo"]
 
 [dependency-groups]
-dev = ["pytest>=8", "ruff", "mypy"]
+dev = ["pytest>=8", "ruff", "mypy", "hypothesis"]
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]
