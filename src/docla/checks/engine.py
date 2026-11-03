@@ -1,13 +1,14 @@
 import hashlib
 from collections.abc import Callable
 from dataclasses import dataclass, field
-from typing import Any, Protocol
+from typing import Any, Protocol, get_args
 
 from docla.facts.layout import LayoutFacts
 from docla.model import Box, Document, Finding, Rule
 from docla.model.rules import Tier
 
-TIERS: tuple[Tier, ...] = ("source", "geometry", "pixel", "semantic")
+# Tiers run in the order the model declares them.
+TIERS: tuple[Tier, ...] = get_args(Tier)
 GRID = 8
 
 
@@ -114,7 +115,7 @@ def _check_for(rule: Rule) -> Check:
 
 
 def _tiers_to_run(ctx: CheckContext) -> tuple[Tier, ...]:
-    return TIERS if ctx.facts is not None else TIERS[:1]
+    return TIERS if ctx.facts is not None else ("source",)
 
 
 def run_checks(rules: list[Rule], ctx: CheckContext) -> list[Finding]:
