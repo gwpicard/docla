@@ -45,8 +45,9 @@ class Cassette:
 
     @classmethod
     def from_env(cls, path: Path, transport: Transport | None = None) -> Cassette:
-        mode = "record" if os.environ.get("DOCLO_RECORD") == "1" else "replay"
-        return cls(path, mode, transport)
+        if os.environ.get("DOCLO_RECORD") == "1":
+            return cls(path, "record", transport)
+        return cls(path, "replay", transport)
 
     def call(self, request: dict[str, Any]) -> dict[str, Any]:
         key = _key(request)
@@ -54,11 +55,9 @@ class Cassette:
             return self._record(key, request)
         entries = self._load()
         if key not in entries:
-            raise CassetteMiss(
-                f"No recording for request {key} in {self.path}. "
-                "Run with DOCLO_RECORD=1 to record it."
-            )
-        return entries[key]["response"]
+            raise CassetteMiss(f"No recording for request {key} in {self.path}. Run with DOCLO_RECORD=1 to record it.")
+        response: dict[str, Any] = entries[key]["response"]
+        return response
 
     def _record(self, key: str, request: dict[str, Any]) -> dict[str, Any]:
         if self.transport is None:
@@ -75,4 +74,5 @@ class Cassette:
     def _load(self) -> dict[str, Any]:
         if not self.path.exists():
             return {}
-        return json.loads(self.path.read_text(encoding="utf-8"))
+        entries: dict[str, Any] = json.loads(self.path.read_text(encoding="utf-8"))
+        return entries
