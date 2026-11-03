@@ -12,7 +12,7 @@ def _python_line() -> tuple[str, bool]:
     v = sys.version_info
     version = f"{v.major}.{v.minor}.{v.micro}"
     if (v.major, v.minor) < MIN_PYTHON:
-        return f"python: {version} (needs 3.12 or later)", False
+        return f"python: {version} (needs {MIN_PYTHON[0]}.{MIN_PYTHON[1]} or later)", False
     return f"python: {version}", True
 
 
