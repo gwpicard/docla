@@ -1,0 +1,190 @@
+{
+  "$defs": {
+    "Box": {
+      "description": "A region on a page, in points.",
+      "properties": {
+        "h": {
+          "title": "H",
+          "type": "number"
+        },
+        "w": {
+          "title": "W",
+          "type": "number"
+        },
+        "x": {
+          "title": "X",
+          "type": "number"
+        },
+        "y": {
+          "title": "Y",
+          "type": "number"
+        }
+      },
+      "required": [
+        "x",
+        "y",
+        "w",
+        "h"
+      ],
+      "title": "Box",
+      "type": "object"
+    },
+    "Remedy": {
+      "properties": {
+        "class": {
+          "enum": [
+            "redraft",
+            "restructure",
+            "tune",
+            "engine",
+            "report",
+            "ask"
+          ],
+          "title": "Class",
+          "type": "string"
+        },
+        "hint": {
+          "title": "Hint",
+          "type": "string"
+        }
+      },
+      "required": [
+        "class",
+        "hint"
+      ],
+      "title": "Remedy",
+      "type": "object"
+    }
+  },
+  "properties": {
+    "confidence": {
+      "anyOf": [
+        {
+          "type": "number"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Confidence"
+    },
+    "corroborated": {
+      "anyOf": [
+        {
+          "type": "boolean"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Corroborated"
+    },
+    "evidence": {
+      "items": {
+        "type": "string"
+      },
+      "title": "Evidence",
+      "type": "array"
+    },
+    "fingerprint": {
+      "title": "Fingerprint",
+      "type": "string"
+    },
+    "format": {
+      "enum": [
+        "slides",
+        "doc"
+      ],
+      "title": "Format",
+      "type": "string"
+    },
+    "id": {
+      "title": "Id",
+      "type": "string"
+    },
+    "measured": {
+      "additionalProperties": true,
+      "title": "Measured",
+      "type": "object"
+    },
+    "message": {
+      "title": "Message",
+      "type": "string"
+    },
+    "page": {
+      "anyOf": [
+        {
+          "type": "integer"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Page"
+    },
+    "region": {
+      "anyOf": [
+        {
+          "$ref": "#/$defs/Box"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null
+    },
+    "remedy": {
+      "$ref": "#/$defs/Remedy"
+    },
+    "rule_id": {
+      "title": "Rule Id",
+      "type": "string"
+    },
+    "section_id": {
+      "anyOf": [
+        {
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Section Id"
+    },
+    "severity": {
+      "enum": [
+        "error",
+        "warning",
+        "info"
+      ],
+      "title": "Severity",
+      "type": "string"
+    },
+    "tier": {
+      "enum": [
+        "source",
+        "geometry",
+        "pixel",
+        "semantic"
+      ],
+      "title": "Tier",
+      "type": "string"
+    }
+  },
+  "required": [
+    "id",
+    "rule_id",
+    "tier",
+    "severity",
+    "format",
+    "message",
+    "fingerprint",
+    "remedy"
+  ],
+  "title": "Finding",
+  "type": "object"
+}
