@@ -1,9 +1,9 @@
 import argparse
 import shutil
-import subprocess
 import sys
 
 from docla import __version__
+from docla.render.typst import TYPST_VERSION, typst_version
 
 MIN_PYTHON = (3, 12)
 
@@ -16,17 +16,14 @@ def _python_line() -> tuple[str, bool]:
     return f"python: {version}", True
 
 
-def _typst_version(executable: str) -> str:
-    result = subprocess.run([executable, "--version"], capture_output=True, text=True, timeout=30)
-    words = (result.stdout.splitlines() or [""])[0].split()
-    return words[1] if len(words) > 1 else "unknown"
-
-
 def _typst_lines() -> list[str]:
     executable = shutil.which("typst")
     if executable is None:
         return ["typst: missing", "install: brew install typst"]
-    return [f"typst: {_typst_version(executable)}"]
+    found = typst_version(executable)
+    if found != TYPST_VERSION:
+        return [f"typst: {found}", f"needs: typst {TYPST_VERSION}"]
+    return [f"typst: {found}"]
 
 
 def _doctor() -> int:
