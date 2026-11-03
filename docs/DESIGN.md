@@ -1195,11 +1195,13 @@ Query (Python):
 ```python
 def read_marks(typ_main: Path, root: Path) -> list[dict]:
     out = subprocess.run(
-        ["typst", "query", str(typ_main), "<doclo-mark>", "--field", "value",
-         "--root", str(root), "--format", "json"],
+        ["typst", "eval", "query(<doclo-mark>).map(it => it.value)", "--in", str(typ_main),
+         "--root", str(root), "--ignore-system-fonts"],
         capture_output=True, text=True, check=True, timeout=60).stdout
     return json.loads(out)
 ```
+
+**Spike results (2026-11-03, `docs/spikes/`).** Marks are exact (0.00 pt) on slides, and on flowing documents section start marks plus an `el` mark inside each float assign every word to its section (1982 of 1982). `typst query` is deprecated in Typst 0.15.1, so the snippet above uses `typst eval`, which returns the same JSON. `el` must wrap its body in a `block`: for inline content `here().position()` is the baseline, for a block it is the top edge.
 
 **Spike S1 must prove** that position and size reporting is exact enough (within ~1pt) for slides (fixed frames:
 easy) and usable for flowing documents (section regions as start/end markers split across pages and columns by
