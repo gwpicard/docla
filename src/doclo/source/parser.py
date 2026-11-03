@@ -30,7 +30,7 @@ FENCE_OPEN = re.compile(r"^:::\s*\{(.*)\}\s*$")
 FENCE_CLOSE = re.compile(r"^:::\s*$")
 CODE_FENCE = re.compile(r"^```\s*(\w*)\s*$")
 ATTR = re.compile(r'#([^\s}]+)|\.([^\s}]+)|([A-Za-z_][\w-]*)=(?:"([^"]*)"|(\S+))')
-CITATION = re.compile(r"\s*\[([A-Za-z]+\d+)\s+([^\]]+)\]")
+CITATION = re.compile(r"\s*\[([A-Za-z]+\d+)(?:\s+([^\]]+))?\]")
 HEAD = re.compile(r"^\*\*(.+?)\*\*(.*)$")
 SOURCE_LINE = re.compile(r"^-\s*\[([^\]]+)\]\s*(.*)$")
 QUOTE = re.compile(r"^>\s*(note|spoken|source):\s*(.*)$")
@@ -143,7 +143,7 @@ class _Parser:
         citations = []
         for match in CITATION.finditer(text):
             key = match.group(1)
-            citations.append(Citation(key=key, locator=match.group(2).strip()))
+            citations.append(Citation(key=key, locator=match.group(2).strip() if match.group(2) else None))
             if key not in self.source_keys:
                 self.report("unknown-citation", f"{key} is not in the sources.", key, section.id)
         text = CITATION.sub("", text).strip()
