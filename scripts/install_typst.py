@@ -21,7 +21,6 @@ ASSETS: dict[str, tuple[str, str]] = {
     ),
 }
 RELEASE_URL = f"https://github.com/typst/typst/releases/download/v{VERSION}/"
-SUFFIX = ".tar.xz"
 
 
 def sha256_of(path: Path) -> str:
