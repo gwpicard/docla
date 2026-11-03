@@ -10,6 +10,9 @@ PROVENANCE = Provenance(source={"doc": "DESIGN.md", "section": "10.5"})
 
 Placed = PlacedWord | PlacedShape
 
+# Cap height as a fraction of the font size, an approximation for the kit's text faces.
+CAP_HEIGHT = 0.7
+
 
 def _sectioned(facts: LayoutFacts) -> list[Placed]:
     items: list[Placed] = [*facts.words, *facts.shapes]
@@ -41,7 +44,7 @@ def _extent(item: Placed) -> FactBox:
     """
     if isinstance(item, PlacedShape):
         return item.box
-    return item.box.model_copy(update={"y0": item.baseline - 0.7 * item.size, "y1": item.baseline})
+    return item.box.model_copy(update={"y0": item.baseline - CAP_HEIGHT * item.size, "y1": item.baseline})
 
 
 Hit = tuple[Placed, float]
