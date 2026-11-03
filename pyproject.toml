@@ -13,6 +13,9 @@ license-files = ["LICENSE", "NOTICE"]
 authors = [{ name = "Guillaume Picard" }]
 classifiers = ["Development Status :: 1 - Planning"]
 
+[project.scripts]
+doclo = "doclo.cli:main"
+
 [project.urls]
 Repository = "https://github.com/gwpicard/doclo"
 
