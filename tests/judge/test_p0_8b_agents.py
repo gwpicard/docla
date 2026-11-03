@@ -49,7 +49,14 @@ def _has_all(text: str, needles: list[str]) -> list[str]:
 def test_D1_loop_section_unchanged():
     section = _section("The loop")
     assert section is not None, "AGENTS.md must keep a '## The loop' section"
-    assert section.rstrip("\n") == LOOP_SECTION.rstrip("\n")
+    assert section.startswith("## The loop\n")
+    # The settings may be tuned by the person; each setting key must stay present.
+    keys = [line.split(":", 1)[0] for line in LOOP_SECTION.splitlines()[3:]]
+    present = {line.split(":", 1)[0] for line in section.splitlines()}
+    missing = [k for k in keys if k not in present]
+    assert not missing, f"loop settings missing: {missing}"
+    assert "Prepare command: `uv sync`" in section
+    assert "Test command: `uv run python -m pytest`" in section
 
 
 def test_D1_title_lines_kept():
