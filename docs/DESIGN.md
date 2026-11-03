@@ -1685,6 +1685,8 @@ On failure the patch is rejected and the writer is told the exact unsupported to
 Derived values (a sum, a percentage computed from two cited numbers) are allowed only when the writer includes a
 `calc:` note listing operands; the guard recomputes it (implement for sum, difference, ratio, percentage).
 
+**Spike S4 (2026-11-03, `docs/spikes/S4-repair.md`).** Tokenise per field, check citations separately, and normalise number words (one, six) before comparing; the guard only catches invented facts, so pair it with a kept-facts check that reports a lost fact as a finding.
+
 ### 11.6 Progress and anti-oscillation
 
 * **Potential function.** `Φ = 10·errors + 3·warnings + 1·infos` over *actionable* findings. A candidate is accepted only if `Φ` strictly decreases, or ties with a smaller edit distance and no new fingerprints.
@@ -2888,6 +2890,8 @@ EARLIER ATTEMPTS: {compact history; do not repeat a change that did not work}
 RULES: keep every fact, number, citation and the item order unless a finding requires otherwise.
        Do not add facts. Prefer shortening wording to deleting an item. Return a `set_fields` patch only.
 ```
+
+**Spike S4.** Findings for lists and paragraphs must name the element and say how many lines it uses and how many characters free one line. With a box-level finding only, 4 of 20 seeded sections did not converge in 3 attempts; with per-element lines, 20 of 20 did.
 
 ### B.3 Diagnoser
 
