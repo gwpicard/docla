@@ -39,7 +39,7 @@ A 4-page, two-column A4 report with 10 sections, three figure floats, one float 
 
 1. Marks are used for slides and documents. The title-search fallback is not needed, but it is a sound degraded mode for flow text (100% on 1,800 flow words).
 2. A document section is described by its start mark (the cut point), its float marks, and the PDF words between cut points. Region boxes come from the assigned words; frames from `el` marks.
-3. Use `typst eval 'query(<doclo-mark>).map(it => it.value)' --in <file>`, not `typst query`: `query` is deprecated in 0.15.1 and prints a warning. The JSON is identical.
+3. Use `typst eval 'query(<docla-mark>).map(it => it.value)' --in <file>`, not `typst query`: `query` is deprecated in 0.15.1 and prints a warning. The JSON is identical.
 4. `el` always wraps its body in a `block`.
 
 ## Not covered

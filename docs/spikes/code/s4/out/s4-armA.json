@@ -1,0 +1,480 @@
+[
+  {
+    "id": "t00",
+    "kind": "title",
+    "start": 1,
+    "cleared": true,
+    "attempts": 1,
+    "rejected": 0,
+    "facts": 4,
+    "lost": [
+      "north sea"
+    ],
+    "cites_lost": 0,
+    "items": [
+      3,
+      3
+    ],
+    "usage": [
+      962,
+      227
+    ],
+    "history": [
+      "attempt 1: accepted, 0 findings left"
+    ],
+    "title": "Three compounding integrity concerns"
+  },
+  {
+    "id": "t01",
+    "kind": "title",
+    "start": 1,
+    "cleared": true,
+    "attempts": 1,
+    "rejected": 0,
+    "facts": 4,
+    "lost": [
+      "14"
+    ],
+    "cites_lost": 0,
+    "items": [
+      3,
+      3
+    ],
+    "usage": [
+      965,
+      299
+    ],
+    "history": [
+      "attempt 1: accepted, 0 findings left"
+    ],
+    "title": "2019 inspection intervals no longer fit use"
+  },
+  {
+    "id": "t02",
+    "kind": "title",
+    "start": 1,
+    "cleared": true,
+    "attempts": 1,
+    "rejected": 0,
+    "facts": 6,
+    "lost": [],
+    "cites_lost": 0,
+    "items": [
+      3,
+      3
+    ],
+    "usage": [
+      971,
+      899
+    ],
+    "history": [
+      "attempt 1: accepted, 0 findings left"
+    ],
+    "title": "Nordic Star & Baltic Wind pilot: 2027 proof"
+  },
+  {
+    "id": "t03",
+    "kind": "title",
+    "start": 1,
+    "cleared": true,
+    "attempts": 1,
+    "rejected": 0,
+    "facts": 7,
+    "lost": [],
+    "cites_lost": 0,
+    "items": [
+      3,
+      3
+    ],
+    "usage": [
+      979,
+      711
+    ],
+    "history": [
+      "attempt 1: accepted, 0 findings left"
+    ],
+    "title": "Unplanned stops: \u20ac1.1M (2022)\u2192\u20ac4.2M (2025e)"
+  },
+  {
+    "id": "t04",
+    "kind": "title",
+    "start": 1,
+    "cleared": true,
+    "attempts": 1,
+    "rejected": 0,
+    "facts": 4,
+    "lost": [
+      "asset integrity"
+    ],
+    "cites_lost": 0,
+    "items": [
+      3,
+      3
+    ],
+    "usage": [
+      962,
+      735
+    ],
+    "history": [
+      "attempt 1: accepted, 0 findings left"
+    ],
+    "title": "Where the inspection register breaks down"
+  },
+  {
+    "id": "t05",
+    "kind": "title",
+    "start": 1,
+    "cleared": true,
+    "attempts": 1,
+    "rejected": 0,
+    "facts": 5,
+    "lost": [],
+    "cites_lost": 0,
+    "items": [
+      3,
+      3
+    ],
+    "usage": [
+      967,
+      906
+    ],
+    "history": [
+      "attempt 1: accepted, 0 findings left"
+    ],
+    "title": "1,240 open orders; 46 safety items need owner"
+  },
+  {
+    "id": "t06",
+    "kind": "title",
+    "start": 1,
+    "cleared": true,
+    "attempts": 1,
+    "rejected": 0,
+    "facts": 3,
+    "lost": [],
+    "cites_lost": 0,
+    "items": [
+      3,
+      3
+    ],
+    "usage": [
+      974,
+      866
+    ],
+    "history": [
+      "attempt 1: accepted, 0 findings left"
+    ],
+    "title": "Gaps at Aberdeen, Esbjerg hide hull corrosion"
+  },
+  {
+    "id": "t07",
+    "kind": "title",
+    "start": 1,
+    "cleared": true,
+    "attempts": 1,
+    "rejected": 0,
+    "facts": 6,
+    "lost": [
+      "12 december"
+    ],
+    "cites_lost": 0,
+    "items": [
+      3,
+      3
+    ],
+    "usage": [
+      966,
+      219
+    ],
+    "history": [
+      "attempt 1: accepted, 0 findings left"
+    ],
+    "title": "Steering decision, 12 Dec 2026: scope, budget, pilots"
+  },
+  {
+    "id": "b00",
+    "kind": "body",
+    "start": 1,
+    "cleared": true,
+    "attempts": 1,
+    "rejected": 0,
+    "facts": 15,
+    "lost": [],
+    "cites_lost": 0,
+    "items": [
+      5,
+      5
+    ],
+    "usage": [
+      1221,
+      985
+    ],
+    "history": [
+      "attempt 1: accepted, 0 findings left"
+    ],
+    "title": "Three integrity concerns"
+  },
+  {
+    "id": "b01",
+    "kind": "body",
+    "start": 1,
+    "cleared": false,
+    "attempts": 3,
+    "rejected": 0,
+    "facts": 19,
+    "lost": [],
+    "cites_lost": 0,
+    "items": [
+      6,
+      6
+    ],
+    "usage": [
+      3878,
+      3309
+    ],
+    "history": [
+      "attempt 1: accepted, 1 findings left",
+      "attempt 2: no progress, still over by 11 pt",
+      "attempt 3: no progress, still over by 11 pt"
+    ],
+    "title": "Inspection intervals"
+  },
+  {
+    "id": "b02",
+    "kind": "body",
+    "start": 1,
+    "cleared": true,
+    "attempts": 1,
+    "rejected": 0,
+    "facts": 17,
+    "lost": [],
+    "cites_lost": 0,
+    "items": [
+      5,
+      5
+    ],
+    "usage": [
+      1211,
+      720
+    ],
+    "history": [
+      "attempt 1: accepted, 0 findings left"
+    ],
+    "title": "The pilot"
+  },
+  {
+    "id": "b03",
+    "kind": "body",
+    "start": 1,
+    "cleared": true,
+    "attempts": 1,
+    "rejected": 0,
+    "facts": 19,
+    "lost": [],
+    "cites_lost": 0,
+    "items": [
+      6,
+      6
+    ],
+    "usage": [
+      1305,
+      1749
+    ],
+    "history": [
+      "attempt 1: accepted, 0 findings left"
+    ],
+    "title": "Shutdown cost"
+  },
+  {
+    "id": "b04",
+    "kind": "body",
+    "start": 1,
+    "cleared": true,
+    "attempts": 1,
+    "rejected": 0,
+    "facts": 14,
+    "lost": [],
+    "cites_lost": 0,
+    "items": [
+      5,
+      5
+    ],
+    "usage": [
+      1218,
+      1126
+    ],
+    "history": [
+      "attempt 1: accepted, 0 findings left"
+    ],
+    "title": "Register ownership"
+  },
+  {
+    "id": "b05",
+    "kind": "body",
+    "start": 1,
+    "cleared": false,
+    "attempts": 3,
+    "rejected": 0,
+    "facts": 19,
+    "lost": [],
+    "cites_lost": 0,
+    "items": [
+      6,
+      6
+    ],
+    "usage": [
+      3877,
+      4123
+    ],
+    "history": [
+      "attempt 1: accepted, 1 findings left",
+      "attempt 2: no progress, still over by 11 pt",
+      "attempt 3: no progress, still over by 11 pt"
+    ],
+    "title": "The backlog"
+  },
+  {
+    "id": "b06",
+    "kind": "body",
+    "start": 1,
+    "cleared": true,
+    "attempts": 1,
+    "rejected": 0,
+    "facts": 15,
+    "lost": [],
+    "cites_lost": 0,
+    "items": [
+      5,
+      5
+    ],
+    "usage": [
+      1221,
+      880
+    ],
+    "history": [
+      "attempt 1: accepted, 0 findings left"
+    ],
+    "title": "Telemetry gaps"
+  },
+  {
+    "id": "b07",
+    "kind": "body",
+    "start": 1,
+    "cleared": true,
+    "attempts": 3,
+    "rejected": 0,
+    "facts": 19,
+    "lost": [],
+    "cites_lost": 0,
+    "items": [
+      6,
+      6
+    ],
+    "usage": [
+      3876,
+      4006
+    ],
+    "history": [
+      "attempt 1: accepted, 1 findings left",
+      "attempt 2: no progress, still over by 11 pt",
+      "attempt 3: accepted, 0 findings left"
+    ],
+    "title": "Decision needed"
+  },
+  {
+    "id": "x00",
+    "kind": "both",
+    "start": 2,
+    "cleared": true,
+    "attempts": 1,
+    "rejected": 0,
+    "facts": 19,
+    "lost": [],
+    "cites_lost": 0,
+    "items": [
+      6,
+      6
+    ],
+    "usage": [
+      1393,
+      1664
+    ],
+    "history": [
+      "attempt 1: accepted, 0 findings left"
+    ],
+    "title": "Three changes Maria Jensen asked us to test"
+  },
+  {
+    "id": "x01",
+    "kind": "both",
+    "start": 2,
+    "cleared": false,
+    "attempts": 3,
+    "rejected": 0,
+    "facts": 19,
+    "lost": [],
+    "cites_lost": 0,
+    "items": [
+      6,
+      6
+    ],
+    "usage": [
+      3945,
+      4001
+    ],
+    "history": [
+      "attempt 1: accepted, 1 findings left",
+      "attempt 2: no progress, still over by 11 pt",
+      "attempt 3: no progress, still over by 11 pt"
+    ],
+    "title": "Pilot measures: month one, six and the end"
+  },
+  {
+    "id": "x02",
+    "kind": "both",
+    "start": 2,
+    "cleared": false,
+    "attempts": 3,
+    "rejected": 0,
+    "facts": 19,
+    "lost": [],
+    "cites_lost": 0,
+    "items": [
+      6,
+      6
+    ],
+    "usage": [
+      3957,
+      3680
+    ],
+    "history": [
+      "attempt 1: accepted, 1 findings left",
+      "attempt 2: no progress, still over by 11 pt",
+      "attempt 3: no progress, still over by 11 pt"
+    ],
+    "title": "Accept, transfer, or escalate to the board"
+  },
+  {
+    "id": "x03",
+    "kind": "both",
+    "start": 2,
+    "cleared": true,
+    "attempts": 1,
+    "rejected": 0,
+    "facts": 19,
+    "lost": [],
+    "cites_lost": 0,
+    "items": [
+      6,
+      6
+    ],
+    "usage": [
+      1390,
+      1633
+    ],
+    "history": [
+      "attempt 1: accepted, 0 findings left"
+    ],
+    "title": "A single register owner: 31 records conflict"
+  }
+]

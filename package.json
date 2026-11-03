@@ -1,10 +1,10 @@
 {
-  "name": "@gwpicard/doclo",
+  "name": "@gwpicard/docla",
   "version": "0.0.1",
   "description": "Claude-generated branded slides and documents (PDF). Early development.",
   "license": "Apache-2.0",
   "author": "Guillaume Picard",
-  "repository": { "type": "git", "url": "git+https://github.com/gwpicard/doclo.git" },
+  "repository": { "type": "git", "url": "git+https://github.com/gwpicard/docla.git" },
   "publishConfig": { "access": "public" },
   "files": ["README.md", "LICENSE", "NOTICE"]
 }

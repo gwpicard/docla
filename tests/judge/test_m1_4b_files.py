@@ -6,24 +6,24 @@ import re
 import pytest
 
 try:
-    from doclo.source import files
+    from docla.source import files
 except ImportError as error:
-    if error.name != "doclo.source" and not str(error.name).startswith("doclo.source."):
+    if error.name != "docla.source" and not str(error.name).startswith("docla.source."):
         raise
     files = None
 
 try:
-    from doclo.source import ids as ids_mod
-    from doclo.source import patches
+    from docla.source import ids as ids_mod
+    from docla.source import patches
 except ImportError as error:
-    if error.name != "doclo.source" and not str(error.name).startswith("doclo.source."):
+    if error.name != "docla.source" and not str(error.name).startswith("docla.source."):
         raise
     ids_mod = patches = None
 
 try:
-    import doclo.model as model
+    import docla.model as model
 except ImportError as error:
-    if error.name != "doclo.model" and not str(error.name).startswith("doclo.model."):
+    if error.name != "docla.model" and not str(error.name).startswith("docla.model."):
         raise
     model = None
 
@@ -35,9 +35,9 @@ STAMPED_B = re.compile(r'::: \{#([0-9a-f]{5}) \.section intent="second" section=
 
 
 def _need():
-    assert files is not None, "doclo.source.files must exist"
+    assert files is not None, "docla.source.files must exist"
     assert hasattr(files, "apply_to_file") and hasattr(files, "current_rev"), "apply_to_file and current_rev must exist"
-    assert ids_mod is not None and patches is not None and model is not None, "doclo.source ids/patches and doclo.model must exist"
+    assert ids_mod is not None and patches is not None and model is not None, "docla.source ids/patches and docla.model must exist"
     return files
 
 
@@ -51,8 +51,8 @@ def _setup(tmp_path, fences=(FENCE_A, FENCE_B), seed=1):
     _need()
     path = tmp_path / "memo.md"
     path.write_bytes((FRONT + "\n".join(fences)).encode())
-    oplog = tmp_path / ".doclo" / "oplog.jsonl"
-    store = ids_mod.IdStore(tmp_path / ".doclo" / "ids.json", rng=random.Random(seed))
+    oplog = tmp_path / ".docla" / "oplog.jsonl"
+    store = ids_mod.IdStore(tmp_path / ".docla" / "ids.json", rng=random.Random(seed))
     return path, oplog, store
 
 
@@ -97,7 +97,7 @@ def test_D2_stamped_ids_are_saved_in_the_store(tmp_path):
     path, oplog, store = _setup(tmp_path)
     _need().apply_to_file(path, _patch(), oplog, store)
     new_id = STAMPED_B.search(path.read_text()).group(1)
-    saved = json.loads((tmp_path / ".doclo" / "ids.json").read_text())
+    saved = json.loads((tmp_path / ".docla" / "ids.json").read_text())
     assert new_id in saved["issued"]
 
 
@@ -135,7 +135,7 @@ def test_D3_stale_base_rev_rejected_and_nothing_changes(tmp_path):
 def test_D4_rejected_patch_leaves_file_log_and_id_store(tmp_path):
     fences = (FENCE_A.replace("}\n", ' owner="human"}\n', 1), FENCE_B)
     path, oplog, store = _setup(tmp_path, fences)
-    ids_path = tmp_path / ".doclo" / "ids.json"
+    ids_path = tmp_path / ".docla" / "ids.json"
     ids_path.parent.mkdir()
     ids_path.write_bytes(b'{\n  "issued": [\n    "00000"\n  ]\n}\n')
     file_before, ids_before = path.read_bytes(), ids_path.read_bytes()
@@ -152,7 +152,7 @@ def test_D4_rejected_patch_does_not_create_id_store(tmp_path):
     path, oplog, store = _setup(tmp_path, fences)
     with pytest.raises(patches.PatchRejected):
         _need().apply_to_file(path, _patch(), oplog, store)
-    assert not (tmp_path / ".doclo" / "ids.json").exists()
+    assert not (tmp_path / ".docla" / "ids.json").exists()
     assert not oplog.exists()
 
 
@@ -179,7 +179,7 @@ def test_D6_no_temporary_file_remains_and_log_is_lf(tmp_path):
     mod = _need()
     mod.apply_to_file(path, _patch(base_rev=0), oplog, store)
     mod.apply_to_file(path, _patch(base_rev=1, title="Newer"), oplog, store)
-    assert sorted(p.name for p in tmp_path.iterdir()) == [".doclo", "memo.md"]
+    assert sorted(p.name for p in tmp_path.iterdir()) == [".docla", "memo.md"]
     assert sorted(p.name for p in oplog.parent.iterdir()) == ["ids.json", "oplog.jsonl"]
     raw = oplog.read_bytes()
     assert raw.endswith(b"\n") and b"\r" not in raw

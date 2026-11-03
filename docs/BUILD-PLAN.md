@@ -1,4 +1,4 @@
-# doclo: build plan and registration plan
+# docla: build plan and registration plan
 
 Companion to `DESIGN.md` (the what and why). This file is the order of work. `DESIGN.md` section 18 holds the milestones
 and their acceptance tests; this plan sequences them, breaks the first ones into tasks, and lists everything to register.
@@ -36,13 +36,13 @@ Done or prepared in 2026-11-03: see section 7 for the current state and what is 
 
 ### 2.3 Repository bootstrap checklist
 
-- [x] Repository `gwpicard/doclo` created (private until you decide to publish), first commit pushed: `LICENSE`, `NOTICE`, `README.md`, `pyproject.toml`, `package.json`, `src/doclo/`, `.gitattributes`, `.gitignore`. Local clone: `~/PROJECTS/doclo`.
+- [x] Repository created as `gwpicard/doclo`, renamed to `gwpicard/docla` and made public on 2026-11-03, first commit pushed: `LICENSE`, `NOTICE`, `README.md`, `pyproject.toml`, `package.json`, `src/docla/`, `.gitattributes`, `.gitignore`. Local clone: `~/PROJECTS/docla`.
 - [ ] `main` protected, squash or rebase merges only, PRs required.
-- [ ] `pyproject.toml` (package `doclo`, Python version pinned, `uv` for environments and lock), `src/doclo/` layout. Grep the tree for the earlier working names ("proof", "replo", "docklo"); none may remain.
+- [ ] `pyproject.toml` (package `docla`, Python version pinned, `uv` for environments and lock), `src/docla/` layout. Grep the tree for the earlier working names ("proof", "replo", "docklo", "doclo"); none may remain outside `docs/`.
 - [ ] Tooling: ruff (lint and format), pyright or mypy, pytest, pre-commit.
 - [ ] `.gitattributes` forcing LF; `.editorconfig`.
 - [ ] CI (GitHub Actions, macOS and Linux): lint, types, unit tests, licence report of dependencies (fail on AGPL, e.g. PyMuPDF), DCO check, secret scan.
-- [ ] Typst pinned by version; `doclo doctor` stub that prints what is installed and what is missing.
+- [ ] Typst pinned by version; `docla doctor` stub that prints what is installed and what is missing.
 - [ ] `AGENTS.md` and `CONTEXT.md` (the vocabulary from DESIGN section 3, one word per thing).
 - [ ] `docs/` with `DESIGN.md` copied in as the starting point and `docs/decisions.md` for the decisions log.
 - [ ] Issue templates and labels (area labels and severity labels) so defects are tracked from the start.
@@ -119,7 +119,7 @@ and everything after it are built in full.
 6. `read_marks` (`typst query`), then the facts extractor (pdfplumber) joined to the marks.
 7. Six geometry and source rules (overflow, out-of-bounds, min font size, missing source, empty section, off-palette colour), each with passing and failing fixtures.
 8. Swatch render of one section (slide and doc) plus the raster and crop helper.
-9. CLI: `doclo build`, `doclo check`, `doclo doctor`.
+9. CLI: `docla build`, `docla check`, `docla doctor`.
 10. Acceptance run as in DESIGN 18.2, with screenshots attached.
 
 ---
@@ -155,11 +155,11 @@ legal work (trademark search and filing, lawyer opinions, employer paperwork) is
 
 | Place | Name | State |
 |---|---|---|
-| GitHub repository | `gwpicard/doclo` | **Created**, private, first commit pushed. The `Doclo` organisation name is held by someone else, so the project lives under your account |
+| GitHub repository | `gwpicard/docla` | **Public.** Renamed from `gwpicard/doclo` on 2026-11-03; the old URL redirects. On GitHub the name `Docla` belongs to a user account, so the project lives under your account |
 | Licence files | `LICENSE`, `NOTICE` | **Committed** (Apache-2.0, copyright 2026 Guillaume Picard) |
-| PyPI | `doclo` | **Not yet published.** Placeholder 0.0.1 built (`dist/doclo-0.0.1.*`); needs your PyPI login. Free when checked |
-| npm | `@gwpicard/doclo` | **Not yet published.** npm refused the unscoped name `doclo` (too similar to docx, docz, docco, doctoc), so the placeholder uses your scope. Needs only `npm publish` |
-| Domain | | On hold. `doclo.com` and `doclo.ai` are already registered by others |
+| PyPI | `docla` | **Not yet published.** Free when checked on 2026-11-03. The placeholder built earlier is named `doclo` (`dist/doclo-0.0.1.*`); rebuild it as `docla` before publishing. Needs your PyPI login |
+| npm | `@gwpicard/docla` | **Not yet published.** Free when checked on 2026-11-03, as is the unscoped `docla`. npm refused the unscoped `doclo` as too similar to docx, docz, docco and doctoc and may refuse `docla` for the same reason (not tried), so the placeholder uses your scope. Needs only `npm publish` |
+| Domain | | On hold. Not checked for `docla`; `doclo.com` and `doclo.ai` were already registered by others |
 
 ### 7.2 Commands for you to run
 
@@ -168,25 +168,25 @@ PyPI and npm both require your own login and two-factor code, which I cannot sup
 PyPI (create the account and an API token at pypi.org first, scoped to "entire account" for the first upload):
 
 ```
-! cd ~/PROJECTS/doclo && uv publish --token <pypi-token>
+! cd ~/PROJECTS/docla && uv publish --token <pypi-token>
 ```
 
 npm (you are already logged in; the package is scoped, and `publishConfig` sets it public):
 
 ```
-! cd ~/PROJECTS/doclo && npm publish
+! cd ~/PROJECTS/docla && npm publish
 ```
 
 After the first PyPI upload, replace the account-wide token: create a project-scoped token or, better, set up Trusted
-Publishing for `gwpicard/doclo` in the PyPI project settings so CI publishes without a stored secret. If you publish
+Publishing for `gwpicard/docla` in the PyPI project settings so CI publishes without a stored secret. If you publish
 nothing else, the names are still free until you do; whoever publishes first holds them.
 
 ### 7.3 Later, when relevant
 
 * **Domain:** on hold. When you pick one, add the contact addresses (`security@`, `maintainers@`) for `SECURITY.md`.
-* **Making the repository public:** `gh repo edit gwpicard/doclo --visibility public --accept-visibility-change-consequences`. Do this when you are ready; nothing else depends on it.
+* **Making the repository public:** `gh repo edit gwpicard/docla --visibility public --accept-visibility-change-consequences`. Do this when you are ready; nothing else depends on it.
 * **Release time (M11):** replace the placeholders with the real release, add `SECURITY.md`, `CODE_OF_CONDUCT.md`, `CONTRIBUTING.md`.
-* **Optional extras:** a Homebrew tap (`homebrew-doclo`), a GHCR image, a Typst Universe package. None are required.
+* **Optional extras:** a Homebrew tap (`homebrew-docla`), a GHCR image, a Typst Universe package. None are required.
 
 ---
 

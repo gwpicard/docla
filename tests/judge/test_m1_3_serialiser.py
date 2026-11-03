@@ -3,16 +3,16 @@ import importlib.util
 import re
 
 try:
-    import doclo.source as source
+    import docla.source as source
 except ImportError as error:
-    if error.name != "doclo.source" and not str(error.name).startswith("doclo.source."):
+    if error.name != "docla.source" and not str(error.name).startswith("docla.source."):
         raise
     source = None
 
 try:
-    import doclo.model as model
+    import docla.model as model
 except ImportError as error:
-    if error.name != "doclo.model" and not str(error.name).startswith("doclo.model."):
+    if error.name != "docla.model" and not str(error.name).startswith("docla.model."):
         raise
     model = None
 
@@ -74,7 +74,7 @@ Text three.
 
 
 def _need(owner, name):
-    assert owner is not None and hasattr(owner, name), f"doclo.source.{name} must exist"
+    assert owner is not None and hasattr(owner, name), f"docla.source.{name} must exist"
     return getattr(owner, name)
 
 
@@ -87,7 +87,7 @@ def parse(text):
 
 
 def _model(name):
-    assert model is not None and hasattr(model, name), f"doclo.model.{name} must exist"
+    assert model is not None and hasattr(model, name), f"docla.model.{name} must exist"
     return getattr(model, name)
 
 

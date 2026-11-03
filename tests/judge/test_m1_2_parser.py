@@ -1,8 +1,8 @@
 # Intent: parse() turns a working file into a Document plus findings and never raises.
 try:
-    from doclo.source import parser
+    from docla.source import parser
 except ImportError as error:
-    if error.name not in ("doclo.source", "doclo.source.parser"):
+    if error.name not in ("docla.source", "docla.source.parser"):
         raise
     parser = None
 
@@ -42,7 +42,7 @@ SOURCES = "## Sources\n\n- [S1] workshop.vtt, transcript\n\n"
 
 
 def parse(text):
-    assert parser is not None and hasattr(parser, "parse"), "doclo.source.parser.parse must exist"
+    assert parser is not None and hasattr(parser, "parse"), "docla.source.parser.parse must exist"
     return parser.parse(text)
 
 

@@ -43,7 +43,7 @@ for _ in range(2): scene("clean heading, 2 lines after", None,
 
 def build(name, body):
     (HERE / f"{name}.typ").write_text(HEAD + body)
-    for cmd in (["typst", "compile", f"{name}.typ", f"{name}.pdf"], ["typst", "eval", "query(<doclo-mark>).map(it => it.value)", "--in", f"{name}.typ"]):
+    for cmd in (["typst", "compile", f"{name}.typ", f"{name}.pdf"], ["typst", "eval", "query(<docla-mark>).map(it => it.value)", "--in", f"{name}.typ"]):
         r = subprocess.run(cmd + ["--root", str(HERE), "--ignore-system-fonts"], capture_output=True, text=True, cwd=HERE, env=ENV)
         if r.returncode: raise RuntimeError(r.stderr)
     marks = json.loads(r.stdout)

@@ -3,7 +3,7 @@ import subprocess
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[1]
-NAMES = re.compile(r"\b(replo|docklo|proof)\b", re.IGNORECASE)
+NAMES = re.compile(r"\b(replo|docklo|doclo|proof)\b", re.IGNORECASE)
 NAME_EXEMPT = {"uv.lock", "tests/test_hygiene.py", "tests/judge/test_p0_3_hygiene.py"}
 
 

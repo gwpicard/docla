@@ -6,16 +6,16 @@ import re
 import pytest
 
 try:
-    from doclo.source import ids
+    from docla.source import ids
 except ImportError as error:
-    if error.name != "doclo.source" and not str(error.name).startswith("doclo.source."):
+    if error.name != "docla.source" and not str(error.name).startswith("docla.source."):
         raise
     ids = None
 
 try:
-    from doclo.model import Document, Section
+    from docla.model import Document, Section
 except ImportError as error:
-    if error.name != "doclo.model" and not str(error.name).startswith("doclo.model."):
+    if error.name != "docla.model" and not str(error.name).startswith("docla.model."):
         raise
     Document = Section = None
 
@@ -23,13 +23,13 @@ ID_PATTERN = re.compile(r"[0-9a-f]{5}")
 
 
 def _subject():
-    assert ids is not None and hasattr(ids, "IdStore"), "doclo.source.ids.IdStore must exist"
+    assert ids is not None and hasattr(ids, "IdStore"), "docla.source.ids.IdStore must exist"
     assert hasattr(ids, "IdStoreError") and hasattr(ids, "stamp"), "IdStoreError and stamp must exist"
     return ids
 
 
 def _doc(section_ids):
-    assert Document is not None and Section is not None, "doclo.model must exist"
+    assert Document is not None and Section is not None, "docla.model must exist"
     return Document(
         format="doc",
         front={"doctype": "memo"},

@@ -4,8 +4,8 @@ from typing import Any
 
 import yaml  # type: ignore[import-untyped]
 
-from doclo.model import Citation, Document, Finding, Item, Remedy, Section, Source
-from doclo.model.source import Format
+from docla.model import Citation, Document, Finding, Item, Remedy, Section, Source
+from docla.model.source import Format
 
 APPEARANCE = {"color", "font", "size", "x", "y"}
 STRING_ATTRS = {"intent", "section", "component", "because", "redraft", "image"}

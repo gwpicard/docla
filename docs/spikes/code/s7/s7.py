@@ -1,13 +1,13 @@
 """Spike S7: separate git dir beside a user's own repository, worktree runs, and the section-aware merge driver."""
 import json, os, shutil, subprocess, sys, time
 from pathlib import Path
-from doclo.source import parse, serialise
-from doclo.model import Item, Section
+from docla.source import parse, serialise
+from docla.model import Item, Section
 
 HERE = Path(__file__).resolve().parent
 PY, DRIVER = sys.executable, HERE / "merge_driver.py"
 import tempfile
-WORK = Path(tempfile.mkdtemp(prefix="doclo-s7-"))
+WORK = Path(tempfile.mkdtemp(prefix="docla-s7-"))
 ENV = dict(os.environ, GIT_AUTHOR_NAME="t", GIT_AUTHOR_EMAIL="t@example.com", GIT_COMMITTER_NAME="t",
            GIT_COMMITTER_EMAIL="t@example.com", GIT_CONFIG_GLOBAL="/dev/null", GIT_CONFIG_NOSYSTEM="1")
 
@@ -76,16 +76,16 @@ def project(path, driver):
     path.mkdir(parents=True)
     (path / "README.md").write_text("my notes\n"); (path / "deck.md").write_text(BASE)
     sh("git", "init", "-q", "-b", "main", cwd=path); sh("git", "add", ".", cwd=path); sh("git", "commit", "-qm", "user's own commit", cwd=path)
-    with open(path / ".git/info/exclude", "a") as fh: fh.write(".doclo/\n")
-    G = ["git", "--git-dir=.doclo/git", "--work-tree=."]
-    (path / ".doclo").mkdir()  # git init does not create the parent of --git-dir
+    with open(path / ".git/info/exclude", "a") as fh: fh.write(".docla/\n")
+    G = ["git", "--git-dir=.docla/git", "--work-tree=."]
+    (path / ".docla").mkdir()  # git init does not create the parent of --git-dir
     sh(*G, "init", "-q", "-b", "main", cwd=path)
-    (path / ".doclo/git/info").mkdir(parents=True, exist_ok=True)
-    (path / ".doclo/git/info/exclude").write_text(".doclo/\n")
+    (path / ".docla/git/info").mkdir(parents=True, exist_ok=True)
+    (path / ".docla/git/info/exclude").write_text(".docla/\n")
     if driver:
-        sh(*G, "config", "merge.doclo-md.name", "doclo section-aware merge", cwd=path)
-        sh(*G, "config", "merge.doclo-md.driver", f"{PY} {DRIVER} %O %A %B %P", cwd=path)
-        (path / ".doclo/git/info/attributes").write_text("*.md merge=doclo-md\n")
+        sh(*G, "config", "merge.docla-md.name", "docla section-aware merge", cwd=path)
+        sh(*G, "config", "merge.docla-md.driver", f"{PY} {DRIVER} %O %A %B %P", cwd=path)
+        (path / ".docla/git/info/attributes").write_text("*.md merge=docla-md\n")
     sh(*G, "add", "deck.md", cwd=path); sh(*G, "commit", "-qm", "base", cwd=path)
     return G
 
@@ -94,14 +94,14 @@ def run(name, ours, theirs, expect, driver):
     G = project(path, driver)
     user_head = sh("git", "rev-parse", "HEAD", cwd=path).stdout.strip()
     t0 = time.perf_counter()
-    sh(*G, "worktree", "add", "-q", ".doclo/runs/r1", "-b", "run/r1", cwd=path)
+    sh(*G, "worktree", "add", "-q", ".docla/runs/r1", "-b", "run/r1", cwd=path)
     wt_time = time.perf_counter() - t0
-    wt = path / ".doclo/runs/r1"
+    wt = path / ".docla/runs/r1"
     (wt / "deck.md").write_text(serialise(theirs(parse(BASE)[0])))
     sh("git", "add", "-A", cwd=wt); sh("git", "commit", "-qm", "run r1", "--allow-empty", cwd=wt)
     (path / "deck.md").write_text(serialise(ours(parse(BASE)[0])))
     sh(*G, "add", "deck.md", cwd=path); sh(*G, "commit", "-qm", "edit: person", "--allow-empty", cwd=path)
-    rpt = path / ".doclo/merge-report.json"
+    rpt = path / ".docla/merge-report.json"
     m = sh(*G, "merge", "--no-edit", "run/r1", cwd=path, check=False)
     text = (path / "deck.md").read_text()
     rep = json.loads(rpt.read_text()) if rpt.exists() else {}
@@ -110,10 +110,10 @@ def run(name, ours, theirs, expect, driver):
     # coexistence: the user's repository must not see or be changed by any of this
     us = sh("git", "status", "--porcelain", cwd=path).stdout.split("\n")
     co = dict(user_head_same=sh("git", "rev-parse", "HEAD", cwd=path).stdout.strip() == user_head,
-              user_sees_doclo=any(".doclo" in l for l in us),
+              user_sees_docla=any(".docla" in l for l in us),
               user_worktrees=len(sh("git", "worktree", "list", cwd=path).stdout.splitlines()),
               user_branches=sh("git", "branch", "--format=%(refname:short)", cwd=path).stdout.split(),
-              run_wt_resolves_to_doclo=sh("git", "rev-parse", "--git-common-dir", cwd=wt).stdout.strip().endswith(".doclo/git"))
+              run_wt_resolves_to_docla=sh("git", "rev-parse", "--git-common-dir", cwd=wt).stdout.strip().endswith(".docla/git"))
     return dict(ok=ok, rc=m.returncode, markers="<<<<<<<" in text, parse_errors=len([x for x in findings if x.severity == "error"]),
                 co=co, wt_time=wt_time, merged_text=text)
 
@@ -125,9 +125,9 @@ for name, o, t, e in S:
 print(f"\n{sum(1 for _, d, _ in results if d['ok'])}/{len(results)} scenarios pass with the driver")
 co = [d["co"] for _, d, _ in results]
 print("user's HEAD unchanged in every scenario:", all(c["user_head_same"] for c in co))
-print("user's git status ever shows .doclo/:", any(c["user_sees_doclo"] for c in co))
-print("user's repo ever lists a doclo worktree:", any(c["user_worktrees"] != 1 for c in co), "| user's branches:", sorted(set(b for c in co for b in c["user_branches"])))
-print("run worktree resolves to .doclo/git with plain git:", all(c["run_wt_resolves_to_doclo"] for c in co))
+print("user's git status ever shows .docla/:", any(c["user_sees_docla"] for c in co))
+print("user's repo ever lists a docla worktree:", any(c["user_worktrees"] != 1 for c in co), "| user's branches:", sorted(set(b for c in co for b in c["user_branches"])))
+print("run worktree resolves to .docla/git with plain git:", all(c["run_wt_resolves_to_docla"] for c in co))
 print(f"worktree creation: median {sorted(d['wt_time'] for _, d, _ in results)[len(results)//2]*1000:.0f} ms")
 
 print("\nplain text merges that exited 0: is the result what the policy wants?")

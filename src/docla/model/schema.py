@@ -4,7 +4,7 @@ from pathlib import Path
 
 from pydantic import BaseModel
 
-from doclo.model import Document, Finding, Patch, Rule
+from docla.model import Document, Finding, Patch, Rule
 
 SCHEMA_MODELS: list[type[BaseModel]] = [Document, Finding, Patch, Rule]
 
@@ -22,7 +22,7 @@ def export_schemas(directory: Path) -> list[Path]:
 
 def main(argv: list[str]) -> int:
     if len(argv) != 1:
-        print("usage: python -m doclo.model.schema <directory>", file=sys.stderr)
+        print("usage: python -m docla.model.schema <directory>", file=sys.stderr)
         return 2
     directory = Path(argv[0])
     directory.mkdir(parents=True, exist_ok=True)

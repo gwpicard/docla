@@ -1,0 +1,472 @@
+[
+  {
+    "id": "t00",
+    "kind": "title",
+    "start": 1,
+    "cleared": true,
+    "attempts": 1,
+    "rejected": 0,
+    "facts": 4,
+    "lost": [
+      "north sea"
+    ],
+    "cites_lost": 0,
+    "items": [
+      3,
+      3
+    ],
+    "usage": [
+      962,
+      221
+    ],
+    "history": [
+      "attempt 1: accepted, 0 findings left"
+    ],
+    "title": "Three compounding fleet and terminal risks"
+  },
+  {
+    "id": "t01",
+    "kind": "title",
+    "start": 1,
+    "cleared": true,
+    "attempts": 1,
+    "rejected": 0,
+    "facts": 4,
+    "lost": [
+      "14"
+    ],
+    "cites_lost": 0,
+    "items": [
+      3,
+      3
+    ],
+    "usage": [
+      965,
+      240
+    ],
+    "history": [
+      "attempt 1: accepted, 0 findings left"
+    ],
+    "title": "2019 inspection intervals no longer fit use"
+  },
+  {
+    "id": "t02",
+    "kind": "title",
+    "start": 1,
+    "cleared": true,
+    "attempts": 1,
+    "rejected": 0,
+    "facts": 6,
+    "lost": [],
+    "cites_lost": 0,
+    "items": [
+      3,
+      3
+    ],
+    "usage": [
+      971,
+      771
+    ],
+    "history": [
+      "attempt 1: accepted, 0 findings left"
+    ],
+    "title": "Nordic Star + Baltic Wind pilot: 2027 proof"
+  },
+  {
+    "id": "t03",
+    "kind": "title",
+    "start": 1,
+    "cleared": true,
+    "attempts": 1,
+    "rejected": 0,
+    "facts": 7,
+    "lost": [],
+    "cites_lost": 0,
+    "items": [
+      3,
+      3
+    ],
+    "usage": [
+      979,
+      1014
+    ],
+    "history": [
+      "attempt 1: accepted, 0 findings left"
+    ],
+    "title": "Shutdowns: EUR 1.1M in 2022, ~4.2M in 2025"
+  },
+  {
+    "id": "t04",
+    "kind": "title",
+    "start": 1,
+    "cleared": true,
+    "attempts": 1,
+    "rejected": 0,
+    "facts": 4,
+    "lost": [
+      "asset integrity"
+    ],
+    "cites_lost": 0,
+    "items": [
+      3,
+      3
+    ],
+    "usage": [
+      962,
+      343
+    ],
+    "history": [
+      "attempt 1: accepted, 0 findings left"
+    ],
+    "title": "Where the inspection register breaks down"
+  },
+  {
+    "id": "t05",
+    "kind": "title",
+    "start": 1,
+    "cleared": true,
+    "attempts": 1,
+    "rejected": 0,
+    "facts": 5,
+    "lost": [],
+    "cites_lost": 0,
+    "items": [
+      3,
+      3
+    ],
+    "usage": [
+      967,
+      752
+    ],
+    "history": [
+      "attempt 1: accepted, 0 findings left"
+    ],
+    "title": "1,240 open; 46 safety-critical need an owner"
+  },
+  {
+    "id": "t06",
+    "kind": "title",
+    "start": 1,
+    "cleared": true,
+    "attempts": 1,
+    "rejected": 0,
+    "facts": 3,
+    "lost": [],
+    "cites_lost": 0,
+    "items": [
+      3,
+      3
+    ],
+    "usage": [
+      974,
+      265
+    ],
+    "history": [
+      "attempt 1: accepted, 0 findings left"
+    ],
+    "title": "Aberdeen and Esbjerg telemetry gaps hide corrosion"
+  },
+  {
+    "id": "t07",
+    "kind": "title",
+    "start": 1,
+    "cleared": true,
+    "attempts": 1,
+    "rejected": 0,
+    "facts": 6,
+    "lost": [
+      "12 december"
+    ],
+    "cites_lost": 0,
+    "items": [
+      3,
+      3
+    ],
+    "usage": [
+      966,
+      257
+    ],
+    "history": [
+      "attempt 1: accepted, 0 findings left"
+    ],
+    "title": "Steering decision, 12 Dec 2026: scope & pilots"
+  },
+  {
+    "id": "b00",
+    "kind": "body",
+    "start": 1,
+    "cleared": true,
+    "attempts": 1,
+    "rejected": 0,
+    "facts": 15,
+    "lost": [],
+    "cites_lost": 0,
+    "items": [
+      5,
+      5
+    ],
+    "usage": [
+      1461,
+      1043
+    ],
+    "history": [
+      "attempt 1: accepted, 0 findings left"
+    ],
+    "title": "Three integrity concerns"
+  },
+  {
+    "id": "b01",
+    "kind": "body",
+    "start": 1,
+    "cleared": true,
+    "attempts": 1,
+    "rejected": 0,
+    "facts": 19,
+    "lost": [],
+    "cites_lost": 0,
+    "items": [
+      6,
+      6
+    ],
+    "usage": [
+      1587,
+      1825
+    ],
+    "history": [
+      "attempt 1: accepted, 0 findings left"
+    ],
+    "title": "Inspection intervals"
+  },
+  {
+    "id": "b02",
+    "kind": "body",
+    "start": 1,
+    "cleared": true,
+    "attempts": 1,
+    "rejected": 0,
+    "facts": 17,
+    "lost": [],
+    "cites_lost": 0,
+    "items": [
+      5,
+      5
+    ],
+    "usage": [
+      1451,
+      702
+    ],
+    "history": [
+      "attempt 1: accepted, 0 findings left"
+    ],
+    "title": "The pilot"
+  },
+  {
+    "id": "b03",
+    "kind": "body",
+    "start": 1,
+    "cleared": true,
+    "attempts": 1,
+    "rejected": 0,
+    "facts": 19,
+    "lost": [],
+    "cites_lost": 0,
+    "items": [
+      6,
+      6
+    ],
+    "usage": [
+      1587,
+      1534
+    ],
+    "history": [
+      "attempt 1: accepted, 0 findings left"
+    ],
+    "title": "Shutdown cost"
+  },
+  {
+    "id": "b04",
+    "kind": "body",
+    "start": 1,
+    "cleared": true,
+    "attempts": 1,
+    "rejected": 0,
+    "facts": 14,
+    "lost": [],
+    "cites_lost": 0,
+    "items": [
+      5,
+      5
+    ],
+    "usage": [
+      1458,
+      865
+    ],
+    "history": [
+      "attempt 1: accepted, 0 findings left"
+    ],
+    "title": "Register ownership"
+  },
+  {
+    "id": "b05",
+    "kind": "body",
+    "start": 1,
+    "cleared": true,
+    "attempts": 1,
+    "rejected": 0,
+    "facts": 19,
+    "lost": [],
+    "cites_lost": 0,
+    "items": [
+      6,
+      6
+    ],
+    "usage": [
+      1584,
+      1690
+    ],
+    "history": [
+      "attempt 1: accepted, 0 findings left"
+    ],
+    "title": "The backlog"
+  },
+  {
+    "id": "b06",
+    "kind": "body",
+    "start": 1,
+    "cleared": true,
+    "attempts": 1,
+    "rejected": 0,
+    "facts": 15,
+    "lost": [],
+    "cites_lost": 0,
+    "items": [
+      5,
+      5
+    ],
+    "usage": [
+      1461,
+      1013
+    ],
+    "history": [
+      "attempt 1: accepted, 0 findings left"
+    ],
+    "title": "Telemetry gaps"
+  },
+  {
+    "id": "b07",
+    "kind": "body",
+    "start": 1,
+    "cleared": true,
+    "attempts": 2,
+    "rejected": 0,
+    "facts": 19,
+    "lost": [],
+    "cites_lost": 0,
+    "items": [
+      6,
+      6
+    ],
+    "usage": [
+      3167,
+      2522
+    ],
+    "history": [
+      "attempt 1: accepted, 1 findings left",
+      "attempt 2: accepted, 0 findings left"
+    ],
+    "title": "Decision needed"
+  },
+  {
+    "id": "x00",
+    "kind": "both",
+    "start": 2,
+    "cleared": true,
+    "attempts": 1,
+    "rejected": 0,
+    "facts": 19,
+    "lost": [],
+    "cites_lost": 0,
+    "items": [
+      6,
+      6
+    ],
+    "usage": [
+      1675,
+      1842
+    ],
+    "history": [
+      "attempt 1: accepted, 0 findings left"
+    ],
+    "title": "From reactive repairs to planned inspection"
+  },
+  {
+    "id": "x01",
+    "kind": "both",
+    "start": 2,
+    "cleared": true,
+    "attempts": 2,
+    "rejected": 1,
+    "facts": 19,
+    "lost": [],
+    "cites_lost": 0,
+    "items": [
+      6,
+      6
+    ],
+    "usage": [
+      3366,
+      3523
+    ],
+    "history": [
+      "attempt 1: rejected by the fact guard, unsupported ['1', '6']",
+      "attempt 2: accepted, 0 findings left"
+    ],
+    "title": "Programme measures, before and after"
+  },
+  {
+    "id": "x02",
+    "kind": "both",
+    "start": 2,
+    "cleared": true,
+    "attempts": 1,
+    "rejected": 0,
+    "facts": 19,
+    "lost": [],
+    "cites_lost": 0,
+    "items": [
+      6,
+      6
+    ],
+    "usage": [
+      1674,
+      1953
+    ],
+    "history": [
+      "attempt 1: accepted, 0 findings left"
+    ],
+    "title": "Accept, transfer, or escalate to the board"
+  },
+  {
+    "id": "x03",
+    "kind": "both",
+    "start": 2,
+    "cleared": true,
+    "attempts": 1,
+    "rejected": 0,
+    "facts": 19,
+    "lost": [],
+    "cites_lost": 0,
+    "items": [
+      6,
+      6
+    ],
+    "usage": [
+      1672,
+      1429
+    ],
+    "history": [
+      "attempt 1: accepted, 0 findings left"
+    ],
+    "title": "Single register owner: 31 records conflict"
+  }
+]

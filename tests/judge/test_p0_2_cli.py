@@ -1,18 +1,18 @@
-# Intent: `doclo doctor` reports the Python and Typst versions found, and the CLI handles --version and unknown subcommands.
+# Intent: `docla doctor` reports the Python and Typst versions found, and the CLI handles --version and unknown subcommands.
 import os
 import subprocess
 import sys
 
 try:
-    from doclo import cli
+    from docla import cli
 except ImportError as error:
-    if error.name != "doclo" and not str(error.name).startswith("doclo."):
+    if error.name != "docla" and not str(error.name).startswith("docla."):
         raise
     cli = None
 
 
 def _require_main():
-    assert cli is not None and hasattr(cli, "main"), "doclo.cli.main must exist"
+    assert cli is not None and hasattr(cli, "main"), "docla.cli.main must exist"
 
 
 def _fake_typst(folder, first_line):
@@ -61,10 +61,10 @@ def test_D3_doctor_reports_typst_version(tmp_path, monkeypatch, capsys):
     assert code == 0
 
 
-def test_D4_installed_doclo_command_runs_doctor(tmp_path):
+def test_D4_installed_docla_command_runs_doctor(tmp_path):
     scripts = os.path.dirname(sys.executable)
-    command = os.path.join(scripts, "doclo")
-    assert os.path.exists(command), "the installed `doclo` command must exist (project.scripts)"
+    command = os.path.join(scripts, "docla")
+    assert os.path.exists(command), "the installed `docla` command must exist (project.scripts)"
     env = {**os.environ, "PATH": str(tmp_path)}
     result = subprocess.run([command, "doctor"], capture_output=True, text=True, env=env, timeout=60)
     v = sys.version_info
@@ -73,10 +73,10 @@ def test_D4_installed_doclo_command_runs_doctor(tmp_path):
     assert result.returncode == 0
 
 
-def test_D5_version_prints_doclo_0_0_1(capsys):
+def test_D5_version_prints_docla_0_0_1(capsys):
     _require_main()
     code, out, _ = _run(["--version"], capsys)
-    assert out.strip() == "doclo 0.0.1"
+    assert out.strip() == "docla 0.0.1"
     assert code == 0
 
 

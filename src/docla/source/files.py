@@ -3,11 +3,11 @@ import os
 import tempfile
 from pathlib import Path
 
-from doclo.model import Document, Patch
-from doclo.source.ids import IdStore, stamp
-from doclo.source.parser import parse
-from doclo.source.patches import FactGuard, PatchRejected, apply_patch
-from doclo.source.serialiser import serialise
+from docla.model import Document, Patch
+from docla.source.ids import IdStore, stamp
+from docla.source.parser import parse
+from docla.source.patches import FactGuard, PatchRejected, apply_patch
+from docla.source.serialiser import serialise
 
 UNPARSEABLE_RULES = ("source.parse-error", "source.appearance-in-source")
 

@@ -3,7 +3,7 @@ from typing import Any
 
 from pydantic import ValidationError
 
-from doclo.model import Document, Patch, PatchOp, Section
+from docla.model import Document, Patch, PatchOp, Section
 
 TEXT_FIELDS = ("title", "items", "paragraphs", "code", "note", "spoken", "source_line", "data")
 IDENTITY_FIELDS = ("id", "intent", "section")

@@ -13,7 +13,7 @@ def compile_pdf(typ, pdf):
 
 def read_marks(typ):
     t = time.perf_counter()
-    r = subprocess.run(["typst", "eval", "query(<doclo-mark>).map(it => it.value)", "--in", str(typ),
+    r = subprocess.run(["typst", "eval", "query(<docla-mark>).map(it => it.value)", "--in", str(typ),
                         "--root", str(HERE), "--ignore-system-fonts"], capture_output=True, text=True, env=ENV, cwd=HERE)
     assert r.returncode == 0, r.stderr
     return json.loads(r.stdout), time.perf_counter() - t
