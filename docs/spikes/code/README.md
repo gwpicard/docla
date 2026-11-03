@@ -18,3 +18,14 @@ uv run python docs/spikes/code/s7/s7.py     # S7: separate git dir, worktree run
 ```
 
 It builds its test projects in a temporary folder.
+
+S4 calls Claude. Its responses are recorded in `s4/cassettes/`, so a replay is free and needs no key:
+
+```
+uv run --with anthropic python docs/spikes/code/s4/s4.py            # arm A, replayed
+uv run --with anthropic python docs/spikes/code/s4/s4.py --arm-b    # arm B, replayed
+uv run --with anthropic python docs/spikes/code/s4/s4.py --mock     # plumbing check, no Claude
+```
+
+To record again (this spends money), set `DOCLO_RECORD=1` and provide a key in `ANTHROPIC_API_KEY` or in the macOS Keychain entry
+`doclo-anthropic-api-key`.
