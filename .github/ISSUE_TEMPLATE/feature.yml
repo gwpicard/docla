@@ -1,0 +1,17 @@
+name: Feature request
+description: Propose a new capability or improvement
+body:
+  - type: textarea
+    id: what
+    attributes:
+      label: What
+      description: Describe the capability you want.
+    validations:
+      required: true
+  - type: textarea
+    id: why
+    attributes:
+      label: Why
+      description: Explain the problem it solves or the value it adds.
+    validations:
+      required: true

@@ -1,0 +1,19 @@
+[
+  {"name": "area:model", "color": "1d76db", "description": "Document model and schema"},
+  {"name": "area:source", "color": "1d76db", "description": "Source content and inputs"},
+  {"name": "area:theme", "color": "1d76db", "description": "Brand themes and styling"},
+  {"name": "area:render", "color": "1d76db", "description": "Rendering to slides and PDF"},
+  {"name": "area:facts", "color": "1d76db", "description": "Fact extraction and sourcing"},
+  {"name": "area:checks", "color": "1d76db", "description": "Quality checks on output"},
+  {"name": "area:loop", "color": "1d76db", "description": "Build and review loop"},
+  {"name": "area:learn", "color": "1d76db", "description": "Self-healing rulebook and learning"},
+  {"name": "area:ingest", "color": "1d76db", "description": "Ingesting files and documents"},
+  {"name": "area:agents", "color": "1d76db", "description": "Claude agents and prompts"},
+  {"name": "area:server", "color": "1d76db", "description": "Server and API"},
+  {"name": "area:web", "color": "1d76db", "description": "Web interface"},
+  {"name": "area:ci", "color": "1d76db", "description": "Continuous integration and tooling"},
+  {"name": "area:docs", "color": "1d76db", "description": "Documentation"},
+  {"name": "severity:blocker", "color": "b60205", "description": "Stops work or breaks the main flow; fix first"},
+  {"name": "severity:major", "color": "d93f0b", "description": "Serious defect with no easy workaround"},
+  {"name": "severity:minor", "color": "fbca04", "description": "Small defect or workaround available"}
+]
