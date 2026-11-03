@@ -1,0 +1,39 @@
+Fonts of the neutral theme. Every file here is licensed under the SIL Open Font License, Version 1.1.
+The licence texts are OFL-SourceSerif4.md and OFL-Inter.txt in this folder. The files are unmodified.
+Recorded 2026-11-04.
+
+file: SourceSerif4-Regular.ttf
+family: Source Serif 4
+version: 4.005
+licence: OFL-1.1 (OFL-SourceSerif4.md)
+source: https://github.com/adobe-fonts/source-serif/releases/download/4.005R/source-serif-4.005_Desktop.zip
+archive_sha256: 549fdb8f9a682bd06944298621404969f6de77c2e422ff3b8244a1dcd6a0c425
+path_in_archive: source-serif-4.005_Desktop/TTF/SourceSerif4-Regular.ttf
+sha256: e5a4ee6a3d87bb9024796be390c6771e2a0eb1883dae25effaf57ca01668e24b
+
+file: SourceSerif4-Semibold.ttf
+family: Source Serif 4
+version: 4.005
+licence: OFL-1.1 (OFL-SourceSerif4.md)
+source: https://github.com/adobe-fonts/source-serif/releases/download/4.005R/source-serif-4.005_Desktop.zip
+archive_sha256: 549fdb8f9a682bd06944298621404969f6de77c2e422ff3b8244a1dcd6a0c425
+path_in_archive: source-serif-4.005_Desktop/TTF/SourceSerif4-Semibold.ttf
+sha256: 36db62940cb5728b12b1802476dc7fcf4c6c519a7bdd476ba23a4e555fc4655f
+
+file: Inter-Regular.ttf
+family: Inter
+version: 4.1
+licence: OFL-1.1 (OFL-Inter.txt)
+source: https://github.com/rsms/inter/releases/download/v4.1/Inter-4.1.zip
+archive_sha256: 9883fdd4a49d4fb66bd8177ba6625ef9a64aa45899767dde3d36aa425756b11e
+path_in_archive: extras/ttf/Inter-Regular.ttf
+sha256: 40d692fce188e4471e2b3cba937be967878f631ad3ebbbdcd587687c7ebe0c82
+
+file: Inter-SemiBold.ttf
+family: Inter
+version: 4.1
+licence: OFL-1.1 (OFL-Inter.txt)
+source: https://github.com/rsms/inter/releases/download/v4.1/Inter-4.1.zip
+archive_sha256: 9883fdd4a49d4fb66bd8177ba6625ef9a64aa45899767dde3d36aa425756b11e
+path_in_archive: extras/ttf/Inter-SemiBold.ttf
+sha256: 78a843fade9d4612a5567302fb595b56976eb5fcebf4fea5a5912d638bafcde3
