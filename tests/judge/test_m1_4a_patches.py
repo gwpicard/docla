@@ -63,6 +63,7 @@ def _rejected(doc, patch, code, **kwargs):
         apply_patch(doc, patch, **kwargs)
     assert info.value.code == code
     assert doc.model_dump() == before
+    return True
 
 
 # D1
@@ -70,7 +71,7 @@ def _rejected(doc, patch, code, **kwargs):
 
 def test_D1_stale_base_rev_rejected():
     doc = _doc()
-    _rejected(doc, _patch(_op("set_fields", A, fields={"title": "New"}), base_rev=2), "stale-base-rev")
+    assert _rejected(doc, _patch(_op("set_fields", A, fields={"title": "New"}), base_rev=2), "stale-base-rev")
 
 
 def test_D1_valid_patch_bumps_rev_and_leaves_input():
@@ -99,12 +100,12 @@ def test_D2_set_fields_changes_title_and_items():
 
 def test_D2_human_owned_section_rejects_text_change():
     doc = _doc(**{A: {"owner": "human"}})
-    _rejected(doc, _patch(_op("set_fields", A, fields={"title": "New"})), "owner-locked")
+    assert _rejected(doc, _patch(_op("set_fields", A, fields={"title": "New"})), "owner-locked")
 
 
 def test_D2_text_lock_rejects_text_change():
     doc = _doc(**{A: {"lock": "text"}})
-    _rejected(doc, _patch(_op("set_fields", A, fields={"items": [{"body": "x"}]})), "owner-locked")
+    assert _rejected(doc, _patch(_op("set_fields", A, fields={"items": [{"body": "x"}]})), "owner-locked")
 
 
 def test_D2_human_owned_section_accepts_span():
@@ -132,7 +133,7 @@ def test_D2_human_owned_section_accepts_span():
 def test_D3_lock_all_rejects(make_op):
     _need()
     doc = _doc(**{A: {"lock": "all"}})
-    _rejected(doc, _patch(make_op()), "lock-all")
+    assert _rejected(doc, _patch(make_op()), "lock-all")
 
 
 # D4
@@ -165,29 +166,29 @@ def test_D4_replace_section_with_same_identity_accepted():
 
 @pytest.mark.parametrize("name", ["color", "font", "size", "x", "y"])
 def test_D5_appearance_forbidden_set_attr(name):
-    _rejected(_doc(), _patch(_op("set_attr", A, fields={"name": name, "value": "1"})), "appearance-forbidden")
+    assert _rejected(_doc(), _patch(_op("set_attr", A, fields={"name": name, "value": "1"})), "appearance-forbidden")
 
 
 @pytest.mark.parametrize("name", ["color", "font", "size", "x", "y"])
 def test_D5_appearance_forbidden_set_fields(name):
-    _rejected(_doc(), _patch(_op("set_fields", A, fields={name: "1"})), "appearance-forbidden")
+    assert _rejected(_doc(), _patch(_op("set_fields", A, fields={name: "1"})), "appearance-forbidden")
 
 
 def test_D5_fact_guard_false_rejects_true_accepts():
     apply_patch = _need()
     doc = _doc()
     patch = _patch(_op("set_fields", A, fields={"title": "New"}))
-    _rejected(doc, patch, "fact-unsupported", fact_guard=lambda d, s: False)
+    assert _rejected(doc, patch, "fact-unsupported", fact_guard=lambda d, s: False)
     out = apply_patch(doc, patch, fact_guard=lambda d, s: True)
     assert out.sections[0].title == "New"
 
 
 def test_D5_invalid_resulting_section_rejected():
-    _rejected(_doc(), _patch(_op("set_fields", A, fields={"span": "bogus"})), "invalid-section")
+    assert _rejected(_doc(), _patch(_op("set_fields", A, fields={"span": "bogus"})), "invalid-section")
 
 
 def test_D5_component_needs_because():
-    _rejected(
+    assert _rejected(
         _doc(),
         _patch(_op("set_attr", A, fields={"name": "component", "value": "key-figures"})),
         "invalid-section",
@@ -220,7 +221,7 @@ def test_D6_insert_after_places_section():
 def test_D6_insert_existing_id_rejected():
     _need()
     dup = model.Section(id=B, intent="new-intent")
-    _rejected(_doc(), _patch(_op("insert_after", A, value=dup, after_id=A)), "identity-changed")
+    assert _rejected(_doc(), _patch(_op("insert_after", A, value=dup, after_id=A)), "identity-changed")
 
 
 def test_D6_delete_removes_section():
@@ -238,8 +239,8 @@ def test_D6_move_section_moves_after_target():
 
 
 def test_D6_unknown_section_rejected():
-    _rejected(_doc(), _patch(_op("delete_section", "nope0")), "unknown-section")
-    _rejected(_doc(), _patch(_op("set_fields", "nope0", fields={"title": "x"})), "unknown-section")
+    assert _rejected(_doc(), _patch(_op("delete_section", "nope0")), "unknown-section")
+    assert _rejected(_doc(), _patch(_op("set_fields", "nope0", fields={"title": "x"})), "unknown-section")
 
 
 def test_D6_failing_second_op_leaves_document_unchanged():
@@ -248,6 +249,6 @@ def test_D6_failing_second_op_leaves_document_unchanged():
         _op("set_fields", A, fields={"title": "New"}),
         _op("delete_section", "nope0"),
     )
-    _rejected(doc, patch, "unknown-section")
+    assert _rejected(doc, patch, "unknown-section")
     assert doc.sections[0].title == "Alpha"
     assert doc.rev == 3
