@@ -1,9 +1,20 @@
 import argparse
 import shutil
 import sys
+from pathlib import Path
+from typing import Any, NamedTuple
+
+from pydantic import TypeAdapter
 
 from docla import __version__
-from docla.render.typst import INSTALL_COMMAND, TYPST_VERSION, typst_version
+from docla.checks.catalogue import m1_rules
+from docla.checks.engine import CheckContext, run_checks
+from docla.facts.layout import layout_facts
+from docla.model import Document, Finding
+from docla.render.compose import ComposeError, assemble, compose
+from docla.render.kit import read_tokens
+from docla.render.typst import INSTALL_COMMAND, TYPST_VERSION, TypstError, compile_pdf, typst_version
+from docla.source.parser import parse
 
 MIN_PYTHON = (3, 12)
 
@@ -34,18 +45,103 @@ def _doctor() -> int:
     return 0 if python_ok else 1
 
 
+class _Built(NamedTuple):
+    doc: Document
+    findings: list[Finding]
+    render: Path
+    main: Path
+    pdf: Path
+
+
+class _BuildFailed(Exception):
+    pass
+
+
+def _out_dir(file: Path, out: Path | None) -> Path:
+    return out if out is not None else file.parent / "build"
+
+
+def _parse(file: Path) -> tuple[Document, list[Finding]]:
+    doc, findings = parse(file.read_text())
+    errors = [f for f in findings if f.severity == "error"]
+    if errors:
+        raise _BuildFailed("\n".join(_line(f) for f in errors))
+    return doc, findings
+
+
+def _render(file: Path, out: Path) -> _Built:
+    doc, findings = _parse(file)
+    render = out / "render"
+    if render.exists():
+        shutil.rmtree(render)
+    try:
+        main = assemble(compose(doc), render)
+        pdf = out / f"{file.stem}.pdf"
+        compile_pdf(main, render, pdf)
+    except (ComposeError, TypstError) as error:
+        raise _BuildFailed(str(error)) from error
+    return _Built(doc, findings, render, main, pdf)
+
+
+def _line(finding: Finding) -> str:
+    return f"{finding.severity} {finding.rule_id} {finding.section_id or '-'} {finding.message}"
+
+
+def _build(file: Path, out: Path) -> int:
+    built = _render(file, out)
+    print(built.pdf)
+    return 0
+
+
+def _check(file: Path, out: Path) -> int:
+    built = _render(file, out)
+    facts = layout_facts(built.pdf, built.main, built.render)
+    ctx = CheckContext(built.doc, facts, read_tokens(built.render))
+    findings = built.findings + run_checks(m1_rules(), ctx)
+    report = TypeAdapter(list[Finding]).dump_json(findings, indent=2)
+    (out / f"{file.stem}.findings.json").write_bytes(report)
+    for finding in findings:
+        print(_line(finding))
+    if not findings:
+        print("no findings")
+    return 1 if any(f.severity == "error" for f in findings) else 0
+
+
+def _add_file_command(subparsers: Any, name: str, help: str) -> None:
+    command = subparsers.add_parser(name, help=help)
+    command.add_argument("file", type=Path, help="the working file")
+    command.add_argument("--out", type=Path, default=None, help="output folder (default: build beside the file)")
+
+
 def _build_parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(prog="docla")
     parser.add_argument("--version", action="version", version=f"docla {__version__}")
     subparsers = parser.add_subparsers(dest="command", required=True)
     subparsers.add_parser("doctor", help="report what is installed and what is missing")
+    _add_file_command(subparsers, "build", "render a working file to PDF")
+    _add_file_command(subparsers, "check", "render a working file and report what the M1 rules find")
     return parser
+
+
+FILE_COMMANDS = {"build": _build, "check": _check}
+
+
+def _run_file_command(args: argparse.Namespace) -> int:
+    out = _out_dir(args.file, args.out)
+    out.mkdir(parents=True, exist_ok=True)
+    try:
+        return FILE_COMMANDS[args.command](args.file, out)
+    except _BuildFailed as error:
+        print(error, file=sys.stderr)
+        return 2
 
 
 def main(argv: list[str] | None = None) -> int:
     args = _build_parser().parse_args(argv)
     if args.command == "doctor":
         return _doctor()
+    if args.command in FILE_COMMANDS:
+        return _run_file_command(args)
     return 1
 
 
