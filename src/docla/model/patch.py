@@ -2,7 +2,7 @@ from typing import Any, Literal
 
 from pydantic import BaseModel, Field
 
-from doclo.model.source import Section
+from docla.model.source import Section
 
 
 class PatchOp(BaseModel):

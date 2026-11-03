@@ -3,7 +3,7 @@ import shutil
 import subprocess
 import sys
 
-from doclo import __version__
+from docla import __version__
 
 MIN_PYTHON = (3, 12)
 
@@ -38,8 +38,8 @@ def _doctor() -> int:
 
 
 def _build_parser() -> argparse.ArgumentParser:
-    parser = argparse.ArgumentParser(prog="doclo")
-    parser.add_argument("--version", action="version", version=f"doclo {__version__}")
+    parser = argparse.ArgumentParser(prog="docla")
+    parser.add_argument("--version", action="version", version=f"docla {__version__}")
     subparsers = parser.add_subparsers(dest="command", required=True)
     subparsers.add_parser("doctor", help="report what is installed and what is missing")
     return parser

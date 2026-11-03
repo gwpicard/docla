@@ -1,15 +1,15 @@
 # Intent: apply_patch changes a Document only through a checked, all-or-nothing patch that enforces the guards.
 try:
-    from doclo.source import patches
+    from docla.source import patches
 except ImportError as error:
-    if error.name not in ("doclo.source", "doclo.source.patches"):
+    if error.name not in ("docla.source", "docla.source.patches"):
         raise
     patches = None
 
 try:
-    import doclo.model as model
+    import docla.model as model
 except ImportError as error:
-    if error.name != "doclo.model" and not str(error.name).startswith("doclo.model."):
+    if error.name != "docla.model" and not str(error.name).startswith("docla.model."):
         raise
     model = None
 
@@ -19,9 +19,9 @@ A, B, C = "a0001", "b0002", "c0003"
 
 
 def _need():
-    assert patches is not None and hasattr(patches, "apply_patch"), "doclo.source.patches.apply_patch must exist"
-    assert hasattr(patches, "PatchRejected"), "doclo.source.patches.PatchRejected must exist"
-    assert model is not None, "doclo.model must exist"
+    assert patches is not None and hasattr(patches, "apply_patch"), "docla.source.patches.apply_patch must exist"
+    assert hasattr(patches, "PatchRejected"), "docla.source.patches.PatchRejected must exist"
+    assert model is not None, "docla.model must exist"
     return patches.apply_patch
 
 

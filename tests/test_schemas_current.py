@@ -1,6 +1,6 @@
 from pathlib import Path
 
-from doclo.model.schema import export_schemas
+from docla.model.schema import export_schemas
 
 COMMITTED = Path(__file__).resolve().parents[1] / "docs" / "schemas"
 

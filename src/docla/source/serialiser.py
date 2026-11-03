@@ -2,7 +2,7 @@ from typing import Any
 
 import yaml  # type: ignore[import-untyped]
 
-from doclo.model import Document, Item, Section
+from docla.model import Document, Item, Section
 
 FRONT_FIRST = ["doctype", "format", "title", "audience", "purpose", "theme", "locale"]
 ATTR_ORDER = [

@@ -1,4 +1,4 @@
-# doclo
+# docla
 
 Claude-generated branded slides and documents (PDF) with a self-healing rulebook. Early development.
 
@@ -6,7 +6,7 @@ Claude-generated branded slides and documents (PDF) with a self-healing rulebook
 Read `CONTEXT.md` for the vocabulary, and `docs/DESIGN.md` and `docs/BUILD-PLAN.md` for the design and the order of work.
 
 Layout:
-- `src/doclo/`: the package
+- `src/docla/`: the package
 - `tests/`: the tests
 - `tests/judge/`: frozen judges, never edit
 - `tests/fixtures/`: test fixtures
@@ -19,7 +19,7 @@ Commands:
 - `uv run ruff check .`: lint
 - `uv run ruff format --check .`: check formatting
 - `uv run mypy`: type-check
-- `uv run doclo doctor`: check the local setup
+- `uv run docla doctor`: check the local setup
 
 ## Working rules
 - Every rule ships with a seeded defect: a fixture that fails it and one that passes it.

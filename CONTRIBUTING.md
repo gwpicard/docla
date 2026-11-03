@@ -1,6 +1,6 @@
 # Contributing
 
-doclo uses the Developer Certificate of Origin (DCO) instead of a contributor license agreement. By signing off a pull request, you certify that you wrote the change or have the right to submit it under the project's license. The full text is at <https://developercertificate.org>.
+docla uses the Developer Certificate of Origin (DCO) instead of a contributor license agreement. By signing off a pull request, you certify that you wrote the change or have the right to submit it under the project's license. The full text is at <https://developercertificate.org>.
 
 ## Pull requests
 

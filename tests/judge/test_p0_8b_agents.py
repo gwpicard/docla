@@ -61,7 +61,7 @@ def test_D1_loop_section_unchanged():
 
 def test_D1_title_lines_kept():
     text = _text()
-    assert text.startswith("# doclo\n\nClaude-generated branded slides and documents (PDF) with a self-healing rulebook. Early development.\n")
+    assert text.startswith("# docla\n\nClaude-generated branded slides and documents (PDF) with a self-healing rulebook. Early development.\n")
 
 
 def test_D2_repository_section_names_docs_and_commands():
@@ -78,7 +78,7 @@ def test_D2_repository_section_names_docs_and_commands():
             "uv run ruff check .",
             "uv run ruff format --check .",
             "uv run mypy",
-            "uv run doclo doctor",
+            "uv run docla doctor",
         ],
     )
     assert missing == []
@@ -89,7 +89,7 @@ def test_D2_repository_section_lists_layout():
     assert section is not None, "AGENTS.md must have a '## Repository' section"
     missing = _has_all(
         section,
-        ["src/doclo/", "tests/", "tests/judge/", "tests/fixtures/", "scripts/", "docs/"],
+        ["src/docla/", "tests/", "tests/judge/", "tests/fixtures/", "scripts/", "docs/"],
     )
     assert missing == []
 

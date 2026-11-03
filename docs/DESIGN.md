@@ -1,6 +1,6 @@
-# Doclo: design document
+# Docla: design document
 
-*Name: doclo (chosen 2026-11-03; check PyPI, GitHub and trademark clashes before first release). The CLI is `doclo`, the package is `doclo`.*
+*Name: docla (renamed from doclo on 2026-11-03; check PyPI, GitHub and trademark clashes before first release). The CLI is `docla`, the package is `docla`.*
 
 A local application in which Claude generates branded slides and documents (output: PDF), a deterministic
 rulebook plus a screenshot loop forces Claude to fix its own violations while it generates, and a person's
@@ -47,7 +47,7 @@ Nothing in this document assumes access to any prior codebase.
 
 ### 0.1 What it is
 
-`doclo serve ./my-project` starts a local web app. A person drops source material into the project folder
+`docla serve ./my-project` starts a local web app. A person drops source material into the project folder
 and brand material into a theme folder. Claude proposes an outline, the person agrees it, Claude drafts
 each section, the engine renders, a deterministic checker and a vision critic read the result, and Claude
 repairs what they find. The person then looks at the rendered pages in the browser, clicks any element,
@@ -183,7 +183,7 @@ Two loops are the heart of the product:
 Process boundaries at runtime:
 
 ```
-browser (React)  ⇄  doclo server (FastAPI, one process, single writer)
+browser (React)  ⇄  docla server (FastAPI, one process, single writer)
                          ├─ engine (parse, assemble, validate, render, look)   in-process
                          ├─ typst CLI (subprocess, sandboxed)
                          ├─ job runner (async tasks, SSE progress)
@@ -198,12 +198,12 @@ project folder on disk  ⇄  server (file watcher; external edits are picked up)
 ### 4.1 Layout
 
 ```
-doclo/
-  pyproject.toml            # uv-managed; package `doclo`
+docla/
+  pyproject.toml            # uv-managed; package `docla`
   LICENSE                   # Apache-2.0 recommended (see 17.5)
   .gitattributes            # * text=auto eol=lf
-  src/doclo/
-    cli.py                  # `doclo serve|init|ingest|build|check|theme ...`
+  src/docla/
+    cli.py                  # `docla serve|init|ingest|build|check|theme ...`
     model/                  # pydantic models: Document, Section, Finding, Rule, Learning, Feedback, Patch
     source/                 # working-file parser/serialiser, ids, citations, patches
     theme/                  # theme loader, token resolver, rule registry, brief-card compiler
@@ -227,7 +227,7 @@ doclo/
   docs/                     # this document, split into pages
 ```
 
-Do not create two modules with the same name in different directories. Make `doclo` a real package from day one
+Do not create two modules with the same name in different directories. Make `docla` a real package from day one
 and use absolute imports; no `sys.path` edits, no load-by-file-path tricks.
 
 ### 4.2 Stack
@@ -253,7 +253,7 @@ and use absolute imports; no `sys.path` edits, no load-by-file-path tricks.
 
 ### 4.3 External requirements at install
 
-* `typst` CLI (pinned; `doclo doctor` verifies the version and prints the install line).
+* `typst` CLI (pinned; `docla doctor` verifies the version and prints the install line).
 * An Anthropic credential: `ANTHROPIC_API_KEY`, or whatever the SDK resolves from the environment.
 * Fonts: the neutral theme ships an OFL font. A custom theme's fonts live inside the theme pack and are passed to Typst with `--font-path`; the system fonts are ignored with `--ignore-system-fonts` for determinism.
 
@@ -333,7 +333,7 @@ manifest. Text on a locked section changes only when the person explicitly asks 
 ### 5.4 Models (Pydantic)
 
 ```python
-# doclo/model/source.py
+# docla/model/source.py
 from __future__ import annotations
 from typing import Literal, Any
 from pydantic import BaseModel, Field
@@ -388,7 +388,7 @@ class Document(BaseModel):
 * `parse(text) -> (Document, list[Finding])` never raises; a malformed file produces findings (`parse-error`, `missing-id`, `unknown-intent`...).
 * `serialise(doc) -> str` is canonical: attribute order fixed, one blank line between sections, trailing newline. Property: `parse(serialise(d)) == d` (hypothesis test).
 * Parsing uses `markdown-it-py` with the `front_matter` and `container` plugins; only section boundaries and the `> key:` convention are custom.
-* Id stamping is the only write the engine makes to the file apart from applying patches and rewriting deprecated spellings. Ids are never reused after deletion (keep a tombstone list in `.doclo/ids.json`) so old review comments and versions cannot attach to a new section.
+* Id stamping is the only write the engine makes to the file apart from applying patches and rewriting deprecated spellings. Ids are never reused after deletion (keep a tombstone list in `.docla/ids.json`) so old review comments and versions cannot attach to a new section.
 * **Deprecated spellings.** The day you rename an attribute or intent, add an alias table and keep reading the old spelling forever (reporting `old-spelling` once and rewriting on next build). Sent documents come back months later.
 
 ### 5.6 Patches: the only way the AI edits
@@ -396,7 +396,7 @@ class Document(BaseModel):
 The AI never returns a file. It returns a patch against a specific `rev`.
 
 ```python
-# doclo/model/patch.py
+# docla/model/patch.py
 class PatchOp(BaseModel):
     op: Literal["replace_section", "set_fields", "insert_after", "delete_section",
                 "set_attr", "move_section"]
@@ -424,7 +424,7 @@ The applier (`source/patches.py`) enforces, in order, and rejects the patch with
 5. Appearance guard: no forbidden attributes.
 6. Schema validity of the resulting section.
 
-On success: `rev += 1`, the op is appended to `.doclo/oplog.jsonl`, and the file is re-serialised.
+On success: `rev += 1`, the op is appended to `.docla/oplog.jsonl`, and the file is re-serialised.
 
 ---
 
@@ -586,8 +586,8 @@ overrides the stronger rule, which writes an `override` entry with a reason.
 
 * `theme.yaml` has a semantic version. Learnings bump the patch version; new components or tokens bump minor; renamed roles bump major.
 * Every document records the theme version it was built with in its manifest. Rebuilding with a newer theme shows a diff of findings.
-* `doclo theme test` runs the theme's own test suite (16.5): specimen renders, gold corpus (must be clean), anti corpus (must be flagged), every learning's fixtures.
-* `doclo theme health` prints: number of rules by tier and origin, fire rate and false-positive rate per rule over the last N builds, rules on probation, rules never fired.
+* `docla theme test` runs the theme's own test suite (16.5): specimen renders, gold corpus (must be clean), anti corpus (must be flagged), every learning's fixtures.
+* `docla theme health` prints: number of rules by tier and origin, fire rate and false-positive rate per rule over the last N builds, rules on probation, rules never fired.
 
 ---
 
@@ -622,7 +622,7 @@ says why. Section 7.8 specifies the Office pipeline.
 
 ### 7.2 Intake
 
-`doclo ingest ./brand-materials --theme themes/acme` (or drag-and-drop in the UI).
+`docla ingest ./brand-materials --theme themes/acme` (or drag-and-drop in the UI).
 
 1. Copy files to `themes/acme/ingest/source/` (git-ignored if confidential; the manifest is committed).
 2. Compute SHA-256, detect type, record size, page count, embedded fonts (PDF), image DPI.
@@ -728,7 +728,7 @@ theme's health baseline; it detects regressions when the theme or prompts change
 
 ### 7.5 Re-ingestion and drift
 
-Brand books change. `doclo ingest --update` re-runs S1 to S4 on changed files, diffs claims against the existing
+Brand books change. `docla ingest --update` re-runs S1 to S4 on changed files, diffs claims against the existing
 rules by `source` and `statement`, and presents *changes* (added, removed, changed value) rather than a new pack.
 Learned rules whose rationale cites a changed claim are flagged for review.
 
@@ -748,7 +748,7 @@ Office files **twice**: structurally from the XML (authoritative for numbers) an
 
 #### 7.8.1 Input matrix
 
-**LibreOffice policy (decision 11).** It is not an install requirement. When an upload needs it (any Office or legacy format), the UI stops that file with an install prompt and the one-line command; PDF, image and text uploads proceed meanwhile. `doclo doctor` reports whether it is present. Without it the structural read still works for `.pptx`, `.docx`, `.idml` and `.xlsx`, but there is no visual read and no calibration against rendered pages, which the UI states.
+**LibreOffice policy (decision 11).** It is not an install requirement. When an upload needs it (any Office or legacy format), the UI stops that file with an install prompt and the one-line command; PDF, image and text uploads proceed meanwhile. `docla doctor` reports whether it is present. Without it the structural read still works for `.pptx`, `.docx`, `.idml` and `.xlsx`, but there is no visual read and no calibration against rendered pages, which the UI states.
 
 | Input | Structural read (authoritative) | Visual read | Notes |
 |---|---|---|---|
@@ -766,7 +766,7 @@ Office files **twice**: structurally from the XML (authoritative for numbers) an
 
 Converting needs **LibreOffice** (`soffice --headless --convert-to pdf`). It is an *optional* system dependency: without it,
 Office files are still read structurally, but no page images exist, so the pipeline asks the user for PDF exports of the
-same files and says exactly which files lack images. `doclo doctor` reports it.
+same files and says exactly which files lack images. `docla doctor` reports it.
 
 **Fidelity warning.** LibreOffice's rendering differs from the native application, and substitutes fonts that are not
 installed. Therefore: geometry, sizes, colours and roles come from the XML; rendered images are used only for vision
@@ -872,7 +872,7 @@ Office files are untrusted input.
 #### 7.8.8 Snippets
 
 ```python
-# doclo/ingest/office/pptx_theme.py
+# docla/ingest/office/pptx_theme.py
 import zipfile
 from lxml import etree
 
@@ -894,7 +894,7 @@ def pptx_theme(path):
     }
     return colours, fonts
 
-# doclo/ingest/office/pptx_layouts.py
+# docla/ingest/office/pptx_layouts.py
 from pptx import Presentation
 EMU_PER_PT = 12700
 
@@ -911,7 +911,7 @@ def pptx_layouts(path):
             out.append({"name": layout.name, "placeholders": phs})
     return page, out
 
-# doclo/ingest/office/docx_styles.py
+# docla/ingest/office/docx_styles.py
 from docx import Document
 from docx.enum.style import WD_STYLE_TYPE
 
@@ -928,7 +928,7 @@ def docx_page_and_styles(path):
                            "bold": st.font.bold, "colour": str(st.font.color.rgb) if st.font.color and st.font.color.rgb else None})
     return page, styles                              # explicit values only: resolve basedOn separately
 
-# doclo/ingest/office/convert.py
+# docla/ingest/office/convert.py
 import subprocess, shutil
 def to_pdf(src, outdir):
     soffice = shutil.which("soffice") or shutil.which("libreoffice")
@@ -1168,16 +1168,16 @@ Layout facts join two sources by bounding-box overlap and page number:
 
 // Wrap a whole section. Start and end markers give the section's extent in flow.
 #let section(id, body) = {
-  context [#metadata((kind: "section", id: id, edge: "start", .._pos())) <doclo-mark>]
+  context [#metadata((kind: "section", id: id, edge: "start", .._pos())) <docla-mark>]
   body
-  context [#metadata((kind: "section", id: id, edge: "end", .._pos())) <doclo-mark>]
+  context [#metadata((kind: "section", id: id, edge: "end", .._pos())) <docla-mark>]
 }
 
 // Wrap an atomic element with a role. Size comes from measure at the container width.
 #let el(role, sec-id, body) = context {
   let m = measure(body, width: auto)
   [#metadata((kind: "element", role: role, id: sec-id,
-              w: m.width / 1pt, h: m.height / 1pt, .._pos())) <doclo-mark>]
+              w: m.width / 1pt, h: m.height / 1pt, .._pos())) <docla-mark>]
   body
 }
 
@@ -1185,7 +1185,7 @@ Layout facts join two sources by bounding-box overlap and page number:
 #let fit-box(role, sec-id, w, h, body) = context {
   let m = measure(body, width: w)
   [#metadata((kind: "fit", role: role, id: sec-id, need: m.height / 1pt,
-              have: h / 1pt, ok: m.height <= h)) <doclo-fit>]
+              have: h / 1pt, ok: m.height <= h)) <docla-fit>]
   block(width: w, height: h, clip: false, body)
 }
 ```
@@ -1195,7 +1195,7 @@ Query (Python):
 ```python
 def read_marks(typ_main: Path, root: Path) -> list[dict]:
     out = subprocess.run(
-        ["typst", "eval", "query(<doclo-mark>).map(it => it.value)", "--in", str(typ_main),
+        ["typst", "eval", "query(<docla-mark>).map(it => it.value)", "--in", str(typ_main),
          "--root", str(root), "--ignore-system-fonts"],
         capture_output=True, text=True, check=True, timeout=60).stdout
     return json.loads(out)
@@ -1231,7 +1231,7 @@ class ImageRef(BaseModel):
 class SectionRegion(BaseModel):
     section_id: str
     boxes: list[Box]                  # one per page (or column) the section touches
-    fits: list[FitReport]             # from <doclo-fit> marks
+    fits: list[FitReport]             # from <docla-fit> marks
 
 class LayoutFacts(BaseModel):
     pdf_sha256: str
@@ -1370,7 +1370,7 @@ select: {kind: text, role: [body, bullet], section_intent: any, component: any}
 | `ratio` | `a`, `b`, `min`, `max` | width/height/area ratio (logo vs page, image coverage) |
 | `align` | `selector`, `to` (`grid`, `left-margin`, `each-other`), `tolerance_pt` | edges snap |
 | `text-pattern` | `regex`, `must_match` or `must_not_match`, `field` | text rule (banned phrase, title is not a question) |
-| `fits` | none | every `<doclo-fit>` mark has `ok: true` |
+| `fits` | none | every `<docla-fit>` mark has `ok: true` |
 | `image-dpi` | `min` | effective DPI of each image |
 | `page-fill` | `min`, `max` (fraction of live area with ink), `ignore: [cover, divider]` | not too empty / full |
 | `sequence` | `over` (sections), `window`, `forbid_repeat` or `require_change` | deck pace: no component N running, a change of pace every N |
@@ -1488,7 +1488,7 @@ in swatches. The rule's `loop: micro | macro | both` field (default `both` where
 ### 11.2 The micro loop
 
 ```python
-# doclo/loop/micro.py
+# docla/loop/micro.py
 async def write_section(job: SectionJob, ctx: LoopContext) -> SectionResult:
     brief = ctx.theme.brief_card(job.format, job.intent, job.component)
     current = await ctx.agents.writer.draft(job, brief)                 # Claude, structured output
@@ -1569,7 +1569,7 @@ This is cheap because swatch renders are fast and the sensors are code.
 ### 11.3 The sensors and the router
 
 ```python
-# doclo/loop/sense.py
+# docla/loop/sense.py
 class Sensors:
     async def run(self, section, render, loop) -> list[Finding]:
         f = []
@@ -1588,7 +1588,7 @@ Typst compile errors are findings too (`engine.compile-error`, remedy `engine`);
 never retried with the same input more than once.
 
 ```python
-# doclo/loop/router.py
+# docla/loop/router.py
 def route(findings: list[Finding], section: Section) -> Plan:
     plan = Plan()
     for f in findings:
@@ -1651,7 +1651,7 @@ class CriticReport(BaseModel):
 2. **Anchoring.** A `fail` needs a bbox that falls inside a known section/element region (from layout facts). Otherwise it is downgraded to `info`.
 3. **No repeats.** The deterministic findings for this scope are passed in ("already reported; do not repeat"); duplicates are dropped by fingerprint overlap.
 4. **Corroboration before it can loop.** A semantic `fail` becomes `corroborated=True` only if (a) a deterministic finding in the same region agrees, or (b) a second independent critic call (different prompt ordering, same rubric, effort `medium`) also fails the same item with overlapping bbox. Uncorroborated semantic findings are shown to the person as *possible issues* and do not trigger repairs by default (`loop.act_on_uncorroborated: false`).
-5. **Calibration gate.** Each rubric item has measured precision/recall on the golden critic set (16.4). Items below the configured precision (default 0.8) are forced to `info` until they improve. The report of this is part of `doclo theme health`.
+5. **Calibration gate.** Each rubric item has measured precision/recall on the golden critic set (16.4). Items below the configured precision (default 0.8) are forced to `info` until they improve. The report of this is part of `docla theme health`.
 6. **Determinism assist.** Temperature is not user-settable on current models; reduce variance with the closed schema, few-shot crops, two-call corroboration, and caching the prompt prefix.
 
 **Cost controls.** Run the critic only on pages with no deterministic blocking findings; batch several swatches
@@ -1663,7 +1663,7 @@ since the last clean critic pass; reuse the cached reference prefix across calls
 A fix that makes the layout fit by inventing a fact is worse than the overflow. Deterministic implementation:
 
 ```python
-# doclo/loop/guards.py
+# docla/loop/guards.py
 NUM = re.compile(r"(?<![\w.])[-+]?\d[\d,.\s]*\d%?|\b\d%?\b")
 DATE = re.compile(r"\b(19|20)\d{2}\b|\b\d{1,2}\s+(Jan|Feb|...)[a-z]*\b")
 ENT = re.compile(r"\b[A-Z][a-zA-Z&-]+(?:\s+[A-Z][a-zA-Z&-]+)+\b")
@@ -1722,7 +1722,7 @@ async def build_document(doc, ctx) -> Version:
 ### 11.8 Budgets
 
 ```yaml
-# doclo.toml (project) or theme defaults
+# docla.toml (project) or theme defaults
 [loop]
 micro_attempts = 3
 best_of_n = 3
@@ -1898,7 +1898,7 @@ check, it writes a `rule.visual` rubric item with a precise question and attache
 6. **Fixtures created**: `before` (snapshot) and, once the person approves the corrected section, `after` (must be clean under the new rule). Both are saved under `learnings/fixtures/L-0042/`.
 
 ```python
-# doclo/learn/validate.py (sketch)
+# docla/learn/validate.py (sketch)
 def validate(p: LearningProposal, theme: Theme, corpus: Corpus) -> ValidationReport:
     r = ValidationReport()
     r.schema = check_schema(p)
@@ -1931,7 +1931,7 @@ cannot fix it, that is a signal the rule is not actionable (add a `remedy.hint` 
 
 * v1: the AI writes **DSL checks only**. DSL specs are data; they cannot do I/O or run code.
 * A code check (Python) may be *drafted* by the AI into `learnings/pending/`, with tests, but is activated only after a person reviews the diff in the UI and the full test suite passes. Run activated theme code checks in a subprocess with a timeout, no network, read-only filesystem except a temp dir.
-* The theme git history is the audit log; `doclo theme revert L-0042` reverts a learning and re-runs the theme tests.
+* The theme git history is the audit log; `docla theme revert L-0042` reverts a learning and re-runs the theme tests.
 
 ### 12.6 Conflict, precedence, and overrides
 
@@ -1941,7 +1941,7 @@ cannot fix it, that is a signal the rule is not actionable (add a `remedy.hint` 
 
 ### 12.7 Learning from the system's own repairs
 
-The heal logs are data. A scheduled job (`doclo learn mine`, also run at the end of each build with a small cost) looks for:
+The heal logs are data. A scheduled job (`docla learn mine`, also run at the end of each build with a small cost) looks for:
 
 * **Recurring repairs**: the same `(rule_id, component)` repaired in ≥ 3 documents or ≥ 5 sections. Prevention beats repair: propose a `capacity` tightening, a brief-card line ("`key-figures` captions ≤ 50 chars: the writer averages 71"), or a chooser change.
 * **Persistent engine defects**: the same `engine`-class finding in ≥ 2 documents → raise a `component-issue` stub with fixtures.
@@ -2164,7 +2164,7 @@ tiers with the evals (16.4) whenever new models ship.
 ### 14.4 The client wrapper
 
 ```python
-# doclo/agents/client.py
+# docla/agents/client.py
 import base64, anthropic
 from pathlib import Path
 from typing import TypeVar
@@ -2236,7 +2236,7 @@ Appendix B has skeletons.
 
 ```
 my-project/
-  doclo.toml                   # project config: theme path, models, budgets, locale
+  docla.toml                   # project config: theme path, models, budgets, locale
   sources/                     # what the user dropped in (any files)
   extracted/                   # text extracted from sources, one .md per source, with page/time markers
   deck.md                      # working file
@@ -2254,14 +2254,14 @@ my-project/
       pages/contact.png        # slides contact sheet / spreads.png for documents
       crops/                   # evidence crops referenced by findings
   assets/                      # project-level images and icons (content-addressed files; catalogue assets.yaml)
-  .doclo/                      # the ONLY generated root besides versions (git-ignored, deletable)
+  .docla/                      # the ONLY generated root besides versions (git-ignored, deletable)
     git/                       # separate git dir for runs (19.1)
     runs/<id>/                 # worktrees for in-flight and unreviewed AI jobs
     oplog.jsonl  ids.json  feedback/  cache/  render/  tmp/
     signals.jsonl  memory.db   # adaptation substrate (20.2, 20.4)
 ```
 
-Nothing else is created in the project folder. The render kit and caches live under `.doclo/`; deleting `.doclo/`
+Nothing else is created in the project folder. The render kit and caches live under `.docla/`; deleting `.docla/`
 loses only undo history, run history, memory and caches, never the working file or delivered versions.
 
 ### 15.2 Manifest
@@ -2332,7 +2332,7 @@ require looking at the images in the UI (the approve action displays them); a ba
 
 Maintain a `RESULTS.md` produced by the eval runner and commit it, so regressions are visible in review.
 
-### 16.5 Theme tests (`doclo theme test`)
+### 16.5 Theme tests (`docla theme test`)
 
 * Schema and provenance lint on every rule; token resolution; component coverage for every chooser entry.
 * Specimen render for every doctype; geometry rules must be silent.
@@ -2435,24 +2435,24 @@ Rules that keep documents from being forgotten:
 | S4 | Does patch-based repair converge on overflow and long-title defects in ≤ 3 attempts without losing facts? | 20 seeded sections; attempts and fact loss reported. |
 | S5 | Can ≥ 95% of extracted brand claims be verified against a verbatim quote on a real brand book? | Measured. |
 | S6 | **Office fidelity:** how well do PPTX/DOCX structural reads (theme, layouts, styles with `basedOn`, `w:cols`) plus LibreOffice renders reproduce what the native applications show, on 5 real corporate templates? | Table of what is exact, what is approximate, which fonts fall back. |
-| S7 | **Worktree runs:** does a section-aware git merge driver merge a human edit and an AI run on different and the same sections correctly, using a separate git dir (`.doclo/git`) beside a user's own repo? | 10 scripted merge scenarios pass. |
+| S7 | **Worktree runs:** does a section-aware git merge driver merge a human edit and an AI run on different and the same sections correctly, using a separate git dir (`.docla/git`) beside a user's own repo? | 10 scripted merge scenarios pass. |
 | S8 | **Doc flow rules:** can widows/orphans, keep-with-next, near-empty last page and column balance be *measured* from the PDF plus marks reliably enough to drive repairs? | 12 seeded flow defects detected with < 10% false positives. |
 
 ### 18.2 Milestones
 
 | M | Deliverable | Acceptance test |
 |---|---|---|
-| **M1 Engine skeleton** | Package, CLI, parser/serialiser, ids, patches with guards, Composition, Typst driver, **2 slide + 2 doc components**, facts extractor, 6 geometry/source rules, `doclo build`, `doclo check` | Round-trip property test; seeded overflow flagged in a slide and a doc fixture; byte-identical PDFs; swatch render for both formats |
+| **M1 Engine skeleton** | Package, CLI, parser/serialiser, ids, patches with guards, Composition, Typst driver, **2 slide + 2 doc components**, facts extractor, 6 geometry/source rules, `docla build`, `docla check` | Round-trip property test; seeded overflow flagged in a slide and a doc fixture; byte-identical PDFs; swatch render for both formats |
 | **M2 Theme and chooser** | `tokens.yaml` for both formats, `theme.typ` generation, neutral theme (slides + doc), chooser, doctype loader, brief card, full slide component set, rule catalogue minus semantic | Every chooser entry resolves; each rule has failing + passing fixtures; brief card deterministic |
 | **M3 Writer and micro loop (slides)** | `Claude` wrapper, gatherer, planner, writer draft/repair, fact guard, router, best-of-N, budgets, heal log, cassettes | Heal eval ≥ 90% cleared in ≤ 3 attempts, ≥ 99% facts preserved |
 | **M4 Look, critic, macro loop (slides)** | Rasteriser, contact sheets, pixel tier, critic with rubric and corroboration, macro loop, versions, manifest, ship gate | A deck with seeded flow problems repaired in ≤ 2 rounds; gate refuses until clean; critic precision gate met. **"Slides complete" demo.** |
 | **M5 Visualiser MVP (slides)** | Server, SSE, page canvas with overlays, outline, field editor, findings, build, live activity, heal replay, versions | Edit a bullet and see the new render and finding in ~1 to 2 s; external edit of `.md` appears |
 | **M6 Documents** | Four sub-milestones, **18.3** | Parity checklist 18.4 rows marked M6 green |
 | **M7 Run isolation** | Git worktree runs, section-aware merge driver, run review screen, conflict policy (section 19) | S7 scenarios pass in CI; an AI run and a concurrent human edit merge correctly on a deck and a report |
-| **M8 Feedback and learning (both formats)** | Capture, Diagnose, RuleAuthor, validation harness, impact preview, Teach card, merge via theme branch, probation, dismiss stats, re-heal | Worked example 12.10 passes on a deck **and** a report; a proposal that fires on gold is narrowed or rejected; `doclo theme revert` works |
+| **M8 Feedback and learning (both formats)** | Capture, Diagnose, RuleAuthor, validation harness, impact preview, Teach card, merge via theme branch, probation, dismiss stats, re-heal | Worked example 12.10 passes on a deck **and** a report; a proposal that fires on gold is narrowed or rejected; `docla theme revert` works |
 | **M9 Comprehensive ingestion** | S0 to S8 for PDF, **PPTX/POTX, DOCX/DOTX, IDML, XLSX/CSV reference tables, images, fonts, text**; Office safety checks; template-to-component mapping; comment import; asset library tagging; questions UI; calibration; `ingest --update` | Synthetic brand book + a synthetic PPTX template + a synthetic DOCX template → theme with ≥ 95% of stated rules present with verified quotes; a second theme builds the same working file as a deck and as a report |
 | **M10 Adaptation** | Signals log, miners, memory index, autonomy dial, component and check authoring in branches, adaptation dashboard (section 20) | Repeat-mistake rate falls over a scripted 10-document sequence; no automatic change loosens a rule (property test); component authoring produces an approved component from a gap |
-| **M11 Hardening and release** | Docs site, examples, CI (licence report, evals), contributor guide, installers, `doclo doctor` | Fresh clone to demo deck **and** demo report in one command sequence; evals committed; parity checklist fully green; tag v1.0 |
+| **M11 Hardening and release** | Docs site, examples, CI (licence report, evals), contributor guide, installers, `docla doctor` | Fresh clone to demo deck **and** demo report in one command sequence; evals committed; parity checklist fully green; tag v1.0 |
 
 ### 18.3 Documents: committed scope (M6)
 
@@ -2513,9 +2513,9 @@ reviewable and reversible. Use git worktrees so that **every AI job is an isolat
 
 ### 19.1 Model
 
-* The project is a git repository managed by the tool. To avoid colliding with a user's own repository, use a separate git directory: `git --git-dir=.doclo/git --work-tree=.` (verify in spike S7; fall back to the project's own repo if the folder is already one and the user opts in).
+* The project is a git repository managed by the tool. To avoid colliding with a user's own repository, use a separate git directory: `git --git-dir=.docla/git --work-tree=.` (verify in spike S7; fall back to the project's own repo if the folder is already one and the user opts in).
 * `main` is the person's live state. The tool commits it on idle (debounced) with `edit: …` messages so merges always have a base.
-* **A run** is a branch `run/<id>` checked out into a worktree at `.doclo/runs/<id>/`. A run is created for: a build-and-heal job, a redraft, a bulk instruction ("tighten the whole deck"), a re-ingestion, an adaptation job.
+* **A run** is a branch `run/<id>` checked out into a worktree at `.docla/runs/<id>/`. A run is created for: a build-and-heal job, a redraft, a bulk instruction ("tighten the whole deck"), a re-ingestion, an adaptation job.
 * Inside the run, the engine behaves exactly as in sections 11 to 12; each accepted patch is a commit (message: finding ids, reason, cost). Renders and caches use the run's own render kit; content-addressed caches (rasters, facts by PDF hash, swatches by section hash) are shared across runs.
 * Deliverables (`*.versions/`) are **not** in git; each version's manifest records `git_commit` and `doc_rev`.
 * The **theme** has its own repository and the same pattern: learnings and authored extensions live on `learn/<id>` and `ext/<name>` branches in theme worktrees (19.6).
@@ -2538,16 +2538,16 @@ Text merges of Markdown work poorly if the AI reflows a bullet while the person 
 Registered per repository:
 
 ```
-# .doclo/git/config
-[merge "doclo-md"]
-    name = doclo section-aware merge
-    driver = doclo merge-driver %O %A %B %P
-# .doclo/git/info/attributes (not tracked: a tracked .gitattributes would belong to the user's repository too; spike S7)
-*.md merge=doclo-md
+# .docla/git/config
+[merge "docla-md"]
+    name = docla section-aware merge
+    driver = docla merge-driver %O %A %B %P
+# .docla/git/info/attributes (not tracked: a tracked .gitattributes would belong to the user's repository too; spike S7)
+*.md merge=docla-md
 ```
 
 ```python
-# doclo/runs/merge.py
+# docla/runs/merge.py
 def merge_docs(base: Document, ours: Document, theirs: Document) -> tuple[Document, list[Dropped]]:
     """ours = person's main; theirs = the AI run."""
     out, dropped = [], []
@@ -2592,7 +2592,7 @@ Runs are independent: two bulk instructions can proceed at once, each in its own
 
 ### 19.6 Runs for the theme (learning and extensions)
 
-A `LearningProposal` (12.4) is applied in a worktree of the theme repository on branch `learn/L-0042`. The validation harness runs *inside that worktree* (theme tests, gold corpus, reproduction). Because the proposed theme is a real directory, **the impact preview is trivial**: build the earlier documents with `theme = <worktree path>` and diff the findings. On acceptance the branch is merged (fast-forward) to the theme's `main` and the version tag bumps; rejection deletes the branch. `doclo theme bisect` finds which learning changed a result.
+A `LearningProposal` (12.4) is applied in a worktree of the theme repository on branch `learn/L-0042`. The validation harness runs *inside that worktree* (theme tests, gold corpus, reproduction). Because the proposed theme is a real directory, **the impact preview is trivial**: build the earlier documents with `theme = <worktree path>` and diff the findings. On acceptance the branch is merged (fast-forward) to the theme's `main` and the version tag bumps; rejection deletes the branch. `docla theme bisect` finds which learning changed a result.
 
 ### 19.7 What this buys
 
@@ -2600,11 +2600,11 @@ Atomic accept/reject of an AI run; a complete audit trail; reversible adaptation
 
 ### 19.8 Cautions
 
-* Requires the `git` CLI (worktrees are a CLI feature); `doclo doctor` checks version ≥ 2.20.
+* Requires the `git` CLI (worktrees are a CLI feature); `docla doctor` checks version ≥ 2.20.
 * Large photo libraries must not live in git: keep files content-addressed outside tracked paths (`assets/` ignored, `assets.yaml` committed) and symlink into worktrees.
 * Worktree creation and render-kit setup must stay fast (copy-on-write or symlinks for fonts and assets); measure in S2.
 * Windows paths and symlinks need care; keep run directory names short.
-* A crashed run leaves a worktree; `doclo runs prune` removes finished or orphaned runs.
+* A crashed run leaves a worktree; `docla runs prune` removes finished or orphaned runs.
 * Commit noise on `main` is acceptable but squashable by the tool when a run merges.
 
 ---
@@ -2628,12 +2628,12 @@ person's consent) adopts them. Over weeks it needs fewer corrections.
 | Recipes | Doctype outlines, section patterns | Structure of approved documents | Propose |
 | Components | Typst overrides and new variants | Component gaps, requests | **Always person-approved** |
 | Code checks | Theme Python checks | Check gaps the DSL cannot express | **Always person-approved** |
-| Model/effort per role | `doclo.toml` suggestions | Eval history | Suggest only |
+| Model/effort per role | `docla.toml` suggestions | Eval history | Suggest only |
 | **Never adapts** | Engine code, core system prompts, the DSL itself, sandboxing, the ship gate | n/a | n/a |
 
 ### 20.2 Signals: the append-only substrate
 
-Everything the system learns from is an event in `.doclo/signals.jsonl` (project) and the theme's `learnings/signals.jsonl`
+Everything the system learns from is an event in `.docla/signals.jsonl` (project) and the theme's `learnings/signals.jsonl`
 (scrubbed, shareable ones only). If it was not logged, it cannot be learned from.
 
 ```json
@@ -2646,7 +2646,7 @@ Everything the system learns from is an event in `.doclo/signals.jsonl` (project
 {"t":"…","type":"proposal_decision","id":"L-0042","decision":"accepted","edited":true}
 ```
 
-### 20.3 Miners (`doclo adapt`, run on idle or on demand)
+### 20.3 Miners (`docla adapt`, run on idle or on demand)
 
 | Miner | Input | Method | Output |
 |---|---|---|---|
@@ -2677,7 +2677,7 @@ stays as the safety net; this layer makes it fire less often over time.
 
 ### 20.4 Writer memory
 
-`.doclo/memory.db` (SQLite with FTS5) indexes **approved** sections: intent, component, doctype, tags, title, text, source
+`.docla/memory.db` (SQLite with FTS5) indexes **approved** sections: intent, component, doctype, tags, title, text, source
 facts (hashed), approval weight, recency. At draft time the writer prompt receives up to 3 exemplars of the same intent
 and component from this brand's own approved work (BM25 over the section's title and facts, filtered by component and
 approval). Effect: voice and structure converge on what the person approves, without touching any rule. Privacy:
@@ -2714,7 +2714,7 @@ execution is sandboxed (12.5), and activation is always a person's decision.
 ### 20.7 The autonomy dial
 
 ```toml
-# doclo.toml
+# docla.toml
 [adaptation]
 level = 1            # 0 observe | 1 propose (default) | 2 auto-adopt soft additions
 inbox_cap_per_day = 5
@@ -2743,7 +2743,7 @@ sequence of automatic adoptions, the set of findings on the gold corpus never sh
 
 ### 20.9 The adaptation dashboard: is it getting better?
 
-Computed per theme per week from signals; shown as a small learning-curve panel and in `doclo theme health`.
+Computed per theme per week from signals; shown as a small learning-curve panel and in `docla theme health`.
 
 | Metric | Definition | Direction |
 |---|---|---|
@@ -2792,13 +2792,14 @@ silent change to anything a person has not been able to inspect.
 | 9 | Licence: **Apache-2.0** (confirmed); copyright holder Guillaume Picard; personal GitHub account `gwpicard` | 2026-11-03 |
 | 10 | Contributions: **DCO** (`Signed-off-by`), no CLA | 2026-11-03 |
 | 11 | LibreOffice is **required only when Office files are uploaded**; the UI prompts to install it at that point (7.8.1) | 2026-11-03 |
-| 12 | Git history is a **separate hidden git dir** (`.doclo/git`); spike S7 verifies coexistence with a project's own repo (19.1) | 2026-11-03 |
+| 12 | Git history is a **separate hidden git dir** (`.docla/git`); spike S7 verifies coexistence with a project's own repo (19.1) | 2026-11-03 |
 | 13 | Memory retrieval is **SQLite FTS5 keyword search**; embeddings are an optional plug-in on the roadmap behind a `Retriever` interface | 2026-11-03 |
 | 14 | Pi reading confirmed, plus: the system learns from its **own deterministic-check failures** so first-shot generation passes (20.3a) | 2026-11-03 |
 | 15 | Platforms: **macOS and Linux first**; Windows after v1.0 | 2026-11-03 |
 | 16 | **No fixed document size limit**; requires rate-limit backoff, resumable builds and a pre-build cost estimate (4.4) | 2026-11-03 |
 | 17 | **No telemetry** of any kind; the only network traffic is the Claude API | 2026-11-03 |
 | 18 | Localisation: **one language per document, left-to-right**; RTL and CJK after v1 | 2026-11-03 |
+| 19 | Renamed from doclo to **docla** (package, CLI, repository, folders, variables, labels); git history and closed issues keep the old name | 2026-11-03 |
 
 ### 21.2 Open questions
 
@@ -2806,16 +2807,16 @@ Decisions 8 to 18 closed the earlier ten. Still to verify rather than decide:
 
 1. **Spike S7** result for the separate git dir (decision 12).
 2. **Size-limit engineering** (decision 16): measure real throughput and rate limits in spike S2.
-3. **Registry names.** `gwpicard/doclo` exists (private). The PyPI and npm placeholders are built but not yet published; whoever publishes first holds the name (BUILD-PLAN 7).
+3. **Registry names.** `gwpicard/docla` is public (renamed from `gwpicard/doclo`, which redirects). On 2026-11-03 `docla` was free on PyPI and on npm, unscoped and as `@gwpicard/docla`. Nothing is published yet; whoever publishes first holds the name (BUILD-PLAN 7).
 
 Out of scope by owner's decision (2026-11-03): trademark search and filing, lawyer opinions, employer paperwork. The name
-check on 2026-11-03 found the nearby names DocLoop, DocLens and Doclio, and that `doclo.com` and `doclo.ai` belong to others.
+check on 2026-11-03 found the nearby names DocLoop, DocLens and Doclio, and that `doclo.com` and `doclo.ai` belong to others. The later name, docla, has not been checked for trademarks or domains.
 
 ---
 
 ## Appendix A: Schemas (summary)
 
-Keep these as Pydantic models in `doclo/model/` and export JSON Schema into `docs/schemas/` in CI.
+Keep these as Pydantic models in `docla/model/` and export JSON Schema into `docs/schemas/` in CI.
 
 | Model | Fields (abridged) |
 |---|---|
@@ -2975,7 +2976,7 @@ things the material does not answer. Mark any section that would need a fact tha
 ### C.1 Typst compile wrapper
 
 ```python
-# doclo/render/typst.py
+# docla/render/typst.py
 import os, subprocess
 from pathlib import Path
 
@@ -2993,7 +2994,7 @@ def compile_pdf(main: Path, out: Path, root: Path, font_path: Path, typst: str =
 ### C.2 PDF facts (generic, no component cooperation)
 
 ```python
-# doclo/facts/pdf.py
+# docla/facts/pdf.py
 import pdfplumber
 
 def to_hex(c) -> str | None:
@@ -3027,7 +3028,7 @@ def extract(pdf_path) -> list[dict]:
 ### C.3 A geometry check (palette)
 
 ```python
-# doclo/checks/palette.py
+# docla/checks/palette.py
 def check_colour_in_set(facts, selector, allowed_hex: list[str], tol: float, rule) -> list[Finding]:
     out = []
     for run in facts.select(selector):                    # joined facts: role + section_id attached
@@ -3044,7 +3045,7 @@ def check_colour_in_set(facts, selector, allowed_hex: list[str], tol: float, rul
 ### C.4 Rasterise and crop with evidence outline
 
 ```python
-# doclo/facts/raster.py
+# docla/facts/raster.py
 import pypdfium2 as pdfium
 from PIL import Image, ImageDraw
 
@@ -3068,7 +3069,7 @@ def crop_with_outline(png, box_pt, page_size_pt, pad_pt=12, outline=True, scale=
 ### C.5 Swatch render
 
 ```python
-# doclo/render/swatch.py
+# docla/render/swatch.py
 async def swatch(section, component, theme, kit) -> SwatchRender:
     comp = Composition.single(section, component, theme)          # one-section document on the component's frame
     main = kit.write_main(comp, frame=component.manifest["swatch"]["frame"])
@@ -3083,7 +3084,7 @@ async def swatch(section, component, theme, kit) -> SwatchRender:
 ### C.6 SSE endpoint
 
 ```python
-# doclo/server/events.py
+# docla/server/events.py
 from fastapi import APIRouter, Request
 from fastapi.responses import StreamingResponse
 import asyncio, json
@@ -3169,7 +3170,7 @@ renderer. Each is turned into a rule in this design.
 2. **Mapping sections to pages by text-matching headings was brittle.** → explicit marks emitted by components (9.4).
 3. **Most slide components overflowed silently** unless measured by the real layout engine, and that engine was available on one operating system only. → components measure themselves in Typst (`fit-box`); the platform dependency disappears.
 4. **A combined multi-format render exited successfully with only one output.** → after every render check that every expected file exists and is non-empty (C.1).
-5. **Gate on capability, not platform.** A check that asked "which OS am I on" refused to run on a machine that could in fact do the job. → ask whether the capability is available (`doclo doctor`).
+5. **Gate on capability, not platform.** A check that asked "which OS am I on" refused to run on a machine that could in fact do the job. → ask whether the capability is available (`docla doctor`).
 6. **Visual baselines approved unseen are worse than none.** → compare layout facts; approval shows images.
 7. **First-match-wins tables need a linter** (default entry last, every referenced component exists, every component labelled). → validated at load (8.3).
 8. **Sent documents come back months later.** → keep reading old spellings, migrate old schemas on load (5.5, 15.3).

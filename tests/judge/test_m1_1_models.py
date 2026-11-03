@@ -1,20 +1,20 @@
-# Intent: the doclo data models validate Document, Patch, Rule and Finding input and export stable JSON Schemas.
+# Intent: the docla data models validate Document, Patch, Rule and Finding input and export stable JSON Schemas.
 import contextlib
 import json
 from pathlib import Path
 
 import pytest
 try:
-    import doclo.model as model
+    import docla.model as model
 except ImportError as error:
-    if error.name != "doclo.model" and not str(error.name).startswith("doclo.model."):
+    if error.name != "docla.model" and not str(error.name).startswith("docla.model."):
         raise
     model = None
 
 try:
-    from doclo.model import schema as schema_mod
+    from docla.model import schema as schema_mod
 except ImportError as error:
-    if error.name != "doclo.model" and not str(error.name).startswith("doclo.model."):
+    if error.name != "docla.model" and not str(error.name).startswith("docla.model."):
         raise
     schema_mod = None
 
@@ -42,7 +42,7 @@ SCHEMA_NAMES = ["Document", "Finding", "Patch", "Rule"]
 
 
 def _need(name):
-    assert model is not None and hasattr(model, name), f"doclo.model.{name} must exist"
+    assert model is not None and hasattr(model, name), f"docla.model.{name} must exist"
     return getattr(model, name)
 
 

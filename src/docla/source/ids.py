@@ -3,7 +3,7 @@ import random
 from collections.abc import Iterable
 from pathlib import Path
 
-from doclo.model import Document
+from docla.model import Document
 
 ID_LENGTH = 5
 ID_SPACE = 16**ID_LENGTH

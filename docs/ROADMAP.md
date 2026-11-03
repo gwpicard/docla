@@ -12,7 +12,7 @@ answered; the later milestones hang on spike results (S3, S4, S6 to S8).
 | Key | Piece | Depends on |
 |---|---|---|
 | P0.1 | Tooling: `requires-python >=3.12`, ruff lint and format, mypy (strict), pytest config. The pre-commit config is left for a person to add | none |
-| P0.2 | CLI skeleton and `doclo doctor` (reports Python, Typst found or missing, pinned Typst version) | P0.1 |
+| P0.2 | CLI skeleton and `docla doctor` (reports Python, Typst found or missing, pinned Typst version) | P0.1 |
 | P0.3 | Hygiene: `.editorconfig`, LF check, grep gate for earlier working names | P0.1 |
 | P0.4 | CI: GitHub Actions on macOS and Linux running lint, types and tests | P0.1 |
 | P0.5 | `CONTRIBUTING.md` and a DCO check in CI | P0.4 |
@@ -48,7 +48,7 @@ answered; the later milestones hang on spike results (S3, S4, S6 to S8).
 | M1.14 | Off-palette colour rule |
 | M1.15 | `Rasteriser` interface (pypdfium2) and crop helper |
 | M1.16 | Swatch render for one section, both formats |
-| M1.17 | `doclo build` and `doclo check` |
+| M1.17 | `docla build` and `docla check` |
 
 M1 acceptance (`DESIGN.md` 18.2) has a person look at the rendered pages. That is a manual step, not a piece.
 

@@ -3,7 +3,7 @@ from typing import Any, Literal, Self
 
 from pydantic import BaseModel, ConfigDict, Field, model_validator
 
-from doclo.model.source import Format
+from docla.model.source import Format
 
 Tier = Literal["source", "geometry", "pixel", "semantic"]
 Severity = Literal["error", "warning", "info"]

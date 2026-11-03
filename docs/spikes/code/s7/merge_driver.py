@@ -5,7 +5,7 @@ It writes the result into %A and exits 0, or exits 1 for a conflict that needs t
 """
 import json, os, sys
 from pathlib import Path
-from doclo.source import parse, serialise
+from docla.source import parse, serialise
 
 TEXT = {"title", "items", "paragraphs", "code", "note", "spoken", "source_line", "data"}
 IDENTITY = {"id"}
@@ -71,7 +71,7 @@ def main(o_path, a_path, b_path, rel):
     base, _ = parse(Path(o_path).read_text()); ours, _ = parse(Path(a_path).read_text()); theirs, _ = parse(Path(b_path).read_text())
     merged, dropped, conflicts = merge_docs(base, ours, theirs)
     Path(a_path).write_text(serialise(merged))
-    report = Path(os.environ.get("DOCLO_MERGE_REPORT", ".doclo/merge-report.json"))
+    report = Path(os.environ.get("DOCLA_MERGE_REPORT", ".docla/merge-report.json"))
     report.parent.mkdir(parents=True, exist_ok=True)
     report.write_text(json.dumps({"path": rel, "dropped": dropped, "conflicts": conflicts}, indent=2, sort_keys=True, default=str) + "\n")
     return 1 if conflicts else 0

@@ -4,9 +4,9 @@ import json
 import pytest
 
 try:
-    from doclo.agents import cassette
+    from docla.agents import cassette
 except ImportError as error:
-    if error.name not in ("doclo.agents", "doclo.agents.cassette"):
+    if error.name not in ("docla.agents", "docla.agents.cassette"):
         raise
     cassette = None
 
@@ -16,7 +16,7 @@ RESPONSE = {"content": "hello", "n": 1}
 
 
 def _need():
-    assert cassette is not None and hasattr(cassette, "Cassette"), "doclo.agents.cassette.Cassette must exist"
+    assert cassette is not None and hasattr(cassette, "Cassette"), "docla.agents.cassette.Cassette must exist"
     assert hasattr(cassette, "CassetteMiss"), "CassetteMiss must exist"
 
 
@@ -57,7 +57,7 @@ def test_D2_replay_miss_raises_with_key_and_hint(tmp_path):
     with pytest.raises(cassette.CassetteMiss) as info:
         c.call(REQUEST)
     assert KEY in str(info.value)
-    assert "DOCLO_RECORD=1" in str(info.value)
+    assert "DOCLA_RECORD=1" in str(info.value)
     assert isinstance(info.value, KeyError)
 
 
@@ -96,7 +96,7 @@ def test_D3_record_keeps_other_requests(tmp_path):
 
 def test_D4_from_env_records_when_set(tmp_path, monkeypatch):
     _need()
-    monkeypatch.setenv("DOCLO_RECORD", "1")
+    monkeypatch.setenv("DOCLA_RECORD", "1")
     path = tmp_path / "c.json"
     t = Transport()
     c = cassette.Cassette.from_env(path, transport=t)
@@ -107,7 +107,7 @@ def test_D4_from_env_records_when_set(tmp_path, monkeypatch):
 
 def test_D4_from_env_replays_otherwise(tmp_path, monkeypatch):
     _need()
-    monkeypatch.delenv("DOCLO_RECORD", raising=False)
+    monkeypatch.delenv("DOCLA_RECORD", raising=False)
     path = tmp_path / "c.json"
     path.write_text(json.dumps({KEY: {"request": REQUEST, "response": RESPONSE}}), encoding="utf-8")
     c = cassette.Cassette.from_env(path, transport=_failing)
@@ -118,7 +118,7 @@ def test_D4_from_env_replays_otherwise(tmp_path, monkeypatch):
 
 def test_D4_from_env_replays_when_value_is_not_one(tmp_path, monkeypatch):
     _need()
-    monkeypatch.setenv("DOCLO_RECORD", "0")
+    monkeypatch.setenv("DOCLA_RECORD", "0")
     c = cassette.Cassette.from_env(tmp_path / "c.json", transport=_failing)
     with pytest.raises(cassette.CassetteMiss):
         c.call(REQUEST)

@@ -1,15 +1,15 @@
 """Spike S4: does patch-based repair converge on overflow and long-title defects in 3 attempts without losing facts?
 
-Run from the doclo repository root:
+Run from the docla repository root:
   uv run --with anthropic python <this file> --mock      # plumbing check, no API calls
-  DOCLO_RECORD=1 uv run --with anthropic python <this file>   # live, records a cassette
+  DOCLA_RECORD=1 uv run --with anthropic python <this file>   # live, records a cassette
   uv run --with anthropic python <this file>             # replays the cassette, free
 """
 import json, os, re, subprocess, sys, tempfile
 from pathlib import Path
-from doclo.model import Citation, Document, Item, Patch, PatchOp, Section
-from doclo.source.patches import PatchRejected, apply_patch
-from doclo.agents.cassette import Cassette
+from docla.model import Citation, Document, Item, Patch, PatchOp, Section
+from docla.source.patches import PatchRejected, apply_patch
+from docla.agents.cassette import Cassette
 
 HERE = Path(__file__).resolve().parent
 sys.path.insert(0, str(HERE)); import seeds
@@ -32,12 +32,12 @@ def measure(sec):
 #fit-box("body", "{sec.id}", {BODY_W}pt, {BODY_H}pt, list({items}{"," if len(sec.items) == 1 else ""}))
 #context {{
   let its = ({items}{"," if len(sec.items) == 1 else ""})
-  for (n, c) in its.enumerate() [#metadata((kind: "item", n: n, w: measure(c).width / 1pt, one: measure(block(width: {BODY_W - 18}pt, [x])).height / 1pt, h: measure(block(width: {BODY_W - 18}pt, c)).height / 1pt)) <doclo-item>]
+  for (n, c) in its.enumerate() [#metadata((kind: "item", n: n, w: measure(c).width / 1pt, one: measure(block(width: {BODY_W - 18}pt, [x])).height / 1pt, h: measure(block(width: {BODY_W - 18}pt, c)).height / 1pt)) <docla-item>]
 }}
 '''
     with tempfile.TemporaryDirectory() as d:
         f = Path(d) / "swatch.typ"; f.write_text(src)
-        r = subprocess.run(["typst", "eval", "(query(<doclo-fit>) + query(<doclo-item>)).map(it => it.value)", "--in", str(f), "--root", "/",
+        r = subprocess.run(["typst", "eval", "(query(<docla-fit>) + query(<docla-item>)).map(it => it.value)", "--in", str(f), "--root", "/",
                             "--ignore-system-fonts"], capture_output=True, text=True, env=ENV)
         if r.returncode: raise RuntimeError(r.stderr)
         allm = json.loads(r.stdout)
@@ -101,9 +101,10 @@ def prompt(sec, findings, history):
 
 def key():
     if os.environ.get("ANTHROPIC_API_KEY"): return None
-    r = subprocess.run(["security", "find-generic-password", "-s", "doclo-anthropic-api-key", "-w"], capture_output=True, text=True)
-    if r.returncode: sys.exit("No key: set ANTHROPIC_API_KEY or store it with: security add-generic-password -a \"$USER\" -s doclo-anthropic-api-key -w")
-    return r.stdout.strip()
+    for service in ("docla-anthropic-api-key", "doclo-anthropic-api-key"):   # the second is the entry made before the rename
+        r = subprocess.run(["security", "find-generic-password", "-s", service, "-w"], capture_output=True, text=True)
+        if r.returncode == 0: return r.stdout.strip()
+    sys.exit("No key: set ANTHROPIC_API_KEY or store it with: security add-generic-password -a \"$USER\" -s docla-anthropic-api-key -w")
 
 def live_transport():
     import anthropic
@@ -124,7 +125,7 @@ def mock_transport(req):
     return {"text": json.dumps(cur), "stop_reason": "end_turn", "model": "mock", "usage": {"input_tokens": 0, "output_tokens": 0}}
 
 def run(mock):
-    cassette = None if mock else Cassette.from_env(HERE / "cassettes" / ("s4b.json" if ARM == "B" else "s4.json"), transport=None if os.environ.get("DOCLO_RECORD") != "1" else live_transport())
+    cassette = None if mock else Cassette.from_env(HERE / "cassettes" / ("s4b.json" if ARM == "B" else "s4.json"), transport=None if os.environ.get("DOCLA_RECORD") != "1" else live_transport())
     call = mock_transport if mock else cassette.call
     rows = []
     for s in seeds.seeds():
