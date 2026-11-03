@@ -1,13 +1,11 @@
 from collections.abc import Sequence
 from pathlib import Path
-from typing import Any, Literal, Protocol, runtime_checkable
+from typing import Any, Protocol, runtime_checkable
 
 import pdfplumber
 from pdfplumber.page import Page
 
-from docla.facts.models import FactBox, PageFacts, Shape, Word
-
-ShapeKind = Literal["rect", "line", "curve"]
+from docla.facts.models import FactBox, PageFacts, Shape, ShapeKind, Word
 
 
 @runtime_checkable

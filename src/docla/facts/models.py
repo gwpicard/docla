@@ -4,6 +4,8 @@ from pydantic import BaseModel
 
 # All lengths are in pt with the origin at the top left of the page; pages count from 1.
 
+ShapeKind = Literal["rect", "line", "curve"]
+
 
 class FactBox(BaseModel):
     page: int
@@ -23,7 +25,7 @@ class Word(BaseModel):
 
 
 class Shape(BaseModel):
-    kind: Literal["rect", "line", "curve"]
+    kind: ShapeKind
     fill: str | None
     stroke: str | None
     box: FactBox
