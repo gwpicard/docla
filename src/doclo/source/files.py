@@ -52,9 +52,7 @@ def _parse_editable(path: Path) -> Document:
     return doc
 
 
-def apply_to_file(
-    path: Path, patch: Patch, oplog: Path, ids: IdStore, fact_guard: FactGuard | None = None
-) -> Document:
+def apply_to_file(path: Path, patch: Patch, oplog: Path, ids: IdStore, fact_guard: FactGuard | None = None) -> Document:
     """Apply `patch` to the working file at `path` and append the change to `oplog`."""
     doc = _parse_editable(path)
     stamped, _ = stamp(doc, ids)
