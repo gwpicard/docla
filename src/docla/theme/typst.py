@@ -25,7 +25,7 @@ FUNCTIONS = """
 
 #let page-setup(format, body) = {
   if format not in pages {
-    panic("unknown page format: " + repr(format) + "; the theme has " + formats.join(", "))
+    panic("unknown page format: " + repr(format) + "; the theme has " + pages.keys().join(", "))
   }
   let p = pages.at(format)
   set page(width: p.width, height: p.height, margin: p.margin)
@@ -44,7 +44,6 @@ def render_theme_typ(theme: Theme) -> str:
         HEADER,
         f"#let tokens = {_dict({name: _str(value) for name, value in tokens.colour.roles.items()})}",
         f"#let chart = {_dict({name: _array([_str(c) for c in cs]) for name, cs in tokens.colour.chart.items()})}",
-        f"#let formats = {_array([_str(fmt) for fmt in theme.info.formats])}",
         f"#let text-font = {_str(families.get('text', ''))}",
         f"#let type-scale = {_dict({fmt: _scale(scale, families) for fmt, scale in tokens.type.scale.items()})}",
         f"#let space-unit = {_pt(tokens.spacing.unit)}",
