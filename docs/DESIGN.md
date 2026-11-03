@@ -2472,6 +2472,8 @@ Rules: widow/orphan, heading-at-foot, figure-source adjacency, near-empty page, 
 Repairs: **copyfitting** (cut about N lines from the section before a near-empty page, N derived from facts), move/resize a float (`span`, `place`), change component, split or merge sections within the doctype's bounds.
 Semantic rubric: spread balance, flow gap, component misfit, repetition across a report (three chart pages in a row of one shape is design, not a fault).
 
+**Spike S8 (2026-11-03, `docs/spikes/S8-flow-rules.md`).** 12 of 12 seeded flow defects detected from PDF lines plus block start marks, with no false positives on 14 controls, and each detection carries the lines a copyfit needs. With Typst's default widow and orphan costs and sticky headings, the widow, orphan and heading defects did not occur at all: prevent those in the theme, and keep the detectors as a check.
+
 **M6d Editor and doctypes for documents**
 * Overlays for sections spanning columns/pages (multiple boxes, one selection); page filmstrip with spreads; outline view for long documents with collapse by chapter.
 * Document doctypes shipped in the neutral theme: **report**, **whitepaper**, **fact sheet / one-pager**, **proposal**, **memo / internal note**, **assessment report**, each with outline, questions, checks, checklist.

@@ -29,3 +29,12 @@ uv run --with anthropic python docs/spikes/code/s4/s4.py --mock     # plumbing c
 
 To record again (this spends money), set `DOCLO_RECORD=1` and provide a key in `ANTHROPIC_API_KEY` or in the macOS Keychain entry
 `doclo-anthropic-api-key`.
+
+S8 needs only Typst and pdfplumber:
+
+```
+cd docs/spikes/code/s8 && uv run --with pdfplumber python s8.py         # seeded flow defects against detectors
+cd docs/spikes/code/s8 && uv run --with pdfplumber python defaults.py   # the same placements with Typst's defaults
+```
+
+`calib.typ` measures the line height, line pitch and heading height the placements use.
