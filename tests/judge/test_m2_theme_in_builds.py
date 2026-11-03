@@ -177,6 +177,7 @@ def test_D2_check_pass_fixtures_give_no_text_fits_or_safe_area_finding(tmp_path,
         fixture = SEEDED / rule_id / "pass" / "doc.md"
         out_dir = tmp_path / ("out-" + rule_id)
         code, out, _ = _run(["check", str(fixture), "--out", str(out_dir)], capsys)
+        assert (out_dir / "doc.findings.json").is_file(), out
         report = json.loads((out_dir / "doc.findings.json").read_text())
         assert [f for f in report if f["rule_id"] in ("geo.text-fits", "geo.in-safe-area")] == [], (rule_id, out)
         assert code == 0, (rule_id, out)
@@ -192,11 +193,13 @@ def test_D3_wide_theme_margins_report_safe_area_but_neutral_does_not(tmp_path, c
     copy = _theme_copy(tmp_path, widen)
     out_neutral = tmp_path / "out-neutral"
     _run(["check", str(source), "--out", str(out_neutral)], capsys)
+    assert (out_neutral / "deck.findings.json").is_file(), "check must write the findings file"
     neutral = TypeAdapter(list[Finding]).validate_python(json.loads((out_neutral / "deck.findings.json").read_text()))
     assert [f for f in neutral if f.rule_id == "geo.in-safe-area"] == []
 
     out_copy = tmp_path / "out-copy"
     code, out, _ = _run(["check", str(source), "--out", str(out_copy), "--theme", str(copy)], capsys)
+    assert (out_copy / "deck.findings.json").is_file(), out
     wide = TypeAdapter(list[Finding]).validate_python(json.loads((out_copy / "deck.findings.json").read_text()))
     hits = [f for f in wide if f.rule_id == "geo.in-safe-area"]
     assert [f.section_id for f in hits] == ["aaaa2"], out
@@ -213,6 +216,7 @@ def test_D4_theme_min_size_sets_min_font_threshold(tmp_path, capsys):
     copy = _theme_copy(tmp_path, raise_minimum)
     out_copy = tmp_path / "out-copy"
     code, out, _ = _run(["check", str(source), "--out", str(out_copy), "--theme", str(copy)], capsys)
+    assert (out_copy / "deck.findings.json").is_file(), out
     findings = TypeAdapter(list[Finding]).validate_python(json.loads((out_copy / "deck.findings.json").read_text()))
     hits = [f for f in findings if f.rule_id == "geo.min-font"]
     assert len(hits) >= 1, out
