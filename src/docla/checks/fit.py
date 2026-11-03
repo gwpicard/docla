@@ -1,7 +1,7 @@
 from typing import Any
 
 from docla.checks.engine import CheckContext, make_finding, register
-from docla.facts.layout import LayoutFacts, PlacedWord
+from docla.facts.layout import LayoutFacts, PlacedWord, centre, contains
 from docla.model import Finding, Provenance, Rule
 from docla.model.rules import Tier
 from docla.render.marks import ElementMark, FitMark
@@ -13,19 +13,13 @@ def _baseline(word: PlacedWord) -> float:
     return round(word.baseline * 2) / 2
 
 
-def _inside(word: PlacedWord, box: ElementMark) -> bool:
-    x = (word.box.x0 + word.box.x1) / 2
-    y = (word.box.y0 + word.box.y1) / 2
-    return word.box.page == box.page and box.x <= x <= box.x + box.w and box.y <= y <= box.y + box.h
-
-
 def _cut_to_save_line(words: list[PlacedWord], last: float) -> int:
     on_last = sorted((w for w in words if _baseline(w) == last), key=lambda w: w.box.x0)
     return len(" ".join(w.text for w in on_last)) + 1
 
 
 def _item_entry(n: int, box: ElementMark, facts: LayoutFacts) -> dict[str, Any]:
-    words = [w for w in facts.words if w.role == "item" and _inside(w, box)]
+    words = [w for w in facts.words if w.role == "item" and contains(box, centre(w.box))]
     baselines = sorted({_baseline(w) for w in words})
     cut = _cut_to_save_line(words, baselines[-1]) if len(baselines) > 1 else None
     return {"n": n, "lines": len(baselines), "cut_to_save_line": cut}

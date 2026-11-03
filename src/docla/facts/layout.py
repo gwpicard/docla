@@ -28,17 +28,17 @@ class LayoutFacts(BaseModel):
     marks: list[Mark]
 
 
-def _centre(box: FactBox) -> Point:
+def centre(box: FactBox) -> Point:
     return (box.page, (box.x0 + box.x1) / 2, (box.y0 + box.y1) / 2)
 
 
-def _contains(mark: ElementMark, point: Point) -> bool:
+def contains(mark: ElementMark, point: Point) -> bool:
     page, x, y = point
     return mark.page == page and mark.x <= x <= mark.x + mark.w and mark.y <= y <= mark.y + mark.h
 
 
 def _innermost(elements: list[ElementMark], point: Point) -> ElementMark | None:
-    containing = [mark for mark in elements if _contains(mark, point)]
+    containing = [mark for mark in elements if contains(mark, point)]
     return min(containing, key=lambda mark: mark.w * mark.h, default=None)
 
 
@@ -63,7 +63,7 @@ class _Placer:
 
     def place(self, box: FactBox) -> tuple[str | None, str | None]:
         """Return the role and section id of an item with this box."""
-        point = _centre(box)
+        point = centre(box)
         element = _innermost(self.elements, point)
         if element is not None:
             return element.role, element.id
