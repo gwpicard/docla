@@ -1,0 +1,201 @@
+{
+  "$defs": {
+    "Provenance": {
+      "properties": {
+        "by": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "By"
+        },
+        "created": {
+          "anyOf": [
+            {
+              "format": "date",
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Created"
+        },
+        "source": {
+          "anyOf": [
+            {
+              "additionalProperties": true,
+              "type": "object"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Source"
+        }
+      },
+      "title": "Provenance",
+      "type": "object"
+    },
+    "Remedy": {
+      "properties": {
+        "class": {
+          "enum": [
+            "redraft",
+            "restructure",
+            "tune",
+            "engine",
+            "report",
+            "ask"
+          ],
+          "title": "Class",
+          "type": "string"
+        },
+        "hint": {
+          "title": "Hint",
+          "type": "string"
+        }
+      },
+      "required": [
+        "class",
+        "hint"
+      ],
+      "title": "Remedy",
+      "type": "object"
+    },
+    "Scope": {
+      "properties": {
+        "format": {
+          "anyOf": [
+            {
+              "enum": [
+                "slides",
+                "doc"
+              ],
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Format"
+        },
+        "roles": {
+          "anyOf": [
+            {
+              "items": {
+                "type": "string"
+              },
+              "type": "array"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Roles"
+        }
+      },
+      "title": "Scope",
+      "type": "object"
+    }
+  },
+  "properties": {
+    "check": {
+      "additionalProperties": true,
+      "title": "Check",
+      "type": "object"
+    },
+    "id": {
+      "title": "Id",
+      "type": "string"
+    },
+    "origin": {
+      "enum": [
+        "ingested",
+        "manual",
+        "feedback",
+        "measured"
+      ],
+      "title": "Origin",
+      "type": "string"
+    },
+    "provenance": {
+      "$ref": "#/$defs/Provenance"
+    },
+    "remedy": {
+      "$ref": "#/$defs/Remedy"
+    },
+    "scope": {
+      "$ref": "#/$defs/Scope"
+    },
+    "severity": {
+      "enum": [
+        "error",
+        "warning",
+        "info"
+      ],
+      "title": "Severity",
+      "type": "string"
+    },
+    "stats": {
+      "additionalProperties": true,
+      "title": "Stats",
+      "type": "object"
+    },
+    "status": {
+      "default": "proposed",
+      "enum": [
+        "proposed",
+        "probation",
+        "active",
+        "retired"
+      ],
+      "title": "Status",
+      "type": "string"
+    },
+    "strength": {
+      "enum": [
+        "hard",
+        "soft"
+      ],
+      "title": "Strength",
+      "type": "string"
+    },
+    "tier": {
+      "enum": [
+        "source",
+        "geometry",
+        "pixel",
+        "semantic"
+      ],
+      "title": "Tier",
+      "type": "string"
+    },
+    "title": {
+      "title": "Title",
+      "type": "string"
+    }
+  },
+  "required": [
+    "id",
+    "title",
+    "origin",
+    "strength",
+    "severity",
+    "tier",
+    "check",
+    "remedy",
+    "provenance"
+  ],
+  "title": "Rule",
+  "type": "object"
+}
