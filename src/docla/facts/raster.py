@@ -6,15 +6,17 @@ from PIL import Image, ImageDraw
 
 OUTLINE_COLOUR = "#DC0000"
 OUTLINE_WIDTH = 4
+# crop reads a page at the scale it was rendered at, so render and crop share one default.
+DEFAULT_SCALE = 2.0
 
 
 @runtime_checkable
 class Rasteriser(Protocol):
-    def render(self, pdf: Path, out_dir: Path, scale: float = 2.0) -> list[Path]: ...
+    def render(self, pdf: Path, out_dir: Path, scale: float = DEFAULT_SCALE) -> list[Path]: ...
 
 
 class PdfiumRasteriser:
-    def render(self, pdf: Path, out_dir: Path, scale: float = 2.0) -> list[Path]:
+    def render(self, pdf: Path, out_dir: Path, scale: float = DEFAULT_SCALE) -> list[Path]:
         out_dir.mkdir(parents=True, exist_ok=True)
         document = pdfium.PdfDocument(pdf)
         try:
@@ -45,7 +47,7 @@ def crop(
     png: Path,
     box: tuple[float, float, float, float],
     out: Path,
-    scale: float = 2.0,
+    scale: float = DEFAULT_SCALE,
     pad_pt: float = 12.0,
     outline: bool = True,
 ) -> Path:
