@@ -12,7 +12,7 @@ license = "Apache-2.0"
 license-files = ["LICENSE", "NOTICE"]
 authors = [{ name = "Guillaume Picard" }]
 classifiers = ["Development Status :: 1 - Planning"]
-dependencies = ["pydantic>=2", "PyYAML>=6"]
+dependencies = ["pdfplumber>=0.11", "Pillow>=13", "pydantic>=2", "pypdfium2>=5.14", "PyYAML>=6"]
 
 [project.scripts]
 docla = "docla.cli:main"
