@@ -51,11 +51,19 @@ def typst_env() -> dict[str, str]:
     return env
 
 
-def compile_pdf(main: Path, root: Path, output: Path, font_paths: Sequence[Path] = ()) -> None:
-    command = [typst_command(), "compile", str(main), str(output), "--root", str(root), "--ignore-system-fonts"]
+def run_typst(args: Sequence[str], root: Path, font_paths: Sequence[Path] = ()) -> str:
+    command = [typst_command(), *args, "--root", str(root), "--ignore-system-fonts"]
     for path in font_paths:
         command += ["--font-path", str(path)]
     result = subprocess.run(command, capture_output=True, text=True, env=typst_env())
     if result.returncode != 0:
-        output.unlink(missing_ok=True)
         raise TypstCompileError(result.stderr)
+    return result.stdout
+
+
+def compile_pdf(main: Path, root: Path, output: Path, font_paths: Sequence[Path] = ()) -> None:
+    try:
+        run_typst(["compile", str(main), str(output)], root, font_paths)
+    except TypstCompileError:
+        output.unlink(missing_ok=True)
+        raise
