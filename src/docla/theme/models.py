@@ -1,8 +1,8 @@
 import re
 from pathlib import Path
-from typing import Any, Literal
+from typing import Annotated, Any, Literal
 
-from pydantic import BaseModel, ConfigDict, Field, field_validator, model_validator
+from pydantic import BaseModel, BeforeValidator, ConfigDict, Field, field_validator, model_validator
 
 from docla.model.source import Format
 
@@ -21,6 +21,9 @@ def to_pt(value: str | float) -> float:
         if match:
             return float(match.group(1)) * PT_PER_UNIT[match.group(2)]
     raise ValueError(f"not a length: {value!r} (use a number or a number followed by pt, mm, cm or in)")
+
+
+Length = Annotated[float, BeforeValidator(to_pt)]
 
 
 def to_colour(value: str) -> str:
@@ -82,23 +85,18 @@ class TypeScale(BaseModel):
 
 
 class Margins(BaseModel):
-    top: float
-    right: float
-    bottom: float
-    left: float
-
-    @field_validator("top", "right", "bottom", "left", mode="before")
-    @classmethod
-    def _length(cls, value: Any) -> float:
-        return to_pt(value)
+    top: Length
+    right: Length
+    bottom: Length
+    left: Length
 
 
-class PageModel(BaseModel):
-    width: float
-    height: float
+class Page(BaseModel):
+    width: Length
+    height: Length
     margin: Margins
     columns: int = 1
-    gutter: float = 0
+    gutter: Length = 0
 
     @model_validator(mode="before")
     @classmethod
@@ -111,11 +109,6 @@ class PageModel(BaseModel):
             rest = {key: item for key, item in value.items() if key != "size"}
             return {"width": width, "height": height, **rest}
         return value
-
-    @field_validator("width", "height", "gutter", mode="before")
-    @classmethod
-    def _length(cls, value: Any) -> float:
-        return to_pt(value)
 
 
 class TypeTokens(BaseModel):
@@ -134,7 +127,7 @@ class Tokens(BaseModel):
     schema_: int = Field(alias="schema")
     colour: Colours
     type: TypeTokens
-    pages: dict[Format, PageModel]
+    pages: dict[Format, Page]
     spacing: Spacing
 
 
