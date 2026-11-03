@@ -207,8 +207,9 @@ def test_D4_rule_without_provenance_is_rejected():
 
 def test_D4_hard_measured_rule_is_rejected():
     Rule = _need("Rule")
-    with _validation_error():
+    with _validation_error() as info:
         Rule(**_rule_data(strength="hard", origin="measured"))
+    assert info.value is not None
 
 
 def test_D4_soft_measured_rule_is_accepted():
