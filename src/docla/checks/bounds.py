@@ -33,6 +33,17 @@ def _outside_by(box: FactBox, page: PageFacts, margin: float) -> float:
     )
 
 
+def _extent(item: Placed) -> FactBox:
+    """Return the item's extent: a shape's box, or a word's box from cap height to baseline.
+
+    Typst lays text out by cap height and baseline, while pdfplumber's box runs from the
+    font's ascender (spike S1, finding 2).
+    """
+    if isinstance(item, PlacedShape):
+        return item.box
+    return item.box.model_copy(update={"y0": item.baseline - 0.7 * item.size, "y1": item.baseline})
+
+
 Hit = tuple[Placed, float]
 
 
@@ -63,7 +74,7 @@ class InSafeArea:
         pages = {page.page: page for page in facts.pages}
         outside: dict[tuple[str, int], list[Hit]] = defaultdict(list)
         for item in _sectioned(facts):
-            by = _outside_by(item.box, pages[item.box.page], margin)
+            by = _outside_by(_extent(item), pages[item.box.page], margin)
             if by > tolerance:
                 outside[(str(item.section_id), item.box.page)].append((item, by))
         return [_safe_area_finding(rule, ctx, key, hits) for key, hits in outside.items()]
