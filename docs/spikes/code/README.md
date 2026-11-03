@@ -10,3 +10,11 @@ uv run --with pdfplumber --with pypdfium2 --with pillow python s2.py     # S2: t
 
 They need `typst` on the path (measured with 0.15.1). `gen.py` writes the fixtures: every word in a fixture is a token such as
 `Z03q017`, so the true section of any word in the PDF is known. `s1b.py` writes overlay images to `out/`.
+
+S7 uses the `doclo` package, so run it from the repository root with the project environment:
+
+```
+uv run python docs/spikes/code/s7/s7.py     # S7: separate git dir, worktree runs, section-aware merge driver
+```
+
+It builds its test projects in a temporary folder.

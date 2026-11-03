@@ -2538,7 +2538,7 @@ Registered per repository:
 [merge "doclo-md"]
     name = doclo section-aware merge
     driver = doclo merge-driver %O %A %B %P
-# .gitattributes (tracked)
+# .doclo/git/info/attributes (not tracked: a tracked .gitattributes would belong to the user's repository too; spike S7)
 *.md merge=doclo-md
 ```
 
@@ -2575,6 +2575,8 @@ Policies:
 * A section **deleted** by one side and edited by the other is a conflict surfaced as a question, never decided silently.
 * Order: if both reordered, the person's order wins.
 * The driver is a pure function of three documents and must be deterministic; property-test it (associativity is *not* required; idempotence and "no change on identical inputs" are).
+
+**Spike S7 (2026-11-03, `docs/spikes/S7-worktrees.md`).** 12 of 12 scripted merges pass with this driver beside a user's own repository, whose `HEAD`, branches, worktree list and status were never affected. A plain text merge stops with conflict markers in 5 of the 12.
 
 ### 19.4 Review screen
 
