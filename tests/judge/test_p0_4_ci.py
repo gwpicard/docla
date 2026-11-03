@@ -92,13 +92,20 @@ def test_D2_every_job_installs_uv_and_syncs():
         assert "uv sync" in _commands(job), f"{name} must run uv sync"
 
 
-def test_D3_dco_job_fetches_history_and_checks_pull_request_range():
+def test_D6_dco_job_checks_the_pull_request_event_without_history():
     jobs = _jobs()
     assert "dco" in jobs, "a dco job must exist"
     body = "\n".join(jobs["dco"])
-    assert re.search(r"fetch-depth:\s*0\b", body), "dco must fetch full history"
-    assert "uv run python scripts/check_dco.py origin/${{ github.base_ref }}..HEAD" in _commands(jobs["dco"])
-    assert "pull_request" in body, "dco must run only on pull_request"
+    condition = [line.strip() for line in jobs["dco"] if line.strip().startswith("if:")]
+    assert condition and "github.event_name == 'pull_request'" in condition[0], (
+        "dco must run only on pull_request"
+    )
+    expected = 'scripts/check_dco.py --pr-event "$GITHUB_EVENT_PATH" --maintainers MAINTAINERS'
+    checks = [cmd for cmd in _commands(jobs["dco"]) if "scripts/check_dco.py" in cmd]
+    assert len(checks) == 1, "dco must invoke scripts/check_dco.py exactly once"
+    assert checks[0].endswith(expected), f"dco must run check_dco.py with: {expected}"
+    assert "..HEAD" not in body and "base_ref" not in body, "dco must not pass a commit range"
+    assert not re.search(r"fetch-depth", body), "dco must not fetch full history"
 
 
 def test_D4_licences_and_secrets_jobs_run_their_scripts():
