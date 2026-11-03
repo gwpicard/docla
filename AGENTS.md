@@ -11,7 +11,8 @@ Agent: claude
 Standards: `STANDARDS.md`
 Protected paths: `.claude/`, `.githooks/`, `.github/`, `LICENSE`, `NOTICE`
 Idle limit: 10
-Waiting limit: 3
-Base branch: main
+Waiting limit: 6
+Base branch: loop/v0
+Base merges: run
 Keep limit: 15
 Sandbox domains: pypi.org, files.pythonhosted.org
