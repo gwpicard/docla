@@ -14,7 +14,7 @@ class ManifestError(ValueError):
 class ComponentManifest(BaseModel):
     name: str
     format: Literal["slides", "doc"]
-    label: str = Field(min_length=1)
+    label: str
     intents: list[str] = Field(min_length=1)
     capacity: dict[str, tuple[int, int]]
     elements: list[str] = Field(min_length=1)
