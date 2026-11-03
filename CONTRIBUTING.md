@@ -14,6 +14,8 @@ Signed-off-by: Your Name <you@example.com>
 
 This one line certifies the Developer Certificate of Origin for every commit in the pull request. Individual commits do not need a sign-off.
 
+Signing each commit with `git commit -s` is optional. Use it if you prefer, but the check reads only the line in the pull request description.
+
 Maintainers listed in `MAINTAINERS` are exempt, because they hold the copyright.
 
 To check a pull request event locally:
