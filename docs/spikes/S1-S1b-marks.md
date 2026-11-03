@@ -21,7 +21,7 @@ Two things the design did not say:
 
 ## S1b, flowing documents: yes, with marks as cut points
 
-A 4-page, two-column A4 report with 10 sections, four figure floats, one float spanning both columns, a page break, and a 40-row table that breaks across a page. It holds 1,982 tokens, each tagged with its true section.
+A 4-page, two-column A4 report with 10 sections, three figure floats, one float spanning both columns, a page break, and a 40-row table that breaks across a page. It holds 1,982 tokens, each tagged with its true section.
 
 | Method | Words in the right section |
 |---|---|

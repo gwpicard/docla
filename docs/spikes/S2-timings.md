@@ -20,7 +20,7 @@ The 18-page report has 74,879 characters; the 90-page report has 397,875.
 | Swatch, one section, under 1 s | 0.02 s plus 0.01 s: met by a wide margin |
 | Full draft render, 25 slides or 20 pages, under 5 s | 0.03 s and 0.04 s: met |
 | Facts extraction under 2 s | 0.27 s for 20 slides and 1.55 s for 18 dense pages: met. 8.4 s for 90 pages: not met without a pool |
-| Look (raster, facts, deterministic checks) under 8 s | about 1.7 s for 18 pages: met |
+| Look (raster, facts, deterministic checks) under 8 s | about 1.6 s for 18 pages: met |
 
 ## Determinism
 
