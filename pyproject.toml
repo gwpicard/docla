@@ -32,7 +32,7 @@ testpaths = ["tests"]
 line-length = 120
 target-version = "py312"
 src = ["src", "tests"]
-extend-exclude = ["docs"]
+extend-exclude = ["docs", "tests/judge"]
 
 [tool.ruff.lint]
 select = ["E", "F", "I", "B", "UP"]
