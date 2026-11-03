@@ -20,13 +20,13 @@ Done when: 12 seeded flow defects are detected with under 10% false positives.
 
 ## Results
 
-| Rule | Seeded | Detected | False positives on controls |
+| Rule | Seeded | Detected | False positives |
 |---|---|---|---|
-| Widow | 3 | 3 | 0 / 14 |
+| Widow | 3 | 3 | 0 / 14 clean scenes |
 | Orphan | 3 | 3 | 0 / 14 |
 | Heading at the foot of a column | 2 | 2 | 0 / 14 |
-| Near-empty last page (under 15% filled) | 2 | 2 | 0 / 4 |
-| Unbalanced last page (columns differ by more than a quarter column) | 2 | 2 | 0 / 4 |
+| Near-empty last page (under 15% filled) | 2 | 2 | 0 / 6 last-page documents without it |
+| Unbalanced last page (columns differ by more than a quarter column) | 2 | 2 | 0 / 6 last-page documents without it |
 | **All** | **12** | **12** | **0** |
 
 All 26 scenes came out exactly as seeded (ground truth matched the intent), so the comparison is against real layouts.
