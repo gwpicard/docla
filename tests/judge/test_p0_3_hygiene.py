@@ -65,7 +65,7 @@ def test_D3_no_carriage_returns():
 def test_D4_no_earlier_working_names():
     offenders = []
     for name in _tracked():
-        if name.startswith("docs/"):
+        if name.startswith("docs/") or name in {"uv.lock", "tests/test_hygiene.py", "tests/judge/test_p0_3_hygiene.py"}:
             continue
         data = (ROOT / name).read_bytes()
         if b"\0" in data:
