@@ -1,4 +1,5 @@
 # Intent: serialise() writes a Document back to canonical working-file text so parse then serialise loses nothing.
+import importlib.util
 import re
 
 try:
@@ -200,6 +201,7 @@ def test_D1_body_order_is_title_items_paragraphs_notes_data_code():
 
 
 def test_D2_generated_documents_round_trip_with_no_findings():
+    assert importlib.util.find_spec("hypothesis") is not None, "hypothesis must be a dev dependency"
     from hypothesis import given, settings, strategies as st
 
     Document, Section, Item = _model("Document"), _model("Section"), _model("Item")
