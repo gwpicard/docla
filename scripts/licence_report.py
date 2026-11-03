@@ -3,6 +3,7 @@
 import sys
 from importlib import metadata
 
+# Older packages paste the full licence text into the "License" field; only a short single line is a usable name.
 MAX_LICENCE_FIELD = 100
 
 
