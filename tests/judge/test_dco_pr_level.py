@@ -184,8 +184,9 @@ def test_D6_contributing_states_pull_request_rule():
     assert "exempt" in lowered
 
 
-def test_D6_contributing_drops_per_commit_instruction():
+def test_D6_contributing_keeps_commit_sign_off_as_optional():
     assert CONTRIBUTING.is_file(), "CONTRIBUTING.md must exist"
     text = CONTRIBUTING.read_text()
-    assert "git commit -s" not in text
-    assert "commit --amend -s" not in text
+    lowered = text.lower()
+    assert "git commit -s" in text
+    assert "optional" in lowered
