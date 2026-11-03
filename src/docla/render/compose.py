@@ -1,0 +1,92 @@
+import shutil
+from pathlib import Path
+from typing import Any
+
+from pydantic import BaseModel
+
+from docla.model import Document, Format, Item, Section
+from docla.render.kit import components_dir, lib_dir
+
+M1_COMPONENTS: dict[tuple[Format, str], str] = {
+    ("slides", "statement"): "statement",
+    ("slides", "bullets"): "bullets",
+    ("doc", "body"): "body",
+    ("doc", "callout"): "callout",
+}
+
+
+class ComposeError(ValueError):
+    pass
+
+
+class ComposedSection(BaseModel):
+    id: str
+    component: str
+    props: dict[str, Any]
+
+
+class Composition(BaseModel):
+    format: Format
+    sections: list[ComposedSection]
+
+
+def _component(section: Section, fmt: Format) -> str:
+    if section.component in {name for (f, _), name in M1_COMPONENTS.items() if f == fmt}:
+        return section.component
+    component = M1_COMPONENTS.get((fmt, section.intent))
+    if component is None:
+        raise ComposeError(f"section {section.id}: intent {section.intent!r} has no component for format {fmt!r}")
+    return component
+
+
+def _item_props(item: Item) -> dict[str, Any]:
+    return {"head": item.head or "", "body": item.body, "cites": [c.key for c in item.citations]}
+
+
+def _compose_section(section: Section, fmt: Format, index: int) -> ComposedSection:
+    if not section.id:
+        raise ComposeError(f"section {index + 1} (intent {section.intent!r}) has no id")
+    props = {
+        "id": section.id,
+        "title": section.title or "",
+        "items": [_item_props(item) for item in section.items],
+        "paragraphs": list(section.paragraphs),
+        "source_line": section.source_line or "",
+    }
+    return ComposedSection(id=section.id, component=_component(section, fmt), props=props)
+
+
+def compose(doc: Document) -> Composition:
+    """Map each section of `doc` to a component and its props, in order."""
+    sections = [_compose_section(section, doc.format, i) for i, section in enumerate(doc.sections)]
+    return Composition(format=doc.format, sections=sections)
+
+
+def _main_typ(comp: Composition) -> str:
+    lines = ['#import "/lib/theme.typ": colour, page-setup']
+    for name in dict.fromkeys(s.component for s in comp.sections):
+        lines.append(f'#import "/components/{name}.typ": {name}')
+    lines += [
+        "",
+        f'#show: page-setup.with("{comp.format}")',
+        '#set text(fill: colour("ink"))',
+        "",
+        '#let comp = json("/composition.json")',
+    ]
+    for i, section in enumerate(comp.sections):
+        if i > 0 and comp.format == "slides":
+            lines.append("#pagebreak()")
+        lines.append(f"#{section.component}(comp.sections.at({i}).props)")
+    return "\n".join(lines) + "\n"
+
+
+def assemble(comp: Composition, dest: Path) -> Path:
+    """Write a render folder at `dest` that Typst compiles; return the path of `main.typ`."""
+    if dest.exists():
+        raise FileExistsError(f"render folder already exists: {dest}")
+    shutil.copytree(lib_dir(), dest / "lib")
+    shutil.copytree(components_dir(), dest / "components")
+    (dest / "composition.json").write_text(comp.model_dump_json())
+    main = dest / "main.typ"
+    main.write_text(_main_typ(comp))
+    return main
