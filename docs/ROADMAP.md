@@ -11,7 +11,7 @@ answered; the later milestones hang on spike results (S3, S4, S6 to S8).
 
 | Key | Piece | Depends on |
 |---|---|---|
-| P0.1 | Tooling: `requires-python >=3.12`, ruff lint and format, pyright, pytest config, pre-commit | none |
+| P0.1 | Tooling: `requires-python >=3.12`, ruff lint and format, mypy (strict), pytest config. The pre-commit config is left for a person to add | none |
 | P0.2 | CLI skeleton and `doclo doctor` (reports Python, Typst found or missing, pinned Typst version) | P0.1 |
 | P0.3 | Hygiene: `.editorconfig`, LF check, grep gate for earlier working names | P0.1 |
 | P0.4 | CI: GitHub Actions on macOS and Linux running lint, types and tests | P0.1 |
@@ -74,3 +74,15 @@ Roughly 150 pieces in all.
 - Wave 2 pieces that compile need a `typst` binary on the machine. Whether Typst is installed by Prepare (for example the PyPI `typst` package) or by hand decides whether those pieces can run walk-away; settle it at M1.5.
 - Pieces that edit `.github/`, `AGENTS.md`, `LICENSE` or `NOTICE` name them under `Protected paths` and need `Settings: may change` where they touch CI.
 - The web app (M5) adds `registry.npmjs.org` to `Sandbox domains` in `AGENTS.md`.
+
+## Piece numbers (wave 1)
+
+| Key | Issue |
+|---|---|
+| P0.0 scaffold, P0.1 tooling, P0.1b ruff scope | #4, #3, #26 |
+| P0.2 CLI and doctor, P0.3 hygiene | #5, #6 |
+| P0.5 DCO, P0.6 licences, P0.7 secret scan | #7, #8, #9 |
+| P0.8 CONTEXT.md, P0.8b AGENTS.md, P0.9 fixtures | #10, #11, #12 |
+| P0.10 issue templates, P0.11 cassette, P0.4 CI | #14, #13, #21 |
+| M1.1 models, M1.2 parser, M1.3 serialiser | #15, #16, #17 |
+| M1.3b ids, M1.4a patch guards, M1.4b patch to file | #18, #19, #20 |
