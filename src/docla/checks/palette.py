@@ -58,8 +58,10 @@ def _coloured(facts: LayoutFacts) -> Iterator[tuple[str, str, FactBox]]:
                     yield shape.section_id, colour, shape.box
 
 
-def _finding(rule: Rule, ctx: CheckContext, section_id: str, colour: str, box: FactBox) -> Finding:
+def _finding(rule: Rule, ctx: CheckContext, section_id: str, colour: str, box: FactBox) -> Finding | None:
     name, distance = nearest(colour, ctx.tokens)
+    if distance <= float(rule.check.get("tolerance", 2.0)):
+        return None
     return make_finding(
         rule,
         ctx,
@@ -78,12 +80,11 @@ class ColourInSet:
     def run(self, ctx: CheckContext, rule: Rule) -> list[Finding]:
         if ctx.facts is None or not ctx.tokens:
             return []
-        tolerance = float(rule.check.get("tolerance", 2.0))
         first: dict[tuple[str, str], FactBox] = {}
         for section_id, colour, box in _coloured(ctx.facts):
-            if (section_id, colour) not in first and nearest(colour, ctx.tokens)[1] > tolerance:
-                first[(section_id, colour)] = box
-        return [_finding(rule, ctx, section_id, colour, box) for (section_id, colour), box in first.items()]
+            first.setdefault((section_id, colour), box)
+        found = (_finding(rule, ctx, section_id, colour, box) for (section_id, colour), box in first.items())
+        return [finding for finding in found if finding is not None]
 
 
 RULES: list[Rule] = [
