@@ -1,4 +1,5 @@
 """Check that every commit in a git revision range carries a DCO sign-off."""
+
 import re
 import subprocess
 import sys
