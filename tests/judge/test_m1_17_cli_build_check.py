@@ -99,9 +99,9 @@ def test_D1_build_doc_writes_a4_pages(tmp_path, capsys):
     source = _write(tmp_path, "note.md", DOC)
     out_dir = tmp_path / "out"
     code, out, _ = _run(["build", str(source), "--out", str(out_dir)], capsys)
-    boxes = _media_boxes(out_dir / "note.pdf")
     assert code == 0
     assert str(out_dir / "note.pdf") in out
+    boxes = _media_boxes(out_dir / "note.pdf")
     assert boxes == [(0.0, 0.0, 595.3, 841.9)]
 
 
@@ -134,6 +134,7 @@ def test_D4_findings_json_matches_printed_lines(tmp_path, capsys):
     fixture = SEEDED / "geo.text-fits" / "fail" / "doc.md"
     out_dir = tmp_path / "out"
     _, out, _ = _run(["check", str(fixture), "--out", str(out_dir)], capsys)
+    assert (out_dir / "doc.findings.json").is_file(), out
     raw = json.loads((out_dir / "doc.findings.json").read_text())
     findings = TypeAdapter(list[Finding]).validate_python(raw)
     expected = [f"{f.severity} {f.rule_id} {f.section_id or '-'} {f.message}" for f in findings]
@@ -145,6 +146,7 @@ def test_D4_findings_json_is_empty_list_when_clean(tmp_path, capsys):
     source = _write(tmp_path, "deck.md", SLIDES)
     out_dir = tmp_path / "out"
     _run(["check", str(source), "--out", str(out_dir)], capsys)
+    assert (out_dir / "deck.findings.json").is_file()
     assert json.loads((out_dir / "deck.findings.json").read_text()) == []
 
 
