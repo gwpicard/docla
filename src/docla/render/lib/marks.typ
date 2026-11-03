@@ -20,6 +20,9 @@
   b
 }
 
+// `el` measures outside any container, where 100% resolves to 0, so pass the available width.
+#let el-full-width(role, sec-id, body) = layout(size => el(role, sec-id, width: size.width, body))
+
 #let fit-box(role, sec-id, w, h, body) = context {
   let m = measure(block(width: w, body))
   [#metadata((kind: "fit", role: role, id: sec-id, need: m.height / 1pt, have: h / 1pt, ok: m.height <= h)) <docla-mark>]
