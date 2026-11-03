@@ -40,6 +40,7 @@ def _sec(sec_id: str, title: str, paragraphs: list[str], items: list[str], sourc
 
 def _marks(tmp_path: Path, component: str, sec: str) -> list[dict]:
     k = _kit()
+    assert (k.components_dir() / f"{component}.typ").is_file(), f"components/{component}.typ must exist"
     shutil.copytree(k.lib_dir(), tmp_path / "lib")
     shutil.copytree(k.components_dir(), tmp_path / "components")
     main = tmp_path / "main.typ"
@@ -146,6 +147,7 @@ def test_D5_empty_source_line_emits_no_source_mark(tmp_path: Path):
 def test_D6_component_files_hold_no_colour_literals():
     folder = _kit().components_dir()
     for name in ("body.typ", "callout.typ"):
+        assert (folder / name).is_file(), f"{name} must exist"
         text = (folder / name).read_text()
         for banned in ("rgb(", "luma(", "cmyk("):
             assert banned not in text, f"{name} must not contain {banned}"
