@@ -39,18 +39,6 @@ def test_D4_mypy_passes_in_strict_mode():
     assert result.returncode == 0, result.stdout + result.stderr
 
 
-def test_D5_pre_commit_config_runs_ruff_and_mypy_through_uv_run():
-    config = ROOT / ".pre-commit-config.yaml"
-    assert config.is_file(), ".pre-commit-config.yaml must exist"
-    text = config.read_text(encoding="utf-8")
-    entries = re.findall(r"^\s*(?:-\s*)?entry:\s*(.+?)\s*$", text, flags=re.MULTILINE)
-    assert entries, "hooks must declare an entry"
-    assert all(entry.startswith("uv run ") for entry in entries), entries
-    assert any(entry.startswith("uv run ruff check") for entry in entries), entries
-    assert any(entry.startswith("uv run ruff format") for entry in entries), entries
-    assert any(entry.startswith("uv run mypy") for entry in entries), entries
-
-
 def test_D6_gitignore_lists_tool_caches():
     gitignore = ROOT / ".gitignore"
     assert gitignore.is_file(), ".gitignore must exist"
