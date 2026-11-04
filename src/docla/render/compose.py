@@ -6,6 +6,8 @@ from pydantic import BaseModel
 
 from docla.model import Document, Format, Item, Section
 from docla.render.kit import components_dir, lib_dir
+from docla.theme import Theme
+from docla.theme.typst import render_theme_typ
 
 M1_COMPONENTS: dict[tuple[Format, str], str] = {
     ("slides", "statement"): "statement",
@@ -30,10 +32,15 @@ class Composition(BaseModel):
     sections: list[ComposedSection]
 
 
-def _component(section: Section, fmt: Format) -> str:
+def component_for(section: Section, fmt: Format) -> str | None:
+    """Return the component that draws `section` in format `fmt`, or None when there is none."""
     if section.component in {name for (f, _), name in M1_COMPONENTS.items() if f == fmt}:
         return section.component
-    component = M1_COMPONENTS.get((fmt, section.intent))
+    return M1_COMPONENTS.get((fmt, section.intent))
+
+
+def _component(section: Section, fmt: Format) -> str:
+    component = component_for(section, fmt)
     if component is None:
         raise ComposeError(f"section {section.id}: intent {section.intent!r} has no component for format {fmt!r}")
     return component
@@ -80,11 +87,27 @@ def _main_typ(comp: Composition) -> str:
     return "\n".join(lines) + "\n"
 
 
-def assemble(comp: Composition, dest: Path) -> Path:
-    """Write a render folder at `dest` that Typst compiles; return the path of `main.typ`."""
+def _apply_theme(theme: Theme, dest: Path) -> None:
+    (dest / "lib" / "theme.typ").write_text(render_theme_typ(theme))
+    shutil.copytree(theme.fonts_dir, dest / "fonts")
+
+
+def font_paths(dest: Path) -> list[Path]:
+    """Return the font folders of the render folder at `dest`, for Typst's `--font-path`."""
+    fonts = dest / "fonts"
+    return [fonts] if fonts.is_dir() else []
+
+
+def assemble(comp: Composition, dest: Path, *, theme: Theme | None = None) -> Path:
+    """Write a render folder at `dest` that Typst compiles; return the path of `main.typ`.
+
+    With a theme, `lib/theme.typ` is generated from its tokens and its fonts are copied to `fonts/`.
+    """
     if dest.exists():
         raise FileExistsError(f"render folder already exists: {dest}")
     shutil.copytree(lib_dir(), dest / "lib")
+    if theme is not None:
+        _apply_theme(theme, dest)
     shutil.copytree(components_dir(), dest / "components")
     (dest / "composition.json").write_text(comp.model_dump_json())
     main = dest / "main.typ"
