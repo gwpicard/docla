@@ -69,6 +69,7 @@ def test_D1_people_manifest_and_packaged_components():
 
 def test_D2_people_and_pinned_routes():
     chooser = _need(chooser_module, "load_chooser")(manifests=_manifests())
+    assert chooser.knows("people", "slides"), "the chooser must have slides entries for intent people"
     Section = _need(model, "Section")
     Item = _need(model, "Item")
     cases = [
