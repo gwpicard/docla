@@ -1,3 +1,4 @@
+import hashlib
 import shutil
 from functools import cache
 from pathlib import Path
@@ -29,6 +30,7 @@ class ComposedSection(BaseModel):
     component: str
     props: dict[str, Any]
     content: dict[str, Any] = Field(default_factory=dict)
+    image_path: Path | None = Field(default=None, exclude=True)
 
 
 class Composition(BaseModel):
@@ -90,11 +92,23 @@ def _compose_section(section: Section, fmt: Format, chooser: Chooser, index: int
     return ComposedSection(id=section.id, component=component, props=props, content=content)
 
 
-def compose(doc: Document, chooser: Chooser | None = None) -> Composition:
+def _resolve_image(image: str | None, assets: list[Path]) -> Path | None:
+    if image is None:
+        return None
+    for folder in assets:
+        path = folder / image
+        if path.is_file():
+            return path
+    raise ComposeError(f"image {image!r} not found in folders: {', '.join(str(folder) for folder in assets)}")
+
+
+def compose(doc: Document, chooser: Chooser | None = None, *, assets: list[Path] = []) -> Composition:
     """Map each section of `doc` to a component and its props, in order, using `chooser` or the default one."""
     chooser = default_chooser() if chooser is None else chooser
     total = len(doc.sections)
     sections = [_compose_section(section, doc.format, chooser, i, total) for i, section in enumerate(doc.sections)]
+    for section, composed in zip(doc.sections, sections, strict=True):
+        composed.image_path = _resolve_image(section.image, assets)
     return Composition(format=doc.format, sections=sections)
 
 
@@ -128,6 +142,19 @@ def font_paths(dest: Path) -> list[Path]:
     return [fonts] if fonts.is_dir() else []
 
 
+def _copy_images(comp: Composition, dest: Path) -> Composition:
+    result = comp.model_copy(deep=True)
+    for section in result.sections:
+        if section.image_path is not None:
+            data = section.image_path.read_bytes()
+            name = hashlib.sha256(data).hexdigest()[:12] + section.image_path.suffix.lower()
+            target = dest / "assets" / name
+            target.parent.mkdir(parents=True, exist_ok=True)
+            target.write_bytes(data)
+            section.content["image"] = f"/assets/{name}"
+    return result
+
+
 def assemble(comp: Composition, dest: Path, *, theme: Theme | None = None, library: Path | None = None) -> Path:
     """Write a render folder at `dest` that Typst compiles; return the path of `main.typ`.
 
@@ -143,7 +170,7 @@ def assemble(comp: Composition, dest: Path, *, theme: Theme | None = None, libra
     shutil.copytree(components_dir(), dest / "components")
     for path in library.glob("*.typ"):
         shutil.copy2(path, dest / "components" / path.name)
-    (dest / "composition.json").write_text(comp.model_dump_json())
+    (dest / "composition.json").write_text(_copy_images(comp, dest).model_dump_json())
     main = dest / "main.typ"
     main.write_text(_main_typ(comp))
     return main
