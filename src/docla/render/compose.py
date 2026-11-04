@@ -7,7 +7,8 @@ from pydantic import BaseModel
 
 from docla.model import Document, Format, Item, Section
 from docla.render.chooser import Chooser, ChooserError, load_chooser
-from docla.render.kit import components_dir, lib_dir
+from docla.render.components import all_manifests
+from docla.render.kit import components_dir, lib_dir, library_dir
 from docla.theme import Theme
 from docla.theme.typst import render_theme_typ
 
@@ -126,10 +127,13 @@ def assemble(comp: Composition, dest: Path, *, theme: Theme | None = None) -> Pa
     """
     if dest.exists():
         raise FileExistsError(f"render folder already exists: {dest}")
+    all_manifests(library_dir())
     shutil.copytree(lib_dir(), dest / "lib")
     if theme is not None:
         _apply_theme(theme, dest)
     shutil.copytree(components_dir(), dest / "components")
+    for path in library_dir().glob("*.typ"):
+        shutil.copy2(path, dest / "components" / path.name)
     (dest / "composition.json").write_text(comp.model_dump_json())
     main = dest / "main.typ"
     main.write_text(_main_typ(comp))

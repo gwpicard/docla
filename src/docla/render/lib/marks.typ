@@ -1,6 +1,8 @@
 // Marks: metadata labelled <docla-mark>, told apart by `kind`.
 // Positions are in pt as numbers.
 
+#import "theme.typ": colour
+
 #let _pos() = {
   let p = here().position()
   (page: p.page, x: p.x / 1pt, y: p.y / 1pt)
@@ -26,5 +28,10 @@
 #let fit-box(role, sec-id, w, h, body) = context {
   let m = measure(block(width: w, body))
   [#metadata((kind: "fit", role: role, id: sec-id, need: m.height / 1pt, have: h / 1pt, ok: m.height <= h)) <docla-mark>]
-  block(width: w, height: h, clip: false, body)
+  block(width: w, height: h, clip: true)[
+    #body
+    #if m.height > h {
+      place(bottom, rect(width: w, height: 3pt, fill: colour("accent"), stroke: none))
+    }
+  ]
 }
