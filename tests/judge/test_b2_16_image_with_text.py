@@ -34,7 +34,9 @@ def _manifests():
 
 def _chooser():
     assert chooser_module is not None and hasattr(chooser_module, "load_chooser")
-    return chooser_module.load_chooser(manifests=_manifests())
+    routes = chooser_module.load_chooser(manifests=_manifests())
+    assert routes.knows("image-text", "slides"), "the chooser must have slides entries for intent image-text"
+    return routes
 
 
 def _fixture():
