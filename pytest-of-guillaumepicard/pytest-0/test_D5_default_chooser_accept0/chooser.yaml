@@ -1,0 +1,6 @@
+version: 1
+intents:
+  spark:
+    describes: A spark.
+    slides:
+      - {component: unknown}

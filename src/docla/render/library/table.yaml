@@ -1,0 +1,10 @@
+name: table
+format: slides
+label: Table
+intents: [table]
+capacity:
+  title_words: [1, 8]
+  columns: [2, 6]
+  rows: [1, 10]
+elements: [title, table-header, table-cell, figure, figure-source]
+fixture: tests/fixtures/components/table.yaml
