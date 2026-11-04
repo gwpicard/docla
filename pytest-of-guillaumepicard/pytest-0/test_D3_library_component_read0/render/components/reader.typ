@@ -1,0 +1,1 @@
+#let reader(sec) = [#sec.title: #sec.data.k]

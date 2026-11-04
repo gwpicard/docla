@@ -1,0 +1,9 @@
+name: callout
+format: doc
+label: Callout box
+intents: [callout]
+capacity:
+  title_words: [1, 8]
+  items: [1, 6]
+  item_chars: [10, 160]
+elements: [callout]
