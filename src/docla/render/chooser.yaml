@@ -39,3 +39,7 @@ intents:
     slides:
       - {component: table, when: {has_data: true}}
       - {component: bullets}
+  chronology:
+    describes: Events in chronological order.
+    slides:
+      - {component: timeline}
