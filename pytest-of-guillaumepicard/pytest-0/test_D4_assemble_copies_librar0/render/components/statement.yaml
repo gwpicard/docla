@@ -1,7 +1,0 @@
-name: statement
-format: slides
-label: Big statement
-intents: [statement]
-capacity:
-  title_words: [1, 14]
-elements: [title]
