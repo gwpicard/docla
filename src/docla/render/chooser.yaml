@@ -24,3 +24,7 @@ intents:
     describes: A numbered list of topics.
     slides:
       - {component: agenda}
+  comparison:
+    describes: A comparison of options.
+    slides:
+      - {component: two-column}
