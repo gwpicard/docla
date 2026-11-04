@@ -1,20 +1,30 @@
-# Intent: cards renders parallel sets within its declared slide capacity.
+# Intent: cards renders card sets within its declared slide capacity.
+import importlib
+import importlib.util
 import re
 from pathlib import Path
 
 import pytest
 import yaml
 
-try:
-    from docla import cli, model, source, theme
-    from docla.render import chooser, components, swatch
-except ImportError as error:
-    if error.name not in {
-        "docla", "docla.cli", "docla.model", "docla.source", "docla.theme", "docla.render",
-        "docla.render.chooser", "docla.render.components", "docla.render.swatch",
-    }:
-        raise
-    cli = model = source = theme = chooser = components = swatch = None
+def _subject(name):
+    try:
+        return importlib.import_module(name)
+    except ImportError as error:
+        if not error.name or not (error.name == name or name.startswith(error.name + ".")):
+            raise
+        if importlib.util.find_spec(error.name) is not None:
+            raise
+        return None
+
+
+cli = _subject("docla.cli")
+model = _subject("docla.model")
+source = _subject("docla.source")
+theme = _subject("docla.theme")
+chooser = _subject("docla.render.chooser")
+components = _subject("docla.render.components")
+swatch = _subject("docla.render.swatch")
 
 ROOT = Path(__file__).resolve().parents[2]
 FIXTURE = ROOT / "tests/fixtures/components/cards.yaml"
@@ -26,18 +36,23 @@ def _manifests():
 
 
 def _section(count, length=30):
+    assert model is not None and hasattr(model, "Section") and hasattr(model, "Item")
     body = ("word " * ((length + 4) // 5))[:length]
-    return model.Section(id="cards1", intent="parallel-set", title="Parallel choices", component="cards",
+    return model.Section(id="cards1", intent="card-set", title="Card choices", component="cards",
                          items=[model.Item(body=body) for _ in range(count)])
 
 
 def _fixture():
     assert FIXTURE.is_file(), "cards fixture must exist"
+    assert model is not None and hasattr(model, "Section")
     return model.Section.model_validate(yaml.safe_load(FIXTURE.read_text()))
 
 
 def _render(section, tmp_path):
     assert "cards" in _manifests(), "cards manifest must exist"
+    assert model is not None and hasattr(model, "Document")
+    assert swatch is not None and hasattr(swatch, "swatch")
+    assert theme is not None and hasattr(theme, "neutral_theme")
     assert section.id
     doc = model.Document(front={"title": "Cards"}, format="slides", sections=[section])
     return swatch.swatch(doc, section.id, tmp_path, theme=theme.neutral_theme())
@@ -49,7 +64,7 @@ def test_D1_cards_manifest_and_packaged_components():
     cards = manifests["cards"]
     assert cards.name == "cards"
     assert cards.format == "slides"
-    assert list(cards.intents) == ["parallel-set"]
+    assert list(cards.intents) == ["card-set"]
     assert {k: tuple(v) for k, v in cards.capacity.items()} == {
         "title_words": (1, 8), "items": (2, 4), "item_chars": (10, 100)
     }
@@ -59,8 +74,10 @@ def test_D1_cards_manifest_and_packaged_components():
 
 
 def test_D2_packaged_chooser_routes_and_pinned_routes():
+    assert chooser is not None and hasattr(chooser, "load_chooser")
     routes = chooser.load_chooser(manifests=_manifests())
-    assert routes.knows("parallel-set", "slides"), "the chooser must have slides entries for intent parallel-set"
+    assert not routes.knows("parallel-set", "slides")
+    assert routes.knows("card-set", "slides"), "the chooser must have slides entries for intent card-set"
     for count, expected in [(1, "bullets"), (2, "cards"), (3, "cards"), (4, "cards"), (5, "bullets")]:
         assert routes.choose(_section(count), "slides", 0, 1) == expected
     for fmt, section, expected in [
@@ -74,7 +91,7 @@ def test_D2_packaged_chooser_routes_and_pinned_routes():
 
 def test_D3_fixture_page_and_marks(tmp_path):
     section = _fixture()
-    assert section.intent == "parallel-set" and section.title and 2 <= len(section.items) <= 4
+    assert section.intent == "card-set" and section.title and 2 <= len(section.items) <= 4
     result = _render(section, tmp_path)
     assert len(result.facts.pages) == 1
     page = result.facts.pages[0]
@@ -96,7 +113,14 @@ def test_D4_capacity_fit_marks(tmp_path, count, length, expected):
 def test_D5_fixture_deck_check_has_no_findings(tmp_path, capsys):
     _manifests()
     section = _fixture()
-    doc = model.Document(front={"doctype": "pitch-deck", "title": "Cards"}, format="slides", sections=[section])
+    assert section.intent == "card-set"
+    assert model is not None and hasattr(model, "Document") and hasattr(model, "Source")
+    assert source is not None and hasattr(source, "serialise")
+    assert cli is not None and hasattr(cli, "main")
+    keys = {citation.key for item in section.items for citation in item.citations}
+    doc = model.Document(front={"doctype": "pitch-deck", "title": "Cards"}, format="slides",
+                         sections=[section], sources=[model.Source(key=key, text="Workshop transcript")
+                                                     for key in sorted(keys)])
     path = tmp_path / "deck.md"
     path.write_text(source.serialise(doc))
     code = cli.main(["check", str(path), "--out", str(tmp_path / "out")])
@@ -113,6 +137,7 @@ def test_D6_cards_typ_has_no_colour_literals():
 
 @pytest.mark.parametrize("rule", ["source.citations-resolve", "source.empty-section"])
 def test_D7_seeded_source_findings_still_reported(tmp_path, capsys, rule):
+    assert cli is not None and hasattr(cli, "main")
     path = ROOT / "tests/fixtures/seeded-defects" / rule / "fail/doc.md"
     assert path.is_file()
     code = cli.main(["check", str(path), "--out", str(tmp_path / "out")])
