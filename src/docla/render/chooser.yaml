@@ -43,3 +43,7 @@ intents:
     describes: Events in chronological order.
     slides:
       - {component: timeline}
+  matrix:
+    describes: Four quadrants arranged on two axes.
+    slides:
+      - {component: matrix}

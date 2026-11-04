@@ -1,0 +1,10 @@
+name: matrix
+format: slides
+label: Matrix
+intents: [matrix]
+capacity:
+  title_words: [1, 8]
+  items: [4, 4]
+  item_chars: [10, 70]
+elements: [title, quadrant, axis-label]
+fixture: tests/fixtures/components/matrix.yaml
