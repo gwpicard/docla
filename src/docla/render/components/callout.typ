@@ -2,6 +2,7 @@
 
 #import "/lib/marks.typ": section, el-full-width
 #import "/lib/theme.typ": colour
+#import "/lib/cite.typ": cite-keys
 
 #let callout(sec) = section(sec.id, {
   set text(size: 11pt, fill: colour("ink"))
@@ -12,8 +13,9 @@
     stroke: 1pt + colour("accent"),
     {
       text(weight: "bold", sec.title)
-      for item in sec.items {
-        list.item[#text(weight: "bold", item.head) #item.body]
+      for (i, item) in sec.items.enumerate() {
+        let citations = sec.at("citations", default: ()).at(i, default: ())
+        list.item[#text(weight: "bold", item.head) #item.body#if citations.len() > 0 { [ #cite-keys(citations)] }]
       }
     },
   ))

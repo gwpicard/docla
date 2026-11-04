@@ -1,0 +1,6 @@
+name: reader
+format: slides
+label: Reader
+intents: [bullets]
+capacity: {}
+elements: [title]

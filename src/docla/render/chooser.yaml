@@ -1,5 +1,9 @@
 version: 1
 intents:
+  cover:
+    describes: An opening slide.
+    slides:
+      - {component: cover}
   statement:
     describes: One claim, stated large.
     slides:
@@ -16,3 +20,17 @@ intents:
     describes: Points set apart from the running text.
     doc:
       - {component: callout}
+  agenda:
+    describes: A numbered list of topics.
+    slides:
+      - {component: agenda}
+  comparison:
+    describes: A comparison of options.
+    slides:
+      - {component: comparison, when: {count: [2, 3]}}
+      - {component: two-column}
+  key-numbers:
+    describes: Key figures and their captions.
+    slides:
+      - {component: key-figures, when: {count: [3, 4]}}
+      - {component: bullets}
