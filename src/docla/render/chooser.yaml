@@ -51,3 +51,7 @@ intents:
     describes: Contact details.
     slides:
       - {component: contact}
+  closing:
+    describes: A closing statement.
+    slides:
+      - {component: closing}
