@@ -1,0 +1,18 @@
+version: 1
+intents:
+  statement:
+    describes: One claim, stated large.
+    slides:
+      - {component: statement}
+  bullets:
+    describes: A list of points.
+    slides:
+      - {component: bullets}
+  body:
+    describes: Running prose in paragraphs.
+    doc:
+      - {component: body}
+  callout:
+    describes: Points set apart from the running text.
+    doc:
+      - {component: callout}
