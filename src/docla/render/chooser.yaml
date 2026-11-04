@@ -27,4 +27,5 @@ intents:
   comparison:
     describes: A comparison of options.
     slides:
+      - {component: comparison, when: {count: [2, 3]}}
       - {component: two-column}
