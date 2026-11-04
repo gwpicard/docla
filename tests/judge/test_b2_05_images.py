@@ -1,4 +1,5 @@
 # Intent: Resolve section images and copy them into the render kit under content-addressed names.
+import hashlib
 import inspect
 import json
 
@@ -35,6 +36,10 @@ def _png(path, colour):
     Image.new("RGB", (2, 2), colour).save(path, format="PNG")
 
 
+def _kit_path(path):
+    return f"/assets/{hashlib.sha256(path.read_bytes()).hexdigest()[:12]}.png"
+
+
 def _assemble(module, comp, dest):
     main = module.assemble(comp, dest)
     assert main == dest / "main.typ"
@@ -47,7 +52,7 @@ def test_D1_image_is_copied_and_exposed_in_content(tmp_path):
     _png(source, (255, 0, 0))
     comp = module.compose(_document("picture.png"), assets=[source.parent])
     sections = _assemble(module, comp, tmp_path / "kit")
-    expected = "/assets/de33ddc09a0b.png"
+    expected = _kit_path(source)
     assert sections[0]["content"]["image"] == expected
     assert (tmp_path / "kit" / expected.lstrip("/")).read_bytes() == source.read_bytes()
 
@@ -61,7 +66,7 @@ def test_D2_searches_folders_in_order(tmp_path):
     comp = module.compose(_document("only.png", "shared.png"), assets=[first, second])
     sections = _assemble(module, comp, tmp_path / "kit")
     assert [section["content"]["image"] for section in sections] == [
-        "/assets/21a452d2648c.png", "/assets/de33ddc09a0b.png"
+        _kit_path(second / "only.png"), _kit_path(first / "shared.png")
     ]
     for section, source in zip(sections, [second / "only.png", first / "shared.png"], strict=True):
         assert (tmp_path / "kit" / section["content"]["image"].lstrip("/")).read_bytes() == source.read_bytes()
@@ -74,7 +79,7 @@ def test_D3_identical_bytes_share_one_copied_file(tmp_path):
     (assets / "two.png").write_bytes((assets / "one.png").read_bytes())
     comp = module.compose(_document("one.png", "two.png"), assets=[assets])
     sections = _assemble(module, comp, tmp_path / "kit")
-    expected = "/assets/de33ddc09a0b.png"
+    expected = _kit_path(assets / "one.png")
     assert [section["content"]["image"] for section in sections] == [expected, expected]
     files = list((tmp_path / "kit" / "assets").iterdir())
     assert files == [tmp_path / "kit" / expected.lstrip("/")]
