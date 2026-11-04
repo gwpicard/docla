@@ -1,0 +1,10 @@
+id: contact1
+intent: contact
+title: Contact us
+items:
+  - head: Email
+    body: hello@example.org
+  - head: Telephone
+    body: +44 20 1234 5678
+  - head: Website
+    body: example.org

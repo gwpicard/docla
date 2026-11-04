@@ -1,0 +1,10 @@
+name: timeline
+format: slides
+label: Timeline
+intents: [chronology]
+capacity:
+  title_words: [1, 8]
+  items: [2, 6]
+  item_chars: [10, 70]
+elements: [title, item, date]
+fixture: tests/fixtures/components/timeline.yaml

@@ -1,0 +1,8 @@
+id: comparison1
+intent: comparison
+title: Compare the options
+items:
+  - body: The first option supports a steady start
+  - body: It offers a familiar way of working
+  - body: The second option allows more flexibility
+  - body: It supports a wider range of needs

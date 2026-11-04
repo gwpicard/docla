@@ -1,0 +1,12 @@
+id: people1
+intent: people
+title: Our team
+items:
+  - head: Ada Morgan
+    body: Programme lead
+  - head: Jo Taylor
+    body: Design lead
+  - head: Sam Chen
+    body: Research lead
+  - head: Alex Brown
+    body: Delivery lead

@@ -69,7 +69,10 @@ def _component(section: Section, fmt: Format, chooser: Chooser, index: int, tota
 
 
 def _item_props(item: Item) -> dict[str, Any]:
-    return {"head": item.head or "", "body": item.body, "cites": [c.key for c in item.citations]}
+    props = {"head": item.head or "", "body": item.body, "cites": [c.key for c in item.citations]}
+    if item.sub:
+        props["sub"] = item.sub
+    return props
 
 
 def _compose_section(section: Section, fmt: Format, chooser: Chooser, index: int, total: int) -> ComposedSection:
