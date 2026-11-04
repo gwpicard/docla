@@ -11,10 +11,16 @@
   let source-line = sec.source_line
   let content = sec.at("content", default: (:))
   place(top + left, dx: content-frame.x, dy: content-frame.y, {
-    fit-box("title", sec.id, content-frame.w * 0.6, 110pt, {
+    fit-box("title", sec.id, content-frame.w * 0.6, 300pt, {
       el("title", sec.id, {
         set text(..type-style("slides", "figure"), fill: colour("on-dark"))
-        sec.title
+        let words = sec.title.split(regex("\\s+"))
+        for (i, word) in words.enumerate() {
+          if i > 0 {
+            if calc.rem(i, 2) == 0 { linebreak() } else { [ ] }
+          }
+          word
+        }
       })
     })
   })
