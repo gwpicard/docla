@@ -24,3 +24,7 @@ intents:
     describes: A numbered list of topics.
     slides:
       - {component: agenda}
+  chapter-break:
+    describes: A break between chapters.
+    slides:
+      - {component: chapter-break}
