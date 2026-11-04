@@ -39,7 +39,9 @@ def facts_for(name: str, fixtures_dir: Path) -> dict[str, Any]:
     return result
 
 
-def _compare_boxes(role: str, kind: str, actual: list, golden: list, tolerance: float) -> list[str]:
+def _compare_boxes(
+    role: str, kind: str, actual: list[dict[str, Any]], golden: list[dict[str, Any]], tolerance: float
+) -> list[str]:
     messages = []
     if len(actual) != len(golden):
         messages.append(f"{role}: {kind} count differs ({len(actual)} != {len(golden)})")
@@ -53,7 +55,7 @@ def _compare_boxes(role: str, kind: str, actual: list, golden: list, tolerance: 
     return messages
 
 
-def compare_facts(actual: dict, golden: dict, tolerance: float = 0.5) -> list[str]:
+def compare_facts(actual: dict[str, Any], golden: dict[str, Any], tolerance: float = 0.5) -> list[str]:
     """Return differences in roles, counts, text and box positions."""
     messages = [
         f"{role}: role missing from {'actual' if role not in actual else 'golden'}"
