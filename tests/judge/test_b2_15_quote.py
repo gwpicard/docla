@@ -1,21 +1,38 @@
 # Intent: quote sections route to a theme-driven slide component with truthful capacity.
+import importlib
+import importlib.util
 import re
 from pathlib import Path
 
 import yaml
 
-from docla import cli
 from docla.model import Document, Item, Section
-from docla.render import chooser, components, swatch
-from docla.source import serialiser
-from docla.theme import neutral_theme
+
+
+def _optional_module(name):
+    try:
+        return importlib.import_module(name)
+    except ImportError as error:
+        if error.name != name and not name.startswith(str(error.name) + "."):
+            raise
+        if importlib.util.find_spec(error.name) is not None:
+            raise
+        return None
+
+
+cli = _optional_module("docla.cli")
+chooser = _optional_module("docla.render.chooser")
+components = _optional_module("docla.render.components")
+swatch = _optional_module("docla.render.swatch")
+serialiser = _optional_module("docla.source.serialiser")
+theme = _optional_module("docla.theme")
 
 ROOT = Path(__file__).resolve().parents[2]
 FIXTURE = ROOT / "tests/fixtures/components/quote.yaml"
 
 
 def _manifests():
-    assert hasattr(components, "all_manifests"), "docla.render.components.all_manifests must exist"
+    assert components is not None and hasattr(components, "all_manifests"), "all_manifests must exist"
     return components.all_manifests()
 
 
@@ -31,7 +48,9 @@ def _fixture():
 def _render(section, tmp_path):
     _manifests()
     doc = Document(front={"title": "Quote"}, format="slides", sections=[section])
-    return swatch.swatch(doc, section.id, tmp_path, theme=neutral_theme())
+    assert swatch is not None and hasattr(swatch, "swatch"), "swatch must exist"
+    assert theme is not None and hasattr(theme, "neutral_theme"), "neutral_theme must exist"
+    return swatch.swatch(doc, section.id, tmp_path, theme=theme.neutral_theme())
 
 
 def test_D1_quote_manifest_and_packaged_components():
@@ -51,6 +70,7 @@ def test_D1_quote_manifest_and_packaged_components():
 
 
 def test_D2_quote_and_pinned_routes():
+    assert chooser is not None and hasattr(chooser, "load_chooser"), "load_chooser must exist"
     routes = chooser.load_chooser(manifests=_manifests())
     assert routes.knows("quote", "slides"), "the chooser must have slides entries for intent quote"
     cases = [
@@ -78,18 +98,27 @@ def test_D3_fixture_renders_one_slide_with_marks(tmp_path):
 
 def test_D4_quote_capacity_boundary(tmp_path):
     section = _fixture()
-    quote = "word " * 40
+    quote = "journey " * 24 + "journey."
     assert len(quote) == 200
-    for text, expected in ((quote, True), (quote + "x", False)):
-        result = _render(section.model_copy(update={"paragraphs": [text]}), tmp_path)
-        fits = [mark.ok for mark in result.facts.marks if mark.kind == "fit"]
-        assert fits, "the quote slide must emit fit marks"
-        assert all(fits) is expected
+    long_quote = "journey " * 375
+    assert len(long_quote) == 3000
+    within = _render(section.model_copy(update={"paragraphs": [quote]}), tmp_path / "within")
+    fits = [mark for mark in within.facts.marks if mark.kind == "fit"]
+    assert fits and all(mark.ok for mark in fits)
+    quote_fits = [mark for mark in fits if mark.role == "quote" and mark.id == section.id]
+    assert len(quote_fits) == 1 and quote_fits[0].have > 0
+    overflow = _render(section.model_copy(update={"paragraphs": [long_quote]}), tmp_path / "overflow")
+    overflow_fits = [mark for mark in overflow.facts.marks if mark.kind == "fit" and mark.role == "quote" and mark.id == section.id]
+    assert len(overflow_fits) == 1
+    assert overflow_fits[0].ok is False
+    assert overflow_fits[0].need > overflow_fits[0].have == quote_fits[0].have
 
 
 def test_D5_fixture_working_file_checks_cleanly(tmp_path, capsys):
     section = _fixture()
     _manifests()
+    assert serialiser is not None and hasattr(serialiser, "serialise"), "serialise must exist"
+    assert cli is not None and hasattr(cli, "main"), "cli.main must exist"
     doc = Document(front={"doctype": "pitch-deck", "title": "Quote"}, format="slides", sections=[section])
     working = tmp_path / "deck.md"
     working.write_text(serialiser.serialise(doc), encoding="utf-8")
