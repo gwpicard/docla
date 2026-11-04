@@ -52,6 +52,7 @@ def test_D1_manifest_and_original_manifests():
 
 def test_D2_comparison_and_pinned_routes():
     routes = chooser.load_chooser(manifests=_manifests())
+    assert routes.knows("comparison", "slides"), "the chooser must have slides entries for intent comparison"
     sections = [
         (Section(id="s1", intent="comparison", title="Options"), "slides", "two-column"),
         (Section(id="s2", intent="comparison", items=[Item(body="A point")]), "slides", "two-column"),
