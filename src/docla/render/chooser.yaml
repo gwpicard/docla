@@ -1,5 +1,9 @@
 version: 1
 intents:
+  cover:
+    describes: An opening slide.
+    slides:
+      - {component: cover}
   statement:
     describes: One claim, stated large.
     slides:
