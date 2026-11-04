@@ -18,6 +18,11 @@ def components_dir() -> Path:
     return Path(__file__).parent / "components"
 
 
+def library_dir() -> Path:
+    """Return the folder that holds additional Typst components."""
+    return Path(__file__).parent / "library"
+
+
 def read_tokens(root: Path) -> dict[str, str]:
     """Return the colour tokens of `root/lib/theme.typ`, each as upper-case `#RRGGBB`."""
     with tempfile.TemporaryDirectory(dir=root) as folder:
