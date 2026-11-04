@@ -4,6 +4,10 @@ intents:
     describes: An opening slide.
     slides:
       - {component: cover}
+  quote:
+    describes: A quotation with its attribution.
+    slides:
+      - {component: quote}
   statement:
     describes: One claim, stated large.
     slides:
