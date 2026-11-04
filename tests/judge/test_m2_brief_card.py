@@ -109,7 +109,8 @@ def _theme_without_voice(tmp_path: Path):
     source = Path(docla.__file__).parent / "themes" / "neutral"
     target = tmp_path / "neutral"
     shutil.copytree(source, target)
-    shutil.rmtree(target / "voice")
+    if (target / "voice").exists():
+        shutil.rmtree(target / "voice")
     return load_theme(target)
 
 
