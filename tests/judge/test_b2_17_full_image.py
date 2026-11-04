@@ -46,6 +46,7 @@ def _asset(root, sec):
 
 def _render(tmp_path, sec):
     route = chooser.load_chooser(manifests=_manifests())
+    assert route.knows("full-image", "slides"), "the chooser must have slides entries for intent full-image"
     doc = Document(front={}, format="slides", sections=[sec])
     comp = compose.compose(doc, chooser=route)
     assert [s.component for s in comp.sections] == ["full-image"]
@@ -76,6 +77,7 @@ def test_D1_full_image_manifest_and_original_packaged_components():
 
 def test_D2_chooser_routes_image_and_preserves_m1_routes():
     route = chooser.load_chooser(manifests=_manifests())
+    assert route.knows("full-image", "slides"), "the chooser must have slides entries for intent full-image"
     assert route.choose(Section(id="a", intent="full-image", image="assets/photo.png"), "slides", 0, 1) == "full-image"
     assert route.choose(Section(id="a", intent="full-image"), "slides", 0, 1) == "statement"
     cases = [
