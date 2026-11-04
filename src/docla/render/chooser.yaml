@@ -55,6 +55,15 @@ intents:
     describes: Contact details.
     slides:
       - {component: contact}
+  chapter-break:
+    describes: A break between chapters.
+    slides:
+      - {component: chapter-break}
+  image-text:
+    describes: An image alongside supporting points.
+    slides:
+      - {component: image-with-text, when: {has_image: true}}
+      - {component: bullets}
   parallel-set:
     describes: Related items presented together.
     slides:
