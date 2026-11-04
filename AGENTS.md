@@ -40,7 +40,9 @@ This project uses AI Loop Kit. Pieces are GitHub issues with one `state:` label.
 Only the gate (gate.py) changes a state label. The person merges every pull request into main.
 Prepare command: `uv sync`
 Test command: `uv run python -m pytest`
-Agent: claude
+Agent: codex
+Agent model: gpt-6.1-terra
+Agent effort: medium
 Standards: `STANDARDS.md`
 Protected paths: `.claude/`, `.githooks/`, `.github/`, `LICENSE`, `NOTICE`
 Idle limit: 10
