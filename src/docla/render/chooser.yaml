@@ -43,3 +43,7 @@ intents:
     describes: Events in chronological order.
     slides:
       - {component: timeline}
+  people:
+    describes: People and their roles.
+    slides:
+      - {component: people}

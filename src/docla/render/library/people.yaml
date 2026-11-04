@@ -1,0 +1,10 @@
+name: people
+format: slides
+label: People
+intents: [people]
+capacity:
+  title_words: [1, 8]
+  items: [2, 6]
+  item_chars: [3, 50]
+elements: [title, name, role]
+fixture: tests/fixtures/components/people.yaml
