@@ -1,5 +1,6 @@
 # Intent: process sections render as a capacity-true slide component.
 import importlib
+import importlib.util
 import re
 from pathlib import Path
 
@@ -10,7 +11,7 @@ def _optional(name):
     try:
         return importlib.import_module(name)
     except ImportError as error:
-        if error.name != name and not name.startswith(str(error.name) + "."):
+        if error.name != name and not str(error.name).startswith(name + "."):
             raise
         if importlib.util.find_spec(str(error.name)) is not None:
             raise
@@ -24,6 +25,7 @@ model = _optional("docla.model")
 theme = _optional("docla.theme")
 serialiser = _optional("docla.source.serialiser")
 cli = _optional("docla.cli")
+golden = _optional("docla.testing.golden")
 ROOT = Path(__file__).resolve().parents[2]
 
 
@@ -35,6 +37,7 @@ def _manifests():
 def _fixture():
     manifests = _manifests()
     assert "process" in manifests, "process manifest must exist"
+    assert manifests["process"].fixture == "tests/fixtures/components/process.yaml"
     path = ROOT / "tests/fixtures/components/process.yaml"
     assert path.is_file(), "process fixture must exist"
     assert model is not None and hasattr(model, "Section")
@@ -88,12 +91,15 @@ def test_D3_fixture_page_and_element_marks(tmp_path):
     assert any(m.kind == "section" and m.id == section.id and m.edge == "start" for m in marks)
     roles = {m.role for m in marks if m.kind == "element" and m.id == section.id}
     assert {"title", "step", "item"} <= roles
+    assert golden is not None and hasattr(golden, "facts_for"), "facts_for must exist"
+    facts = golden.facts_for("process", ROOT / "tests/fixtures/components")
+    assert {"title", "step", "item"} <= facts.keys()
 
 
 def test_D4_capacity_boundary_fit_marks(tmp_path):
     section = _fixture()
     assert model is not None and hasattr(model, "Item")
-    items = [model.Item(head="Step", body="word " * 11 + "x") for _ in range(7)]
+    items = [model.Item(head="Prepare", body="process " * 6 + "steps") for _ in range(7)]
     assert all(len(item.head) + len(item.body) == 60 for item in items)
     for count, expected in [(6, True), (7, False)]:
         candidate = section.model_copy(update={"items": items[:count]})
