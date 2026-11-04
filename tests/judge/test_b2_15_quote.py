@@ -52,6 +52,7 @@ def test_D1_quote_manifest_and_packaged_components():
 
 def test_D2_quote_and_pinned_routes():
     routes = chooser.load_chooser(manifests=_manifests())
+    assert routes.knows("quote", "slides"), "the chooser must have slides entries for intent quote"
     cases = [
         (Section(id="q", intent="quote", paragraphs=["A quotation"], source_line="A speaker"), "slides", "quote"),
         (Section(id="s", intent="statement", title="A claim"), "slides", "statement"),
