@@ -60,6 +60,7 @@ def test_D1_cards_manifest_and_packaged_components():
 
 def test_D2_packaged_chooser_routes_and_pinned_routes():
     routes = chooser.load_chooser(manifests=_manifests())
+    assert routes.knows("parallel-set", "slides"), "the chooser must have slides entries for intent parallel-set"
     for count, expected in [(1, "bullets"), (2, "cards"), (3, "cards"), (4, "cards"), (5, "bullets")]:
         assert routes.choose(_section(count), "slides", 0, 1) == expected
     for fmt, section, expected in [
