@@ -67,6 +67,7 @@ def test_D2_process_and_pinned_routes():
     assert chooser is not None and hasattr(chooser, "load_chooser")
     assert model is not None and hasattr(model, "Section") and hasattr(model, "Item")
     routes = chooser.load_chooser(manifests=manifests)
+    assert routes.knows("process", "slides"), "the chooser must have slides entries for intent process"
     sections = [
         ("slides", model.Section(id="p", intent="process"), "process"),
         ("slides", model.Section(id="s", intent="statement", title="Claim"), "statement"),
