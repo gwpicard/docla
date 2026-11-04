@@ -46,10 +46,10 @@ def _chosen(section: Section, fmt: Format, chooser: Chooser, index: int, total: 
     return chooser.choose(section, fmt, index, total)
 
 
-def component_for(section: Section, fmt: Format) -> str | None:
-    """Return the component that draws `section` in format `fmt`, or None when there is none."""
+def component_for(section: Section, fmt: Format, index: int = 0, total: int = 1) -> str | None:
+    """Return the component that draws `section` at `index` of `total` in format `fmt`, or None when there is none."""
     try:
-        return _chosen(section, fmt, default_chooser(), 0, 1)
+        return _chosen(section, fmt, default_chooser(), index, total)
     except ChooserError:
         return None
 
