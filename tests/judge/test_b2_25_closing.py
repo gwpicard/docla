@@ -72,6 +72,7 @@ def test_D2_closing_and_pinned_routes():
     assert chooser_module is not None and hasattr(chooser_module, "load_chooser")
     assert model is not None and hasattr(model, "Section") and hasattr(model, "Item")
     chooser = chooser_module.load_chooser(manifests=manifests)
+    assert chooser.knows("closing", "slides"), "the chooser must have slides entries for intent closing"
     cases = [
         ("slides", model.Section(id="a", intent="closing", title="Thank you"), "closing"),
         ("slides", model.Section(id="b", intent="statement", title="Claim"), "statement"),
