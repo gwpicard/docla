@@ -67,6 +67,7 @@ def test_D1_manifest_and_packaged_components():
 def test_D2_key_numbers_routes(count, expected):
     assert chooser is not None and hasattr(chooser, 'load_chooser')
     routes = chooser.load_chooser(manifests=manifests())
+    assert routes.knows("key-numbers", "slides"), "the chooser must have slides entries for intent key-numbers"
     section = Section(id='figures', intent='key-numbers', items=[Item(body='A caption') for _ in range(count)])
     assert routes.choose(section, 'slides', 0, 1) == expected
 
@@ -74,6 +75,7 @@ def test_D2_key_numbers_routes(count, expected):
 def test_D2_pinned_routes():
     assert chooser is not None and hasattr(chooser, 'load_chooser')
     routes = chooser.load_chooser(manifests=manifests())
+    assert routes.knows("key-numbers", "slides"), "the chooser must have slides entries for intent key-numbers"
     for fmt, intent, count, expected in [
         ('slides', 'statement', 0, 'statement'), ('slides', 'bullets', 3, 'bullets'),
         ('doc', 'body', 0, 'body'), ('doc', 'callout', 1, 'callout'),
