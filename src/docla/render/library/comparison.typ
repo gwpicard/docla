@@ -22,7 +22,7 @@
         let citations = sec.at("citations", default: ()).at(i, default: ())
         fit-box("item", sec.id, column-width, content-frame.h, {
           fit-box("column-title", sec.id, column-width, row-height, el("column-title", sec.id, [#item.head #cite-keys(citations)], width: column-width))
-          for row in item.sub {
+          for row in item.at("sub", default: ()) {
             fit-box("row", sec.id, column-width, row-height, el("row", sec.id, row, width: column-width))
           }
         })
