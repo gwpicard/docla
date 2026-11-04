@@ -237,6 +237,9 @@ def _palette_findings(colour: str):
     theme = _need_theme()
     assert engine is not None and hasattr(engine, "CheckContext") and hasattr(engine, "run_checks")
     assert catalogue is not None and hasattr(catalogue, "m1_rules"), "docla.checks.catalogue.m1_rules must exist"
+    import dataclasses
+
+    assert "theme" in {f.name for f in dataclasses.fields(engine.CheckContext)}, "CheckContext must accept a theme"
     doc = Document(front={}, format="slides", sections=[Section(id="s1", intent="statement")])
     ctx = engine.CheckContext(doc=doc, facts=_facts_with_word(colour), theme=theme)
     rules = [r for r in catalogue.m1_rules() if r.id == "geo.palette"]
