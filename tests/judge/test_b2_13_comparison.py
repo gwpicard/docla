@@ -74,6 +74,7 @@ def test_D2_comparison_count_routes(count, expected):
     manifests = _manifests()
     assert chooser_module is not None and hasattr(chooser_module, "load_chooser")
     chooser = chooser_module.load_chooser(manifests=manifests)
+    assert chooser.knows("comparison", "slides"), "the chooser must have slides entries for intent comparison"
     section = Section(id="s1", intent="comparison", items=[Item(head="Option", body="") for _ in range(count)])
     assert chooser.choose(section, "slides", 0, 1) == expected
 
@@ -81,6 +82,7 @@ def test_D2_comparison_count_routes(count, expected):
 def test_D2_existing_routes_stay():
     assert chooser_module is not None and hasattr(chooser_module, "load_chooser")
     chooser = chooser_module.load_chooser(manifests=_manifests())
+    assert chooser.knows("comparison", "slides"), "the chooser must have slides entries for intent comparison"
     cases = [
         (Section(id="s1", intent="statement", title="Claim"), "slides", "statement"),
         (Section(id="s2", intent="bullets", items=[Item(body="A useful point") for _ in range(3)]), "slides", "bullets"),
