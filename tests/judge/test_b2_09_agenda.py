@@ -45,6 +45,7 @@ def test_D1_agenda_manifest_and_packaged_components():
 
 def test_D2_packaged_chooser_routes_agenda_and_pinned_intents():
     routing = chooser.load_chooser(manifests=_manifests())
+    assert routing.knows("agenda", "slides"), "the chooser must have slides entries for intent agenda"
     cases = [
         ("slides", Section(id="a", intent="agenda", title="Agenda", items=[Item(body="First"), Item(body="Second")]), "agenda"),
         ("slides", Section(id="b", intent="statement", title="Claim"), "statement"),
