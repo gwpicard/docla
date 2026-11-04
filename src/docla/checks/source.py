@@ -49,6 +49,7 @@ class IntentKnown:
 
     def run(self, ctx: CheckContext, rule: Rule) -> list[Finding]:
         fmt = ctx.doc.format
+        total = len(ctx.doc.sections)
         return [
             make_finding(
                 rule,
@@ -57,8 +58,8 @@ class IntentKnown:
                 section_id=section.id,
                 measured={"intent": section.intent, "format": fmt},
             )
-            for section in ctx.doc.sections
-            if component_for(section, fmt) is None
+            for index, section in enumerate(ctx.doc.sections)
+            if component_for(section, fmt, index, total) is None
         ]
 
 
