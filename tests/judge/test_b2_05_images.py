@@ -1,5 +1,4 @@
 # Intent: Resolve section images and copy them into the render kit under content-addressed names.
-import hashlib
 import inspect
 import json
 
@@ -36,10 +35,6 @@ def _png(path, colour):
     Image.new("RGB", (2, 2), colour).save(path, format="PNG")
 
 
-def _kit_image(path):
-    return "/assets/" + hashlib.sha256(path.read_bytes()).hexdigest()[:12] + ".png"
-
-
 def _assemble(module, comp, dest):
     main = module.assemble(comp, dest)
     assert main == dest / "main.typ"
@@ -52,7 +47,7 @@ def test_D1_image_is_copied_and_exposed_in_content(tmp_path):
     _png(source, (255, 0, 0))
     comp = module.compose(_document("picture.png"), assets=[source.parent])
     sections = _assemble(module, comp, tmp_path / "kit")
-    expected = _kit_image(source)
+    expected = "/assets/de33ddc09a0b.png"
     assert sections[0]["content"]["image"] == expected
     assert (tmp_path / "kit" / expected.lstrip("/")).read_bytes() == source.read_bytes()
 
@@ -66,7 +61,7 @@ def test_D2_searches_folders_in_order(tmp_path):
     comp = module.compose(_document("only.png", "shared.png"), assets=[first, second])
     sections = _assemble(module, comp, tmp_path / "kit")
     assert [section["content"]["image"] for section in sections] == [
-        _kit_image(second / "only.png"), _kit_image(first / "shared.png")
+        "/assets/21a452d2648c.png", "/assets/de33ddc09a0b.png"
     ]
     for section, source in zip(sections, [second / "only.png", first / "shared.png"], strict=True):
         assert (tmp_path / "kit" / section["content"]["image"].lstrip("/")).read_bytes() == source.read_bytes()
@@ -79,7 +74,7 @@ def test_D3_identical_bytes_share_one_copied_file(tmp_path):
     (assets / "two.png").write_bytes((assets / "one.png").read_bytes())
     comp = module.compose(_document("one.png", "two.png"), assets=[assets])
     sections = _assemble(module, comp, tmp_path / "kit")
-    expected = _kit_image(assets / "one.png")
+    expected = "/assets/de33ddc09a0b.png"
     assert [section["content"]["image"] for section in sections] == [expected, expected]
     files = list((tmp_path / "kit" / "assets").iterdir())
     assert files == [tmp_path / "kit" / expected.lstrip("/")]
@@ -101,6 +96,21 @@ def test_D4_missing_image_reports_file_and_all_searched_folders(tmp_path):
 
 def test_D5_no_image_keeps_empty_content_image(tmp_path):
     module = _interface()
-    comp = module.compose(_document(None))
+    comp = module.compose(_document(None), assets=[])
+    sections = _assemble(module, comp, tmp_path / "kit")
+    assert sections[0]["content"]["image"] == ""
+
+
+def test_D4_empty_assets_reports_missing_image(tmp_path):
+    module = _interface()
+    with pytest.raises(module.ComposeError) as caught:
+        module.compose(_document("missing.png"), assets=[])
+    assert "missing.png" in str(caught.value)
+
+
+def test_D5_default_assets_leaves_unresolved_image_empty(tmp_path):
+    module = _interface()
+    comp = module.compose(_document("missing.png"))
+    assert comp.sections[0].content["image"] == ""
     sections = _assemble(module, comp, tmp_path / "kit")
     assert sections[0]["content"]["image"] == ""
