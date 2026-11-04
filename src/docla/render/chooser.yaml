@@ -4,6 +4,10 @@ intents:
     describes: An opening slide.
     slides:
       - {component: cover}
+  quote:
+    describes: A quotation with its attribution.
+    slides:
+      - {component: quote}
   statement:
     describes: One claim, stated large.
     slides:
@@ -43,6 +47,14 @@ intents:
     describes: Events in chronological order.
     slides:
       - {component: timeline}
+  people:
+    describes: People and their roles.
+    slides:
+      - {component: people}
+  contact:
+    describes: Contact details.
+    slides:
+      - {component: contact}
   matrix:
     describes: Four quadrants arranged on two axes.
     slides:
