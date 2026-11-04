@@ -4,7 +4,7 @@ from typing import Any, Literal
 import yaml  # type: ignore[import-untyped]
 from pydantic import BaseModel, Field, ValidationError, field_validator
 
-from docla.render.kit import components_dir
+from docla.render.kit import components_dir, library_dir
 
 
 class ManifestError(ValueError):
@@ -18,6 +18,8 @@ class ComponentManifest(BaseModel):
     intents: list[str] = Field(min_length=1)
     capacity: dict[str, tuple[int, int]]
     elements: list[str] = Field(min_length=1)
+    fixture: str | None = None
+    variants: list[str] = Field(default_factory=list)
 
     @field_validator("label")
     @classmethod
@@ -52,6 +54,16 @@ def load_manifests(folder: Path | None = None) -> dict[str, ComponentManifest]:
     for path in sorted(root.glob("*.yaml")):
         manifests[path.stem] = _read_manifest(path)
     return manifests
+
+
+def all_manifests(library: Path | None = None) -> dict[str, ComponentManifest]:
+    """Return packaged and library manifests, rejecting duplicate names."""
+    manifests = load_manifests()
+    additional = load_manifests(library or library_dir())
+    duplicates = manifests.keys() & additional.keys()
+    if duplicates:
+        raise ManifestError(f"duplicate component: {min(duplicates)}")
+    return manifests | additional
 
 
 def _check_pairs(root: Path) -> None:
