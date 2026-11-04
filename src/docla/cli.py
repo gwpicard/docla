@@ -70,8 +70,7 @@ def _parse(file: Path) -> tuple[Document, list[Finding]]:
     return doc, findings
 
 
-def _draw(file: Path, out: Path, parsed: tuple[Document, list[Finding]], comp: Composition, theme: Theme) -> _Built:
-    doc, findings = parsed
+def _draw(file: Path, out: Path, doc: Document, findings: list[Finding], comp: Composition, theme: Theme) -> _Built:
     render = out / "render"
     if render.exists():
         shutil.rmtree(render)
@@ -90,7 +89,7 @@ def _render(file: Path, out: Path, theme: Theme) -> _Built:
         comp = compose(doc)
     except ComposeError as error:
         raise _BuildFailed(str(error)) from error
-    return _draw(file, out, (doc, findings), comp, theme)
+    return _draw(file, out, doc, findings, comp, theme)
 
 
 def _line(finding: Finding) -> str:
@@ -110,7 +109,7 @@ def _check(file: Path, out: Path, theme: Theme) -> int:
     except ComposeError:
         # Without layout facts the engine runs only the source tier.
         return _report(file, out, parsed + run_checks(all_rules(), CheckContext(doc, theme=theme)))
-    built = _draw(file, out, (doc, parsed), comp, theme)
+    built = _draw(file, out, doc, parsed, comp, theme)
     facts = layout_facts(built.pdf, built.main, built.render, font_paths=font_paths(built.render))
     ctx = CheckContext(built.doc, facts, read_tokens(built.render), theme=theme)
     return _report(file, out, built.findings + run_checks(all_rules(), ctx))
