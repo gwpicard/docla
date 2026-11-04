@@ -102,13 +102,14 @@ def _resolve_image(image: str | None, assets: list[Path]) -> Path | None:
     raise ComposeError(f"image {image!r} not found in folders: {', '.join(str(folder) for folder in assets)}")
 
 
-def compose(doc: Document, chooser: Chooser | None = None, *, assets: list[Path] = []) -> Composition:
+def compose(doc: Document, chooser: Chooser | None = None, *, assets: list[Path] | None = None) -> Composition:
     """Map each section of `doc` to a component and its props, in order, using `chooser` or the default one."""
     chooser = default_chooser() if chooser is None else chooser
     total = len(doc.sections)
     sections = [_compose_section(section, doc.format, chooser, i, total) for i, section in enumerate(doc.sections)]
-    for section, composed in zip(doc.sections, sections, strict=True):
-        composed.image_path = _resolve_image(section.image, assets)
+    if assets is not None:
+        for section, composed in zip(doc.sections, sections, strict=True):
+            composed.image_path = _resolve_image(section.image, assets)
     return Composition(format=doc.format, sections=sections)
 
 
