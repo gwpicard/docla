@@ -1,0 +1,8 @@
+id: image-text1
+intent: image-text
+title: A clear picture
+image: picture.png
+items:
+  - body: A useful point about the picture
+  - body: Another point for the audience
+  - body: A final point to remember
