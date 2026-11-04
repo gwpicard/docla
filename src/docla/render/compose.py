@@ -28,6 +28,7 @@ class ComposedSection(BaseModel):
     id: str
     component: str
     props: dict[str, Any]
+    content: dict[str, Any]
 
 
 class Composition(BaseModel):
@@ -80,7 +81,13 @@ def _compose_section(section: Section, fmt: Format, chooser: Chooser, index: int
         "source_line": section.source_line or "",
     }
     component = _component(section, fmt, chooser, index, total)
-    return ComposedSection(id=section.id, component=component, props=props)
+    content = {
+        "data": section.data,
+        "image": "",
+        "citations": [[{"key": c.key, "locator": c.locator} for c in item.citations] for item in section.items],
+        "icons": [],
+    }
+    return ComposedSection(id=section.id, component=component, props=props, content=content)
 
 
 def compose(doc: Document, chooser: Chooser | None = None) -> Composition:
@@ -105,7 +112,8 @@ def _main_typ(comp: Composition) -> str:
     for i, section in enumerate(comp.sections):
         if i > 0 and comp.format == "slides":
             lines.append("#pagebreak()")
-        lines.append(f"#{section.component}(comp.sections.at({i}).props)")
+        lines.append(f"#let sec = comp.sections.at({i}).props + comp.sections.at({i}).content")
+        lines.append(f"#{section.component}(sec)")
     return "\n".join(lines) + "\n"
 
 
@@ -120,19 +128,20 @@ def font_paths(dest: Path) -> list[Path]:
     return [fonts] if fonts.is_dir() else []
 
 
-def assemble(comp: Composition, dest: Path, *, theme: Theme | None = None) -> Path:
+def assemble(comp: Composition, dest: Path, *, theme: Theme | None = None, library: Path | None = None) -> Path:
     """Write a render folder at `dest` that Typst compiles; return the path of `main.typ`.
 
     With a theme, `lib/theme.typ` is generated from its tokens and its fonts are copied to `fonts/`.
     """
     if dest.exists():
         raise FileExistsError(f"render folder already exists: {dest}")
-    all_manifests(library_dir())
+    library = library_dir() if library is None else library
+    all_manifests(library)
     shutil.copytree(lib_dir(), dest / "lib")
     if theme is not None:
         _apply_theme(theme, dest)
     shutil.copytree(components_dir(), dest / "components")
-    for path in library_dir().glob("*.typ"):
+    for path in library.glob("*.typ"):
         shutil.copy2(path, dest / "components" / path.name)
     (dest / "composition.json").write_text(comp.model_dump_json())
     main = dest / "main.typ"
