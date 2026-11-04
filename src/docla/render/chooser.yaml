@@ -29,3 +29,8 @@ intents:
     slides:
       - {component: comparison, when: {count: [2, 3]}}
       - {component: two-column}
+  key-numbers:
+    describes: Key figures and their captions.
+    slides:
+      - {component: key-figures, when: {count: [3, 4]}}
+      - {component: bullets}

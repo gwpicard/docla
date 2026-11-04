@@ -1,0 +1,10 @@
+name: key-figures
+format: slides
+label: Key figures
+intents: [key-numbers]
+capacity:
+  title_words: [1, 8]
+  items: [3, 4]
+  item_chars: [10, 60]
+elements: [title, figure-value, figure-caption]
+fixture: tests/fixtures/components/key-figures.yaml
