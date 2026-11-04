@@ -1,0 +1,10 @@
+id: cards1
+intent: card-set
+title: Shared priorities
+items:
+  - head: People
+    body: Support the people who deliver our work.
+  - head: Practice
+    body: Improve the way we work together.
+  - head: Progress
+    body: Measure progress against our goals.
