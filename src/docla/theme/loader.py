@@ -15,8 +15,8 @@ class ThemeError(ValueError):
 
 def load_theme(root: Path) -> Theme:
     """Read theme.yaml and tokens.yaml under root, check them against each other and the fonts folder."""
-    info = _read_model(root / "theme.yaml", ThemeInfo)
     tokens = _read_model(root / "tokens.yaml", Tokens)
+    info = _read_model(root / "theme.yaml", ThemeInfo)
     _check_usage(tokens)
     _check_families(tokens)
     _check_formats(info, tokens)

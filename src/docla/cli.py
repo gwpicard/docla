@@ -11,10 +11,11 @@ from docla.checks.catalogue import all_rules
 from docla.checks.engine import CheckContext, run_checks
 from docla.facts.layout import layout_facts
 from docla.model import Document, Finding
-from docla.render.compose import ComposeError, Composition, assemble, compose
+from docla.render.compose import ComposeError, Composition, assemble, compose, font_paths
 from docla.render.kit import read_tokens
 from docla.render.typst import INSTALL_COMMAND, TYPST_VERSION, TypstError, compile_pdf, typst_version
 from docla.source.parser import parse
+from docla.theme import Theme, ThemeError, load_theme, neutral_theme
 
 MIN_PYTHON = (3, 12)
 
@@ -69,48 +70,48 @@ def _parse(file: Path) -> tuple[Document, list[Finding]]:
     return doc, findings
 
 
-def _draw(file: Path, out: Path, doc: Document, findings: list[Finding], comp: Composition) -> _Built:
+def _draw(file: Path, out: Path, doc: Document, findings: list[Finding], comp: Composition, theme: Theme) -> _Built:
     render = out / "render"
     if render.exists():
         shutil.rmtree(render)
-    main = assemble(comp, render)
+    main = assemble(comp, render, theme=theme)
     pdf = out / f"{file.stem}.pdf"
     try:
-        compile_pdf(main, render, pdf)
+        compile_pdf(main, render, pdf, font_paths(render))
     except TypstError as error:
         raise _BuildFailed(str(error)) from error
     return _Built(doc, findings, render, main, pdf)
 
 
-def _render(file: Path, out: Path) -> _Built:
+def _render(file: Path, out: Path, theme: Theme) -> _Built:
     doc, findings = _parse(file)
     try:
         comp = compose(doc)
     except ComposeError as error:
         raise _BuildFailed(str(error)) from error
-    return _draw(file, out, doc, findings, comp)
+    return _draw(file, out, doc, findings, comp, theme)
 
 
 def _line(finding: Finding) -> str:
     return f"{finding.severity} {finding.rule_id} {finding.section_id or '-'} {finding.message}"
 
 
-def _build(file: Path, out: Path) -> int:
-    built = _render(file, out)
+def _build(file: Path, out: Path, theme: Theme) -> int:
+    built = _render(file, out, theme)
     print(built.pdf)
     return 0
 
 
-def _check(file: Path, out: Path) -> int:
+def _check(file: Path, out: Path, theme: Theme) -> int:
     doc, parsed = _parse(file)
     try:
         comp = compose(doc)
     except ComposeError:
         # Without layout facts the engine runs only the source tier.
-        return _report(file, out, parsed + run_checks(all_rules(), CheckContext(doc)))
-    built = _draw(file, out, doc, parsed, comp)
-    facts = layout_facts(built.pdf, built.main, built.render)
-    ctx = CheckContext(built.doc, facts, read_tokens(built.render))
+        return _report(file, out, parsed + run_checks(all_rules(), CheckContext(doc, theme=theme)))
+    built = _draw(file, out, doc, parsed, comp, theme)
+    facts = layout_facts(built.pdf, built.main, built.render, font_paths=font_paths(built.render))
+    ctx = CheckContext(built.doc, facts, read_tokens(built.render), theme=theme)
     return _report(file, out, built.findings + run_checks(all_rules(), ctx))
 
 
@@ -128,6 +129,7 @@ def _add_file_command(subparsers: Any, name: str, help: str) -> None:
     command = subparsers.add_parser(name, help=help)
     command.add_argument("file", type=Path, help="the working file")
     command.add_argument("--out", type=Path, default=None, help="output folder (default: build beside the file)")
+    command.add_argument("--theme", type=Path, default=None, help="theme folder (default: the neutral theme)")
 
 
 def _build_parser() -> argparse.ArgumentParser:
@@ -143,11 +145,18 @@ def _build_parser() -> argparse.ArgumentParser:
 FILE_COMMANDS = {"build": _build, "check": _check}
 
 
+def _theme(folder: Path | None) -> Theme:
+    try:
+        return neutral_theme() if folder is None else load_theme(folder)
+    except ThemeError as error:
+        raise _BuildFailed(str(error)) from error
+
+
 def _run_file_command(args: argparse.Namespace) -> int:
     out = _out_dir(args.file, args.out)
     out.mkdir(parents=True, exist_ok=True)
     try:
-        return FILE_COMMANDS[args.command](args.file, out)
+        return FILE_COMMANDS[args.command](args.file, out, _theme(args.theme))
     except _BuildFailed as error:
         print(error, file=sys.stderr)
         return 2

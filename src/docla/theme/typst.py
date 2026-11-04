@@ -28,7 +28,9 @@ FUNCTIONS = """
     panic("unknown page format: " + repr(format) + "; the theme has " + pages.keys().join(", "))
   }
   let p = pages.at(format)
-  set page(width: p.width, height: p.height, margin: p.margin)
+  // Slide components place their frames inside the slide margins themselves.
+  let margin = if format == "slides" { 0pt } else { p.margin }
+  set page(width: p.width, height: p.height, margin: margin)
   set page(columns: p.columns) if p.columns > 1
   set text(font: text-font, ..p.body-text, fill: colour("ink"))
   body
