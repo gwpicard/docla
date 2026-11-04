@@ -1,6 +1,7 @@
 from docla.checks.engine import CheckContext, make_finding, register
 from docla.model import Finding, Provenance, Remedy, Rule, Section
 from docla.model.rules import Tier
+from docla.render.compose import component_for
 
 PROVENANCE = Provenance(source={"doc": "DESIGN.md", "section": "10.5"})
 
@@ -42,6 +43,26 @@ class EmptySection:
         ]
 
 
+@register("intent-known")
+class IntentKnown:
+    tier: Tier = "source"
+
+    def run(self, ctx: CheckContext, rule: Rule) -> list[Finding]:
+        fmt = ctx.doc.format
+        total = len(ctx.doc.sections)
+        return [
+            make_finding(
+                rule,
+                ctx,
+                message=f"intent {section.intent} has no component for format {fmt}",
+                section_id=section.id,
+                measured={"intent": section.intent, "format": fmt},
+            )
+            for index, section in enumerate(ctx.doc.sections)
+            if component_for(section, fmt, index, total) is None
+        ]
+
+
 RULES: list[Rule] = [
     Rule(
         id="source.citations-resolve",
@@ -65,6 +86,23 @@ RULES: list[Rule] = [
         tier="source",
         check={"kind": "empty-section"},
         remedy=Remedy.model_validate({"class": "redraft", "hint": "write the section's content or remove it"}),
+        provenance=PROVENANCE,
+    ),
+]
+
+M2_RULES: list[Rule] = [
+    Rule(
+        id="source.intent-known",
+        title="Every section's intent has a component for the format",
+        origin="manual",
+        strength="hard",
+        status="active",
+        severity="error",
+        tier="source",
+        check={"kind": "intent-known"},
+        remedy=Remedy.model_validate(
+            {"class": "restructure", "hint": "choose an intent or a component the format can draw"}
+        ),
         provenance=PROVENANCE,
     ),
 ]

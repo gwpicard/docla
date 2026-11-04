@@ -5,6 +5,7 @@ from docla.facts.layout import LayoutFacts, PlacedShape, PlacedWord
 from docla.facts.models import FactBox, PageFacts
 from docla.model import Box, Finding, Provenance, Rule
 from docla.model.rules import Tier
+from docla.theme.models import Margins
 
 PROVENANCE = Provenance(source={"doc": "DESIGN.md", "section": "10.5"})
 
@@ -25,15 +26,30 @@ def _region(boxes: list[FactBox]) -> Box:
     return Box(x=x0, y=y0, w=max(b.x1 for b in boxes) - x0, h=max(b.y1 for b in boxes) - y0)
 
 
-def _outside_by(box: FactBox, page: PageFacts, margin: float) -> float:
+def _outside_by(box: FactBox, page: PageFacts, margin: Margins) -> float:
     """Return how far the box lies beyond the page inset by `margin`, or 0 when it lies within."""
     return max(
         0.0,
-        margin - box.x0,
-        margin - box.y0,
-        box.x1 - (page.width - margin),
-        box.y1 - (page.height - margin),
+        margin.left - box.x0,
+        margin.top - box.y0,
+        box.x1 - (page.width - margin.right),
+        box.y1 - (page.height - margin.bottom),
     )
+
+
+def _margins(ctx: CheckContext, rule: Rule) -> Margins:
+    """Return the theme's page margins for the document's format, or the rule's `margin_pt` on every side."""
+    if ctx.theme is not None:
+        return ctx.theme.tokens.pages[ctx.doc.format].margin
+    margin = float(rule.check["margin_pt"][ctx.doc.format])
+    return Margins(top=margin, right=margin, bottom=margin, left=margin)
+
+
+def _min_size(ctx: CheckContext, rule: Rule) -> float:
+    """Return the theme's minimum type size for the document's format, or the rule's `min_pt`."""
+    if ctx.theme is not None:
+        return ctx.theme.tokens.type.scale[ctx.doc.format].min_size
+    return float(rule.check["min_pt"][ctx.doc.format])
 
 
 def _extent(item: Placed) -> FactBox:
@@ -72,7 +88,7 @@ class InSafeArea:
         facts = ctx.facts
         if facts is None:
             return []
-        margin = float(rule.check["margin_pt"][ctx.doc.format])
+        margin = _margins(ctx, rule)
         tolerance = float(rule.check["tolerance_pt"])
         pages = {page.page: page for page in facts.pages}
         outside: dict[tuple[str, int], list[Hit]] = defaultdict(list)
@@ -103,7 +119,7 @@ class MinFont:
         facts = ctx.facts
         if facts is None:
             return []
-        minimum = rule.check["min_pt"][ctx.doc.format]
+        minimum = _min_size(ctx, rule)
         smallest: dict[str, PlacedWord] = {}
         for word in facts.words:
             if word.section_id is not None:

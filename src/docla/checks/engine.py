@@ -6,6 +6,7 @@ from typing import Any, Protocol, get_args
 from docla.facts.layout import LayoutFacts
 from docla.model import Box, Document, Finding, Rule
 from docla.model.rules import Tier
+from docla.theme import Theme
 
 # Tiers run in the order the model declares them.
 TIERS: tuple[Tier, ...] = get_args(Tier)
@@ -17,6 +18,7 @@ class CheckContext:
     doc: Document
     facts: LayoutFacts | None = None
     tokens: dict[str, str] = field(default_factory=dict)
+    theme: Theme | None = None
 
 
 class Check(Protocol):

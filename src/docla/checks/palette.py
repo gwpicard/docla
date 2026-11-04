@@ -6,6 +6,7 @@ from docla.facts.layout import LayoutFacts
 from docla.facts.models import FactBox
 from docla.model import Box, Finding, Provenance, Rule
 from docla.model.rules import Tier
+from docla.theme import Theme
 
 PROVENANCE = Provenance(source={"doc": "DESIGN.md", "section": "10.5"})
 
@@ -58,8 +59,22 @@ def _coloured(facts: LayoutFacts) -> Iterator[tuple[str, str, FactBox]]:
                     yield shape.section_id, colour, shape.box
 
 
-def _finding(rule: Rule, ctx: CheckContext, section_id: str, colour: str, box: FactBox) -> Finding | None:
-    name, distance = nearest(colour, ctx.tokens)
+def _theme_colours(theme: Theme) -> dict[str, str]:
+    """Return every colour role and every chart colour of `theme`, by name."""
+    colours = dict(theme.tokens.colour.roles)
+    for name, values in theme.tokens.colour.chart.items():
+        colours |= {f"chart.{name}.{i}": value for i, value in enumerate(values)}
+    return colours
+
+
+def _allowed(ctx: CheckContext) -> dict[str, str]:
+    return _theme_colours(ctx.theme) if ctx.theme is not None else ctx.tokens
+
+
+def _finding(
+    rule: Rule, ctx: CheckContext, allowed: dict[str, str], section_id: str, colour: str, box: FactBox
+) -> Finding | None:
+    name, distance = nearest(colour, allowed)
     if distance <= float(rule.check.get("tolerance", 2.0)):
         return None
     return make_finding(
@@ -78,12 +93,13 @@ class ColourInSet:
     tier: Tier = "geometry"
 
     def run(self, ctx: CheckContext, rule: Rule) -> list[Finding]:
-        if ctx.facts is None or not ctx.tokens:
+        allowed = _allowed(ctx)
+        if ctx.facts is None or not allowed:
             return []
         first: dict[tuple[str, str], FactBox] = {}
         for section_id, colour, box in _coloured(ctx.facts):
             first.setdefault((section_id, colour), box)
-        found = (_finding(rule, ctx, section_id, colour, box) for (section_id, colour), box in first.items())
+        found = (_finding(rule, ctx, allowed, sid, colour, box) for (sid, colour), box in first.items())
         return [finding for finding in found if finding is not None]
 
 
