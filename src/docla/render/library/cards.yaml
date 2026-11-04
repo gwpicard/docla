@@ -1,7 +1,7 @@
 name: cards
 format: slides
 label: Cards
-intents: [parallel-set]
+intents: [card-set]
 capacity:
   title_words: [1, 8]
   items: [2, 4]

@@ -1,5 +1,5 @@
 id: cards1
-intent: parallel-set
+intent: card-set
 title: Shared priorities
 items:
   - head: People
