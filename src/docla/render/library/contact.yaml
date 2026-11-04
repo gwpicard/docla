@@ -1,0 +1,10 @@
+name: contact
+format: slides
+label: Contact
+intents: [contact]
+capacity:
+  title_words: [1, 8]
+  items: [1, 6]
+  item_chars: [3, 60]
+elements: [title, item]
+fixture: tests/fixtures/components/contact.yaml
