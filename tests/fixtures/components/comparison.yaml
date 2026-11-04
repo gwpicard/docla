@@ -1,0 +1,14 @@
+id: comparison1
+intent: comparison
+title: Compare the options
+items:
+  - head: Option one
+    body: ''
+    sub:
+      - Familiar approach
+      - Steady delivery
+  - head: Option two
+    body: ''
+    sub:
+      - Flexible approach
+      - Wider reach

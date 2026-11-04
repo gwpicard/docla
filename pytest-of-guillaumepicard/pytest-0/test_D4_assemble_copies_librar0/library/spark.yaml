@@ -1,0 +1,6 @@
+name: spark
+format: slides
+label: Library component
+intents: [spark]
+capacity: {title_words: [1, 10]}
+elements: [title]
