@@ -5,7 +5,7 @@ import yaml  # type: ignore[import-untyped]
 from pydantic import BaseModel, ConfigDict, Field, ValidationError
 
 from docla.model import Format, Section
-from docla.render.components import ComponentManifest, load_manifests
+from docla.render.components import ComponentManifest, all_manifests
 
 FORMATS: tuple[Format, ...] = ("slides", "doc")
 
@@ -99,7 +99,7 @@ def default_path() -> Path:
 
 def load_chooser(path: Path | None = None, manifests: dict[str, ComponentManifest] | None = None) -> Chooser:
     """Read and check the chooser at `path` (default the packaged one) against the component manifests."""
-    manifests = load_manifests() if manifests is None else manifests
+    manifests = all_manifests() if manifests is None else manifests
     data = _read(default_path() if path is None else path)
     entries: dict[tuple[str, Format], list[Entry]] = {}
     for name, intent in data.intents.items():

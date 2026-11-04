@@ -1,0 +1,11 @@
+name: comparison
+format: slides
+label: Comparison
+intents: [comparison]
+capacity:
+  title_words: [1, 8]
+  items: [2, 3]
+  item_chars: [3, 40]
+  rows: [0, 4]
+elements: [title, column-title, row]
+fixture: tests/fixtures/components/comparison.yaml
