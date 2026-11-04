@@ -53,7 +53,7 @@ def test_D1_chart_manifest_and_packaged_manifests():
     assert manifest.name == "chart"
     assert manifest.format == "slides"
     assert manifest.intents == ["chart"]
-    assert manifest.capacity == {"title_words": (1, 8), "categories": (1, 8), "series": (1, 4)}
+    assert manifest.capacity == {"title_words": (1, 8), "categories": (1, 6), "series": (1, 3)}
     assert manifest.elements == ["title", "chart-plot", "chart-mark", "chart-label", "chart-legend", "figure", "figure-source"]
     assert manifest.label.strip()
     assert sorted(components.load_manifests()) == ["body", "bullets", "callout", "statement"]
@@ -90,8 +90,8 @@ def test_D3_fixture_page_and_roles(tmp_path):
 
 
 def test_D4_capacity_fit_marks(tmp_path):
-    within = _render(_section(8, 4), tmp_path / "within")
-    beyond = _render(_section(9, 4), tmp_path / "beyond")
+    within = _render(_section(6, 3), tmp_path / "within")
+    beyond = _render(_section(7, 3), tmp_path / "beyond")
     good = [m for m in within.marks if isinstance(m, marks.FitMark)]
     bad = [m for m in beyond.marks if isinstance(m, marks.FitMark)]
     assert good and all(m.ok for m in good)
@@ -131,3 +131,16 @@ def test_D7_mark_lengths_are_proportional(tmp_path, chart_type, dimension):
 def test_D7_unknown_chart_type_notice(tmp_path):
     facts = _render(_section(chart_type="unknown"), tmp_path)
     assert "chart type not supported" in " ".join(word.text for word in facts.words).lower()
+
+
+def test_D8_figure_fit_measures_chart_height(tmp_path):
+    def figure_need(count, folder):
+        facts = _render(_section(count, 2), folder)
+        figures = [m for m in facts.marks if isinstance(m, marks.FitMark) and m.role == "figure"]
+        assert len(figures) == 1
+        return figures[0].need
+
+    short = figure_need(2, tmp_path / "short")
+    tall = figure_need(6, tmp_path / "tall")
+    assert short > 0
+    assert tall > short
