@@ -34,3 +34,8 @@ intents:
     slides:
       - {component: key-figures, when: {count: [3, 4]}}
       - {component: bullets}
+  chart:
+    describes: Data shown as a chart.
+    slides:
+      - {component: chart, when: {has_data: true}}
+      - {component: bullets}
