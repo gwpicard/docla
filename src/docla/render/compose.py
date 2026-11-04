@@ -32,10 +32,15 @@ class Composition(BaseModel):
     sections: list[ComposedSection]
 
 
-def _component(section: Section, fmt: Format) -> str:
+def component_for(section: Section, fmt: Format) -> str | None:
+    """Return the component that draws `section` in format `fmt`, or None when there is none."""
     if section.component in {name for (f, _), name in M1_COMPONENTS.items() if f == fmt}:
         return section.component
-    component = M1_COMPONENTS.get((fmt, section.intent))
+    return M1_COMPONENTS.get((fmt, section.intent))
+
+
+def _component(section: Section, fmt: Format) -> str:
+    component = component_for(section, fmt)
     if component is None:
         raise ComposeError(f"section {section.id}: intent {section.intent!r} has no component for format {fmt!r}")
     return component
