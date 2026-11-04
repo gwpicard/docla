@@ -55,3 +55,7 @@ intents:
     describes: Contact details.
     slides:
       - {component: contact}
+  chapter-break:
+    describes: A break between chapters.
+    slides:
+      - {component: chapter-break}
