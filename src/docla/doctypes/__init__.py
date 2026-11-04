@@ -92,7 +92,7 @@ def _read(path: Path) -> Doctype:
 
 def _check_intents(path: Path, fmt: Format, outline: list[OutlineEntry], chooser: Chooser) -> None:
     for entry in outline:
-        if entry.intent not in (None, ANY_INTENT) and (entry.intent, fmt) not in chooser.entries:
+        if entry.intent not in (None, ANY_INTENT) and not chooser.knows(entry.intent, fmt):
             raise DoctypeError(
                 f"{path.name}: section {entry.section!r} has intent {entry.intent!r}, "
                 f"which the chooser has no entries for in format {fmt!r}"
