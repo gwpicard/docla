@@ -13,7 +13,7 @@
   if paragraphs.len() > 0 {
     let quotation = paragraphs.first()
     place(top + left, dx: content-frame.x, dy: content-frame.y, {
-      fit-box("quote", sec.id, content-frame.w, if quotation.len() > 200 { 0pt } else { content-frame.h - space(7) }, {
+      fit-box("quote", sec.id, content-frame.w, content-frame.h - space(7), {
         set text(..type-style("slides", "title"), fill: colour("ink"))
         el("quote", sec.id, quotation, width: content-frame.w)
       })
