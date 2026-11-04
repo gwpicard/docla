@@ -3,7 +3,7 @@ from functools import cache
 from pathlib import Path
 from typing import Any
 
-from pydantic import BaseModel
+from pydantic import BaseModel, Field
 
 from docla.model import Document, Format, Item, Section
 from docla.render.chooser import Chooser, ChooserError, load_chooser
@@ -28,7 +28,7 @@ class ComposedSection(BaseModel):
     id: str
     component: str
     props: dict[str, Any]
-    content: dict[str, Any]
+    content: dict[str, Any] = Field(default_factory=dict)
 
 
 class Composition(BaseModel):
