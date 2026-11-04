@@ -101,17 +101,13 @@ def _build(file: Path, out: Path) -> int:
     return 0
 
 
-def _source_findings(doc: Document) -> list[Finding]:
-    rules = [rule for rule in all_rules() if rule.tier == "source"]
-    return run_checks(rules, CheckContext(doc))
-
-
 def _check(file: Path, out: Path) -> int:
     doc, parsed = _parse(file)
     try:
         comp = compose(doc)
     except ComposeError:
-        return _report(file, out, parsed + _source_findings(doc))
+        # Without layout facts the engine runs only the source tier.
+        return _report(file, out, parsed + run_checks(all_rules(), CheckContext(doc)))
     built = _draw(file, out, doc, parsed, comp)
     facts = layout_facts(built.pdf, built.main, built.render)
     ctx = CheckContext(built.doc, facts, read_tokens(built.render))
