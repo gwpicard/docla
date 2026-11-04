@@ -1,0 +1,10 @@
+name: agenda
+format: slides
+label: Agenda
+intents: [agenda]
+capacity:
+  title_words: [1, 8]
+  items: [2, 8]
+  item_chars: [3, 60]
+elements: [title, item, number]
+fixture: tests/fixtures/components/agenda.yaml

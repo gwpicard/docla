@@ -1,0 +1,9 @@
+name: chapter-break
+format: slides
+label: Chapter break
+intents: [chapter-break]
+capacity:
+  title_words: [1, 10]
+  paragraphs: [0, 1]
+elements: [title, number]
+fixture: tests/fixtures/components/chapter-break.yaml

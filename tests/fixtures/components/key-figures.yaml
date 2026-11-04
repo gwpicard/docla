@@ -1,0 +1,10 @@
+id: figures1
+intent: key-numbers
+title: Key figures
+items:
+  - head: 42%
+    body: Growth in the past year
+  - head: '120'
+    body: Projects delivered on time
+  - head: 85%
+    body: Customers who returned
