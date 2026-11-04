@@ -1,0 +1,9 @@
+name: cover
+format: slides
+label: Cover
+intents: [cover]
+capacity:
+  title_words: [1, 12]
+  paragraphs: [0, 1]
+elements: [title, subtitle, panel]
+fixture: tests/fixtures/components/cover.yaml
