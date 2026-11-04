@@ -64,3 +64,8 @@ intents:
     slides:
       - {component: image-with-text, when: {has_image: true}}
       - {component: bullets}
+  card-set:
+    describes: Related items presented together.
+    slides:
+      - {component: cards, when: {count: [2, 4]}}
+      - {component: bullets}
