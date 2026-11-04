@@ -1,0 +1,9 @@
+name: quote
+format: slides
+label: Quote
+intents: [quote]
+capacity:
+  title_words: [0, 8]
+  paragraphs: [1, 1]
+elements: [quote, source]
+fixture: tests/fixtures/components/quote.yaml
