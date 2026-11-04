@@ -1,0 +1,23 @@
+name: pitch-deck
+format: slides
+audience: Decision makers who will act on the ask
+length: {slides: [3, 20]}
+questions:
+  - key: decision
+    ask: What decision should the audience make after the deck?
+  - key: length
+    ask: How many slides can the audience give their attention to?
+outline:
+  - section: opener
+    intent: statement
+    required: true
+  - section: content
+    intent: any
+    repeat: [1, 16]
+  - section: ask
+    intent: statement
+    required: true
+checks: []
+checklist:
+  - Does the opener state the point of the deck in one line?
+  - Does the ask name one decision the audience can make?
