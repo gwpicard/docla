@@ -88,6 +88,7 @@ def test_D3_fixture_page_and_marks(tmp_path):
 def test_D4_capacity_boundary_fit_marks(tmp_path):
     text = "A clear comparison point " * 4
     assert len(text) == 100
+    assert chooser.load_chooser(manifests=_manifests()).knows("comparison", "slides"), "the chooser must have slides entries for intent comparison"
 
     def fits(count):
         section = Section(
