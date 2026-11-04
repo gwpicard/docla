@@ -43,3 +43,7 @@ intents:
     describes: Events in chronological order.
     slides:
       - {component: timeline}
+  process:
+    describes: Steps in a process.
+    slides:
+      - {component: process}
