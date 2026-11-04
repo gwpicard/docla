@@ -86,8 +86,8 @@ def test_D3_fixture_page_and_marks(tmp_path):
 
 def test_D4_title_capacity_boundary(tmp_path):
     section = _fixture()
-    ten = "one two three four five six seven eight nine ten"
-    for title, expected in [(ten, True), (ten + " eleven", False)]:
+    ten = "chapter chapter chapter chapter chapter chapter chapter chapter chapter chapter"
+    for title, expected in [(ten, True), (ten + " chapter", False)]:
         result = _render(section.model_copy(update={"title": title}), tmp_path)
         fits = [m.ok for m in result.facts.marks if m.kind == "fit"]
         assert fits
