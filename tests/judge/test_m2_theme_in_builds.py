@@ -230,7 +230,7 @@ def _facts_with_word(colour: str) -> LayoutFacts:
         text="Chart", font="Inter-Regular", size=24, colour=colour, box=box, baseline=118, role=None, section_id="s1"
     )
     page = PageFacts(page=1, width=960, height=540, words=[word], shapes=[])
-    return LayoutFacts(pdf_sha256="0" * 64, pages=[page], words=[word], shapes=[])
+    return LayoutFacts(pdf_sha256="0" * 64, pages=[page], words=[word], shapes=[], marks=[])
 
 
 def _palette_findings(colour: str):
