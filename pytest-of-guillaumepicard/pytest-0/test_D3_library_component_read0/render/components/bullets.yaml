@@ -1,9 +1,0 @@
-name: bullets
-format: slides
-label: Bullet list
-intents: [bullets]
-capacity:
-  title_words: [1, 8]
-  items: [1, 6]
-  item_chars: [10, 140]
-elements: [title, body, item]

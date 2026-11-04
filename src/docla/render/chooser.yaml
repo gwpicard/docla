@@ -38,3 +38,20 @@ intents:
     slides:
       - {component: key-figures, when: {count: [3, 4]}}
       - {component: bullets}
+  table:
+    describes: Tabular data with headings and rows.
+    slides:
+      - {component: table, when: {has_data: true}}
+      - {component: bullets}
+  chronology:
+    describes: Events in chronological order.
+    slides:
+      - {component: timeline}
+  people:
+    describes: People and their roles.
+    slides:
+      - {component: people}
+  contact:
+    describes: Contact details.
+    slides:
+      - {component: contact}
