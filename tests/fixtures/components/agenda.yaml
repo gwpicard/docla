@@ -1,0 +1,8 @@
+id: agenda1
+intent: agenda
+title: Today's agenda
+items:
+  - body: Review the current position
+  - body: Discuss priorities for the year
+  - body: Agree the next steps
+  - body: Assign responsibilities
