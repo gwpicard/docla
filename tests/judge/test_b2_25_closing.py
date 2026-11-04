@@ -1,5 +1,6 @@
 # Intent: closing sections route to a capacity-accurate, marked slide component.
 import importlib
+import importlib.util
 import re
 from pathlib import Path
 
@@ -11,6 +12,14 @@ def _optional(name):
         return importlib.import_module(name)
     except ImportError as error:
         if error.name != name and not str(error.name).startswith(name + "."):
+            raise
+        try:
+            spec = importlib.util.find_spec(error.name)
+        except ModuleNotFoundError as missing:
+            if missing.name != name and not name.startswith(str(missing.name) + "."):
+                raise
+            spec = None
+        if spec is not None:
             raise
         return None
 
@@ -47,10 +56,12 @@ def _document(section):
 
 
 def _render(section, tmp_path):
-    _manifests()
+    assert "closing" in _manifests(), "closing manifest must exist"
     assert swatch_module is not None and hasattr(swatch_module, "swatch"), "swatch must exist"
     assert theme is not None and hasattr(theme, "neutral_theme"), "neutral_theme must exist"
-    assert marks is not None and hasattr(marks, "FitMark"), "mark types must exist"
+    assert marks is not None and all(
+        hasattr(marks, name) for name in ("SectionMark", "ElementMark", "FitMark")
+    ), "mark types must exist"
     return swatch_module.swatch(_document(section), section.id, tmp_path, theme=theme.neutral_theme())
 
 
