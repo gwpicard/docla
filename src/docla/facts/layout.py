@@ -1,4 +1,5 @@
 import hashlib
+from collections.abc import Sequence
 from pathlib import Path
 
 from pydantic import BaseModel
@@ -85,8 +86,10 @@ def join(pages: list[PageFacts], marks: list[Mark], pdf_sha256: str) -> LayoutFa
     return LayoutFacts(pdf_sha256=pdf_sha256, pages=pages, words=words, shapes=shapes, marks=marks)
 
 
-def layout_facts(pdf: Path, main: Path, root: Path, extractor: PdfFacts | None = None) -> LayoutFacts:
+def layout_facts(
+    pdf: Path, main: Path, root: Path, extractor: PdfFacts | None = None, font_paths: Sequence[Path] = ()
+) -> LayoutFacts:
     pages = (extractor or PdfPlumberFacts()).extract(pdf)
-    marks = read_marks(main, root)
+    marks = read_marks(main, root, font_paths)
     digest = hashlib.sha256(pdf.read_bytes()).hexdigest()
     return join(pages, marks, digest)
