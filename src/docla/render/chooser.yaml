@@ -24,3 +24,8 @@ intents:
     describes: A numbered list of topics.
     slides:
       - {component: agenda}
+  parallel-set:
+    describes: Related items presented together.
+    slides:
+      - {component: cards, when: {count: [2, 4]}}
+      - {component: bullets}
