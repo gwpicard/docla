@@ -1,0 +1,23 @@
+name: report
+format: doc
+audience: Readers who need the findings and the reasoning behind them
+length: {pages: [1, 40]}
+questions:
+  - key: purpose
+    ask: What should the report help the reader do?
+  - key: reader
+    ask: Who will read the report, and what do they already know?
+outline:
+  - section: introduction
+    intent: body
+    required: true
+  - section: content
+    intent: any
+    repeat: [1, 30]
+  - section: findings
+    intent: callout
+    required: true
+checks: []
+checklist:
+  - Does the introduction say what the report covers and why?
+  - Does each finding follow from the content before it?
