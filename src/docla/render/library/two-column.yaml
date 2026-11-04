@@ -1,0 +1,11 @@
+name: two-column
+format: slides
+label: Two columns
+intents: [comparison]
+capacity:
+  title_words: [1, 8]
+  items: [0, 8]
+  paragraphs: [0, 6]
+  item_chars: [10, 100]
+elements: [title, item, paragraph]
+fixture: tests/fixtures/components/two-column.yaml
