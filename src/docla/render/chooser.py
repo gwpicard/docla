@@ -83,6 +83,10 @@ class Chooser:
                 return entry.component
         raise ChooserError(f"intent {section.intent!r}, format {fmt!r}: no entry matches section {section.id}")
 
+    def knows(self, intent: str, fmt: Format) -> bool:
+        """Return whether the chooser has entries for `intent` in format `fmt`."""
+        return (intent, fmt) in self.entries
+
     def names(self, fmt: Format) -> set[str]:
         """Return the names of the components drawn in format `fmt`."""
         return {name for name, manifest in self.manifests.items() if manifest.format == fmt}
