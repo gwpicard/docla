@@ -1,0 +1,10 @@
+name: chart
+format: slides
+label: Chart
+intents: [chart]
+capacity:
+  title_words: [1, 8]
+  categories: [1, 6]
+  series: [1, 3]
+elements: [title, chart-plot, chart-mark, chart-label, chart-legend, figure, figure-source]
+fixture: tests/fixtures/components/chart.yaml
