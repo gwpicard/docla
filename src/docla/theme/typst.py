@@ -10,6 +10,8 @@ FUNCTIONS = """
   rgb(tokens.at(name))
 }
 
+#let chart-colour(n) = rgb(chart.categorical.at(calc.rem(n, chart.categorical.len())))
+
 #let type-style(format, role) = {
   if format not in type-scale {
     panic("unknown type format: " + repr(format) + "; the theme has " + type-scale.keys().join(", "))

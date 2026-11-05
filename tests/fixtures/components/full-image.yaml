@@ -1,0 +1,5 @@
+id: full-image1
+intent: full-image
+image: picture.png
+paragraphs:
+  - A view of the landscape.
