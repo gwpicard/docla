@@ -59,12 +59,16 @@ def _run_sub(ctx: CheckContext, rule: Rule, sub: dict[str, Any]) -> list[Finding
 
 @register("all-of")
 class AllOf:
+    tier = None
+
     def run(self, ctx: CheckContext, rule: Rule) -> list[Finding]:
         return [finding for sub in rule.check["checks"] for finding in _run_sub(ctx, rule, sub)]
 
 
 @register("any-of")
 class AnyOf:
+    tier = None
+
     def run(self, ctx: CheckContext, rule: Rule) -> list[Finding]:
         results = [_run_sub(ctx, rule, sub) for sub in rule.check["checks"]]
         return [finding for result in results for finding in result] if all(results) else []
@@ -72,6 +76,8 @@ class AnyOf:
 
 @register("not")
 class Not:
+    tier = None
+
     def run(self, ctx: CheckContext, rule: Rule) -> list[Finding]:
         (sub,) = rule.check["checks"]
         if _run_sub(ctx, rule, sub):
