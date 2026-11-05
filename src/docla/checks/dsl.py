@@ -1,9 +1,44 @@
+import re
 from dataclasses import dataclass
 from typing import Any, Literal
 
 from docla.checks.engine import CHECKS, CheckContext, UnknownCheckError, make_finding, register
 from docla.facts.layout import PlacedShape, PlacedWord
 from docla.model import Finding, Rule, Section
+from docla.model.rules import Tier
+
+
+def _texts(section: Section, field: str) -> list[str]:
+    if field == "title":
+        return [section.title] if section.title else []
+    if field == "paragraphs":
+        return section.paragraphs
+    if field == "items":
+        return [text for item in section.items for text in ([item.head] if item.head else []) + [item.body] + item.sub]
+    raise ValueError(f"unknown text field {field!r}")
+
+
+@register("text-pattern")
+class TextPattern:
+    tier: Tier = "source"
+
+    def run(self, ctx: CheckContext, rule: Rule) -> list[Finding]:
+        field = rule.check["field"]
+        regex = rule.check["regex"]
+        must_match = rule.check.get("must_match", False)
+        findings = []
+        for section in ctx.doc.sections:
+            breaking = next(
+                (text for text in _texts(section, field) if bool(re.search(regex, text)) != must_match), None
+            )
+            if breaking is not None:
+                findings.append(
+                    make_finding(
+                        rule, ctx, message=f'{field} "{breaking}" does not satisfy the text pattern',
+                        section_id=section.id, role=field, measured={"field": field, "text": breaking},
+                    )
+                )
+        return findings
 
 
 @dataclass(frozen=True)
