@@ -1,0 +1,9 @@
+name: full-image
+format: slides
+label: Full image
+intents: [full-image]
+capacity:
+  title_words: [0, 8]
+  paragraphs: [0, 1]
+elements: [image, caption]
+fixture: tests/fixtures/components/full-image.yaml

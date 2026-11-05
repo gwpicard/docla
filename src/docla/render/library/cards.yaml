@@ -1,0 +1,10 @@
+name: cards
+format: slides
+label: Cards
+intents: [card-set]
+capacity:
+  title_words: [1, 8]
+  items: [2, 4]
+  item_chars: [10, 100]
+elements: [title, item]
+fixture: tests/fixtures/components/cards.yaml

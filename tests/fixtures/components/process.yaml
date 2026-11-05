@@ -1,0 +1,12 @@
+id: process1
+intent: process
+title: How we work
+items:
+  - head: Discover
+    body: Understand the needs of the team.
+  - head: Plan
+    body: Agree on the next steps together.
+  - head: Build
+    body: Turn the plan into a working service.
+  - head: Review
+    body: Learn from the results and improve.
