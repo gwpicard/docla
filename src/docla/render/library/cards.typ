@@ -11,7 +11,7 @@
   slide-title(sec + (title: el("title", sec.id, sec.title)))
   let gap = space(3)
   let count = calc.min(calc.max(items.len(), 1), 4)
-  let width = (content-frame.w - gap * (count - 1)) / count
+  let width = calc.floor(((content-frame.w - gap * (count - 1)) / count) / 0.001pt) * 0.001pt
   for (i, item) in items.enumerate() {
     let citations = sec.at("citations", default: ()).at(i, default: ())
     let height = if i >= 4 or item.body.len() > 100 { 0pt } else { content-frame.h }
