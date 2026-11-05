@@ -19,9 +19,10 @@
     set text(..type-style("slides", "body"), fill: colour("ink"))
     fit-box("figure", sec.id, content-frame.w, row-height * 11, {
       el("figure", sec.id, {
+        place(top + left, dy: row-height - space(1), line(length: content-frame.w, stroke: 0.5pt + colour("hairline")))
         grid(
           columns: (width,) * columns.len(),
-          ..columns.map(cell => fit-box("table-header", sec.id, width, row-height, el("table-header", sec.id, str(cell), width: width))),
+          ..columns.map(cell => fit-box("table-header", sec.id, width, row-height, el("table-header", sec.id, text(weight: "bold", str(cell)), width: width))),
           ..rows.flatten().map(cell => fit-box("table-cell", sec.id, width, row-height, el("table-cell", sec.id, str(cell), width: width))),
         )
       }, width: content-frame.w)

@@ -12,11 +12,13 @@
   let label-height = space(4)
   let gutter = space(2)
   let width = (content-frame.w - gutter) / 2
-  let height = (content-frame.h - label-height - gutter) / 2
+  let height = (content-frame.h - label-height - gutter - space(1)) / 2
   slide-title(sec + (title: el("title", sec.id, sec.title)))
   place(top + left, dx: content-frame.x, dy: content-frame.y, {
     set block(above: 0pt, below: 0pt)
     set text(..type-style("slides", "body"), fill: colour("ink"))
+    place(top + left, dx: width + gutter / 2, line(length: height * 2 + gutter, angle: 90deg, stroke: 0.5pt + colour("hairline")))
+    place(top + left, dy: height + gutter / 2, line(length: content-frame.w, stroke: 0.5pt + colour("hairline")))
     grid(
       columns: (width, width),
       column-gutter: gutter,
@@ -24,12 +26,13 @@
       ..items.enumerate().map(((i, item)) => {
         let citations = sec.at("citations", default: ()).at(i, default: ())
         fit-box("item", sec.id, width, if item.head.len() + item.body.len() > 70 { 0pt } else { height },
-          el("quadrant", sec.id, {
+          el("quadrant", sec.id, block(width: width, height: height, {
             if item.head != "" { strong(item.head); linebreak() }
             [#item.body #cite-keys(citations)]
-          }, width: width))
+          }), width: width))
       }),
     )
+    v(space(1))
     grid(
       columns: (width, width),
       column-gutter: gutter,

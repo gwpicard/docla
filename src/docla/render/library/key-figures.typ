@@ -10,7 +10,7 @@
   let content = sec.at("content", default: (:))
   let gutter = space(2)
   let width = (content-frame.w - gutter * calc.max(0, items.len() - 1)) / calc.max(1, items.len())
-  let value-height = content-frame.h / 3
+  let value-height = content-frame.h / 2
   let caption-height = content-frame.h - value-height
   slide-title(sec + (title: el("title", sec.id, sec.title)))
   place(top + left, dx: content-frame.x, dy: content-frame.y, {

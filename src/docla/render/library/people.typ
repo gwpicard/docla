@@ -15,6 +15,7 @@
   place(top + left, dx: content-frame.x, dy: content-frame.y, {
     set block(above: 0pt, below: 0pt)
     fit-box("body", sec.id, content-frame.w, content-frame.h, {
+      place(top + left, dy: height - space(1), line(length: content-frame.w, stroke: 0.5pt + colour("hairline")))
       grid(
         columns: (width, width, width),
         column-gutter: gutter,
@@ -23,11 +24,11 @@
           fit-box("item", sec.id, width, height, {
             fit-box("name", sec.id, width, height / 2, {
               set text(..type-style("slides", "body"), fill: colour("ink"))
-              el("name", sec.id, item.head, width: width)
+              el("name", sec.id, if calc.rem(i, 3) == 2 { align(right, item.head) } else { item.head }, width: width)
             })
             fit-box("role", sec.id, width, height / 2, {
               set text(..type-style("slides", "body"), fill: colour("ink"))
-              el("role", sec.id, [#item.body #cite-keys(citations)], width: width)
+              el("role", sec.id, if calc.rem(i, 3) == 2 { align(right, [#item.body #cite-keys(citations)]) } else { [#item.body #cite-keys(citations)] }, width: width)
             })
           })
         }),

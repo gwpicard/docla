@@ -8,10 +8,11 @@
   let source-line = sec.source_line
   let content = sec.at("content", default: (:))
   let image-path = sec.at("image", default: content.at("image", default: ""))
+  let image-height = full-frame.h - if paragraphs.len() > 0 { space(7) } else { 0pt }
   place(top + left, dx: full-frame.x, dy: full-frame.y, {
-    fit-box("image", sec.id, full-frame.w, full-frame.h, {
+    fit-box("image", sec.id, full-frame.w, image-height, {
       el("image", sec.id, width: full-frame.w, if image-path != "" {
-        image(image-path, width: full-frame.w, height: full-frame.h, fit: "cover")
+        image(image-path, width: full-frame.w, height: image-height, fit: "cover")
       })
     })
   })
