@@ -8,6 +8,8 @@
   muted: "#6b6b6b",
 )
 
+#let pages = (:)
+
 #let colour(name) = {
   if name not in tokens {
     panic("unknown colour token: " + name)
