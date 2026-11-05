@@ -69,6 +69,11 @@ intents:
     slides:
       - {component: cards, when: {count: [2, 4]}}
       - {component: bullets}
+  full-image:
+    describes: A full-frame image with an optional caption.
+    slides:
+      - {component: full-image, when: {has_image: true}}
+      - {component: statement}
   chart:
     describes: Data shown as a chart.
     slides:
