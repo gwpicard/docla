@@ -34,6 +34,10 @@ def _selected(ctx: CheckContext, kind: str) -> list[Selected]:
     return []
 
 
+def _section_value(values: dict[str, str], section_id: str | None) -> str | None:
+    return values.get(section_id) if section_id is not None else None
+
+
 def select(ctx: CheckContext, spec: dict[str, Any]) -> list[Selected]:
     sections = {section.id: section.intent for section in ctx.doc.sections if section.id is not None}
     components = {section.id: section.component for section in ctx.composition.sections} if ctx.composition else {}
@@ -41,8 +45,8 @@ def select(ctx: CheckContext, spec: dict[str, Any]) -> list[Selected]:
         item
         for item in _selected(ctx, spec["kind"])
         if _matches(item.role, spec.get("role"))
-        and _matches(sections.get(item.section_id), spec.get("section_intent"))
-        and _matches(components.get(item.section_id), spec.get("component"))
+        and _matches(_section_value(sections, item.section_id), spec.get("section_intent"))
+        and _matches(_section_value(components, item.section_id), spec.get("component"))
     ]
 
 
