@@ -144,7 +144,11 @@ def run_checks(rules: list[Rule], ctx: CheckContext) -> list[Finding]:
     findings: list[Finding] = []
     for tier in _tiers_to_run(ctx):
         produced = [
-            f for rule, check in applicable if check.tier == tier for f in check.run(ctx, rule) if _in_scope(f, rule, ctx)
+            f
+            for rule, check in applicable
+            if check.tier == tier
+            for f in check.run(ctx, rule)
+            if _in_scope(f, rule, ctx)
         ]
         kept = [f for f in produced if f.section_id not in blocked]
         blocked |= {f.section_id for f in kept if f.severity == "error"}
