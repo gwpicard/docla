@@ -113,7 +113,7 @@ def test_D3_fixture_page_and_marks(tmp_path):
 def test_D4_title_capacity_boundary(tmp_path):
     section = _fixture()
     for count, expected in [(10, True), (11, False)]:
-        title = " ".join(["closing"] * count)
+        title = " ".join(["minimum"] * count)
         result = _render(section.model_copy(update={"title": title}), tmp_path / str(count))
         fits = [m for m in result.facts.marks if isinstance(m, marks.FitMark)]
         assert fits, "closing must report fit marks"
