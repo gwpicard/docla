@@ -25,7 +25,7 @@ class CheckContext:
 
 
 class Check(Protocol):
-    tier: Tier
+    tier: Tier | None
 
     def run(self, ctx: CheckContext, rule: Rule) -> list[Finding]: ...
 
@@ -146,7 +146,7 @@ def run_checks(rules: list[Rule], ctx: CheckContext) -> list[Finding]:
         produced = [
             f
             for rule, check in applicable
-            if check.tier == tier
+            if (check.tier or rule.tier) == tier
             for f in check.run(ctx, rule)
             if _in_scope(f, rule, ctx)
         ]
