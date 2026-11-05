@@ -16,6 +16,7 @@ from docla.render.kit import read_tokens
 from docla.render.typst import INSTALL_COMMAND, TYPST_VERSION, TypstError, compile_pdf, typst_version
 from docla.source.parser import parse
 from docla.theme import Theme, ThemeError, load_theme, neutral_theme
+from docla.theme.rules import load_theme_rules
 
 MIN_PYTHON = (3, 12)
 
@@ -105,14 +106,18 @@ def _build(file: Path, out: Path, theme: Theme) -> int:
 def _check(file: Path, out: Path, theme: Theme, *, final: bool = False) -> int:
     doc, parsed = _parse(file)
     try:
+        rules = all_rules() + load_theme_rules(theme)
+    except ThemeError as error:
+        raise _BuildFailed(str(error)) from error
+    try:
         comp = compose(doc, assets=[file.parent / "assets", theme.root / "assets"])
     except ComposeError:
         # Without layout facts the engine runs only the source tier.
-        return _report(file, out, parsed + run_checks(all_rules(), CheckContext(doc, theme=theme, final=final)))
+        return _report(file, out, parsed + run_checks(rules, CheckContext(doc, theme=theme, final=final)))
     built = _draw(file, out, doc, parsed, comp, theme)
     facts = layout_facts(built.pdf, built.main, built.render, font_paths=font_paths(built.render))
     ctx = CheckContext(built.doc, facts, read_tokens(built.render), theme=theme, composition=comp, final=final)
-    return _report(file, out, built.findings + run_checks(all_rules(), ctx))
+    return _report(file, out, built.findings + run_checks(rules, ctx))
 
 
 def _report(file: Path, out: Path, findings: list[Finding]) -> int:
