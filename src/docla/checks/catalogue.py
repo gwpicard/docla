@@ -1,4 +1,5 @@
 from docla.checks import bounds, fit, palette, source
+from docla.checks import dsl as dsl
 from docla.model import Rule
 
 
