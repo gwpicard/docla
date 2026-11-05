@@ -1,0 +1,12 @@
+id: timeline1
+intent: chronology
+title: Our journey
+items:
+  - head: '2020'
+    body: The project begins with a small team.
+  - head: '2021'
+    body: The first product reaches its customers.
+  - head: '2022'
+    body: The team expands into new markets.
+  - head: '2023'
+    body: A new service joins the portfolio.

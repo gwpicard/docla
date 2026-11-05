@@ -1,0 +1,11 @@
+id: table1
+intent: table
+title: Quarterly results
+data:
+  columns: [Quarter, Revenue, Growth]
+  rows:
+    - [First, 120, 5%]
+    - [Second, 130, 8%]
+    - [Third, 140, 7%]
+    - [Fourth, 150, 6%]
+source_line: 'Source: Company records'

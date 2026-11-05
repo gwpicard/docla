@@ -86,7 +86,7 @@ def _draw(file: Path, out: Path, doc: Document, findings: list[Finding], comp: C
 def _render(file: Path, out: Path, theme: Theme) -> _Built:
     doc, findings = _parse(file)
     try:
-        comp = compose(doc)
+        comp = compose(doc, assets=[file.parent / "assets", theme.root / "assets"])
     except ComposeError as error:
         raise _BuildFailed(str(error)) from error
     return _draw(file, out, doc, findings, comp, theme)
@@ -105,7 +105,7 @@ def _build(file: Path, out: Path, theme: Theme) -> int:
 def _check(file: Path, out: Path, theme: Theme) -> int:
     doc, parsed = _parse(file)
     try:
-        comp = compose(doc)
+        comp = compose(doc, assets=[file.parent / "assets", theme.root / "assets"])
     except ComposeError:
         # Without layout facts the engine runs only the source tier.
         return _report(file, out, parsed + run_checks(all_rules(), CheckContext(doc, theme=theme)))

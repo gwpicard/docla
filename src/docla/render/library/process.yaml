@@ -1,0 +1,10 @@
+name: process
+format: slides
+label: Process
+intents: [process]
+capacity:
+  title_words: [1, 8]
+  items: [3, 6]
+  item_chars: [10, 60]
+elements: [title, step, item]
+fixture: tests/fixtures/components/process.yaml

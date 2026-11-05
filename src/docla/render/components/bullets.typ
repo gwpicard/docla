@@ -2,6 +2,7 @@
 
 #import "/lib/marks.typ": section, el-full-width, fit-box
 #import "/lib/theme.typ": colour
+#import "/lib/cite.typ": cite-keys
 
 #let bullets(sec) = section(sec.id, {
   set text(fill: colour("ink"))
@@ -11,8 +12,9 @@
   }))
   place(top + left, dx: 40pt, dy: 120pt, fit-box("body", sec.id, 880pt, 380pt, {
     set text(size: 20pt)
-    for item in sec.items {
-      el-full-width("item", sec.id, [#text(weight: "bold", item.head) #item.body])
+    for (i, item) in sec.items.enumerate() {
+      let citations = sec.at("citations", default: ()).at(i, default: ())
+      el-full-width("item", sec.id, [#text(weight: "bold", item.head) #item.body#if citations.len() > 0 { [ #cite-keys(citations)] }])
     }
   }))
 })

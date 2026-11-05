@@ -1,0 +1,10 @@
+name: image-with-text
+format: slides
+label: Image with text
+intents: [image-text]
+capacity:
+  title_words: [1, 8]
+  items: [1, 5]
+  item_chars: [10, 80]
+elements: [image, title, item]
+fixture: tests/fixtures/components/image-with-text.yaml
