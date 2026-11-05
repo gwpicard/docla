@@ -39,10 +39,10 @@ def _render(section, tmp_path):
     return swatch.swatch(_doc(section), section.id, tmp_path, theme=neutral_theme()).facts
 
 
-def _section(count=3, series=1, chart_type="bar"):
+def _section(count=3, series=1, chart_type="bar", categories=None):
     return Section(id="chart1", intent="chart", title="Results", data={
         "type": chart_type,
-        "categories": [f"C{i}" for i in range(count)],
+        "categories": categories if categories is not None else [f"Cat{i:02}" for i in range(count)],
         "series": [{"name": f"S{j}", "values": [2 ** (i % 3) for i in range(count)]}
                    for j in range(series)],
     })
@@ -89,9 +89,10 @@ def test_D3_fixture_page_and_roles(tmp_path):
     assert expected <= roles
 
 
-def test_D4_capacity_fit_marks(tmp_path):
-    within = _render(_section(6, 3), tmp_path / "within")
-    beyond = _render(_section(7, 3), tmp_path / "beyond")
+@pytest.mark.parametrize("chart_type", ["bar", "column"])
+def test_D4_capacity_fit_marks(tmp_path, chart_type):
+    within = _render(_section(6, 3, chart_type), tmp_path / "within")
+    beyond = _render(_section(7, 3, chart_type), tmp_path / "beyond")
     good = [m for m in within.marks if isinstance(m, marks.FitMark)]
     bad = [m for m in beyond.marks if isinstance(m, marks.FitMark)]
     assert good and all(m.ok for m in good)
@@ -118,7 +119,7 @@ def test_D6_chart_source_has_no_colour_literals():
 
 
 @pytest.mark.parametrize("chart_type,dimension", [("bar", "w"), ("column", "h")])
-def test_D7_mark_lengths_are_proportional(tmp_path, chart_type, dimension):
+def test_D7_mark_lengths_and_unknown_type_notice(tmp_path, chart_type, dimension):
     facts = _render(_section(chart_type=chart_type), tmp_path)
     lengths = sorted(getattr(m, dimension) for m in facts.marks
                      if isinstance(m, marks.ElementMark) and m.role == "chart-mark")
@@ -126,21 +127,24 @@ def test_D7_mark_lengths_are_proportional(tmp_path, chart_type, dimension):
     assert lengths[0] > 0
     assert abs(lengths[1] - 2 * lengths[0]) <= 0.5
     assert abs(lengths[2] - 4 * lengths[0]) <= 0.5
-
-
-def test_D7_unknown_chart_type_notice(tmp_path):
-    facts = _render(_section(chart_type="unknown"), tmp_path)
+    facts = _render(_section(chart_type="unknown"), tmp_path / "unknown")
     assert "chart type not supported" in " ".join(word.text for word in facts.words).lower()
 
 
 def test_D8_figure_fit_measures_chart_height(tmp_path):
-    def figure_need(count, folder):
-        facts = _render(_section(count, 2), folder)
+    def figure_need(section, folder):
+        facts = _render(section, folder)
         figures = [m for m in facts.marks if isinstance(m, marks.FitMark) and m.role == "figure"]
         assert len(figures) == 1
         return figures[0].need
 
-    short = figure_need(2, tmp_path / "short")
-    tall = figure_need(6, tmp_path / "tall")
+    short = figure_need(_section(2, 2), tmp_path / "short")
+    tall = figure_need(_section(6, 2), tmp_path / "tall")
     assert short > 0
     assert tall > short
+    short_labels = figure_need(_section(4, 2, "column"), tmp_path / "short-labels")
+    long_labels = figure_need(
+        _section(4, 2, "column", ["A" * 30, "Cat01", "Cat02", "Cat03"]),
+        tmp_path / "long-labels",
+    )
+    assert long_labels > short_labels
