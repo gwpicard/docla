@@ -103,8 +103,11 @@ def test_D1_contrast_theme_tokens(contrast):
     tokens = contrast.tokens
     assert tokens.colour.roles == ROLES and tokens.colour.roles != neutral.colour.roles
     assert tokens.colour.chart == CHART and tokens.colour.chart != neutral.colour.chart
+    assert tokens.colour.usage == {"text": ["ink", "ink-soft", "muted", "on-dark", "accent"],
+                                   "fill": ["surface", "surface-alt", "dark", "accent"],
+                                   "stroke": ["hairline", "ink-soft", "accent"]}
     assert tokens.colour.usage == neutral.colour.usage
-    assert tokens.colour.contrast_min == neutral.colour.contrast_min
+    assert tokens.colour.contrast_min == 4.5 == neutral.colour.contrast_min
     assert tokens.type.families["display"].model_dump() == {"name": "Inter", "files": ["Inter-Regular.ttf", "Inter-SemiBold.ttf"]}
     assert tokens.type.families["text"].model_dump() == {"name": "Source Serif 4", "files": ["SourceSerif4-Regular.ttf", "SourceSerif4-Semibold.ttf"]}
     assert tokens.type.families != neutral.type.families
@@ -129,7 +132,9 @@ def test_D2_every_fixture_is_one_page_and_passes_rules(slides, contrast):
 
 def test_D3_title_and_item_fonts(slides):
     titles = items = 0
-    for name, (_, _, facts, _) in slides.items():
+    for name, (_, section, facts, _) in slides.items():
+        if section.title:
+            assert any(word.role == "title" for word in facts.words), name
         for word in facts.words:
             if word.role == "title":
                 titles += 1
@@ -146,6 +151,8 @@ def test_D4_all_rendered_colours_are_from_contrast(slides, contrast):
     forbidden = (set(neutral.roles.values()) | {c for colours in neutral.chart.values() for c in colours}) - allowed
     seen = set()
     for name, (_, _, facts, _) in slides.items():
+        for word in facts.words:
+            assert word.colour is not None, (name, word)
         for colour in [w.colour for w in facts.words] + [c for s in facts.shapes for c in (s.fill, s.stroke)]:
             if colour is not None:
                 colour = colour.upper()
