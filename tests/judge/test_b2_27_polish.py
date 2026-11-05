@@ -130,15 +130,15 @@ def test_D4_comparison_headings_and_divider(slides):
                and heads[0].box.x1 < s.box.x0 <= s.box.x1 < heads[1].box.x0 for s in facts.shapes)
 
 
-def _assert_clean(slide):
+def _findings(slide):
     doc, _, facts, current_theme, tokens = slide
     ctx = engine.CheckContext(doc=doc, facts=facts, tokens=tokens, theme=current_theme)
-    assert engine.run_checks(catalogue.all_rules(), ctx) == []
+    return engine.run_checks(catalogue.all_rules(), ctx)
 
 
 @pytest.mark.parametrize("name", NINE)
 def test_D5_nine_slides_pass_all_rules(slides, name):
-    _assert_clean(slides[name])
+    assert _findings(slides[name]) == []
 
 
 def test_D6_full_image_and_caption_are_separate_and_safe(slides):
@@ -188,4 +188,4 @@ def test_D8_matrix_quadrants_boundaries_and_axis_labels(slides):
 
 @pytest.mark.parametrize("name", DEFECTS)
 def test_D9_fixed_slides_pass_all_rules(slides, name):
-    _assert_clean(slides[name])
+    assert _findings(slides[name]) == []
