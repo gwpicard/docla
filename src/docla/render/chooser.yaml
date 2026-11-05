@@ -87,3 +87,7 @@ intents:
     describes: Steps in a process.
     slides:
       - {component: process}
+  matrix:
+    describes: Four quadrants arranged on two axes.
+    slides:
+      - {component: matrix}

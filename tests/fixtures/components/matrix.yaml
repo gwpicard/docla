@@ -1,0 +1,11 @@
+id: matrix1
+intent: matrix
+title: Priorities for action
+items:
+  - body: Invest in promising opportunities
+  - body: Build on established strengths
+  - body: Monitor emerging possibilities
+  - body: Review areas needing attention
+data:
+  x: Impact
+  y: Effort
