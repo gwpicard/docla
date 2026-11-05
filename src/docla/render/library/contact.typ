@@ -14,9 +14,9 @@
       set block(above: 0pt, below: 0pt)
       for (i, item) in items.enumerate() {
         let citations = sec.at("citations", default: ()).at(i, default: ())
-        block(width: content-frame.w, height: content-frame.h / 6, {
+        block(width: content-frame.w, height: content-frame.h / calc.min(6, calc.max(3, items.len())), {
           set text(..type-style("slides", "body"), fill: colour("ink"))
-          fit-box("item", sec.id, content-frame.w, content-frame.h / 6,
+          fit-box("item", sec.id, content-frame.w, content-frame.h / calc.min(6, calc.max(3, items.len())),
             el("item", sec.id, [#item.head #item.body #cite-keys(citations)]))
         })
       }

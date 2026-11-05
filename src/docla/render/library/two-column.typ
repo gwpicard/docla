@@ -11,7 +11,7 @@
   let entries = if items.len() > 0 { items } else { paragraphs }
   let midpoint = calc.ceil(entries.len() / 2)
   let column-width = (content-frame.w - space(4)) / 2
-  let row-height = content-frame.h / 4
+  let row-height = content-frame.h / calc.min(4, calc.max(2, midpoint))
   slide-title(sec + (title: el("title", sec.id, sec.title)))
   place(top + left, dx: content-frame.x, dy: content-frame.y, {
     fit-box("body", sec.id, content-frame.w, content-frame.h, {

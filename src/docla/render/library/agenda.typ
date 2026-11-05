@@ -14,12 +14,12 @@
       set block(above: 0pt, below: 0pt)
       for (i, item) in items.enumerate() {
         let citations = sec.at("citations", default: ()).at(i, default: ())
-        block(width: content-frame.w, height: content-frame.h / 8, {
+        block(width: content-frame.w, height: content-frame.h / calc.min(8, calc.max(6, items.len())), {
           set text(..type-style("slides", "body"), fill: colour("ink"))
           grid(
             columns: (space(5), 1fr),
-            fit-box("number", sec.id, space(5), content-frame.h / 8, el("number", sec.id, str(i + 1))),
-            fit-box("item", sec.id, content-frame.w - space(5), content-frame.h / 8, el("item", sec.id, [#item.body #cite-keys(citations)])),
+            fit-box("number", sec.id, space(5), content-frame.h / calc.min(8, calc.max(6, items.len())), el("number", sec.id, str(i + 1))),
+            fit-box("item", sec.id, content-frame.w - space(5), content-frame.h / calc.min(8, calc.max(6, items.len())), el("item", sec.id, [#item.body #cite-keys(citations)])),
           )
         })
       }

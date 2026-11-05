@@ -15,15 +15,17 @@
   place(top + left, dx: content-frame.x, dy: content-frame.y, {
     set block(above: 0pt, below: 0pt)
     set text(..type-style("slides", "body"), fill: colour("ink"))
+    place(top + left, dx: content-frame.w / 2, line(length: content-frame.h, angle: 90deg, stroke: 0.5pt + colour("hairline")))
+    place(top + left, dy: row-height - space(1), line(length: content-frame.w, stroke: 0.5pt + colour("hairline")))
     grid(
       columns: (column-width,) * items.len(),
       column-gutter: gutter,
       ..items.enumerate().map(((i, item)) => {
         let citations = sec.at("citations", default: ()).at(i, default: ())
         fit-box("item", sec.id, column-width, content-frame.h, {
-          fit-box("column-title", sec.id, column-width, row-height, el("column-title", sec.id, [#item.head #cite-keys(citations)], width: column-width))
+          fit-box("column-title", sec.id, column-width, row-height, el("column-title", sec.id, text(weight: "bold", [#item.head #cite-keys(citations)]), width: column-width))
           for row in item.at("sub", default: ()) {
-            fit-box("row", sec.id, column-width, row-height, el("row", sec.id, row, width: column-width))
+            fit-box("row", sec.id, column-width, row-height, el("row", sec.id, if i == items.len() - 1 { align(right, row) } else { row }, width: column-width))
           }
         })
       }),
