@@ -83,3 +83,7 @@ intents:
     describes: A closing statement.
     slides:
       - {component: closing}
+  process:
+    describes: Steps in a process.
+    slides:
+      - {component: process}
