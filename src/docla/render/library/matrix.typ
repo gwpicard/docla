@@ -8,7 +8,7 @@
   let paragraphs = sec.paragraphs
   let source-line = sec.source_line
   let content = sec.at("content", default: (:))
-  let data = sec.data
+  let data = if sec.data == none { (:) } else { sec.data }
   let label-height = space(4)
   let gutter = space(2)
   let width = (content-frame.w - gutter) / 2
@@ -23,8 +23,11 @@
       row-gutter: gutter,
       ..items.enumerate().map(((i, item)) => {
         let citations = sec.at("citations", default: ()).at(i, default: ())
-        fit-box("item", sec.id, width, if item.body.len() > 70 { 0pt } else { height },
-          el("quadrant", sec.id, [#item.body #cite-keys(citations)], width: width))
+        fit-box("item", sec.id, width, if item.head.len() + item.body.len() > 70 { 0pt } else { height },
+          el("quadrant", sec.id, {
+            if item.head != "" { strong(item.head); linebreak() }
+            [#item.body #cite-keys(citations)]
+          }, width: width))
       }),
     )
     grid(
