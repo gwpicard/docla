@@ -1,0 +1,9 @@
+name: closing
+format: slides
+label: Closing
+intents: [closing]
+capacity:
+  title_words: [1, 10]
+  paragraphs: [0, 1]
+elements: [title, spoken]
+fixture: tests/fixtures/components/closing.yaml

@@ -79,3 +79,7 @@ intents:
     slides:
       - {component: chart, when: {has_data: true}}
       - {component: bullets}
+  closing:
+    describes: A closing statement.
+    slides:
+      - {component: closing}
