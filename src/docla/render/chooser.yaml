@@ -74,3 +74,8 @@ intents:
     slides:
       - {component: full-image, when: {has_image: true}}
       - {component: statement}
+  chart:
+    describes: Data shown as a chart.
+    slides:
+      - {component: chart, when: {has_data: true}}
+      - {component: bullets}
