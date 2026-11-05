@@ -29,7 +29,7 @@
               for (i, category) in categories.enumerate() {
                 for (j, s) in series.enumerate() {
                   let value = s.values.at(i, default: 0)
-                  rows.push(block(height: if categories.len() * series.len() <= 8 { 26pt } else { 18pt }, grid(columns: (120pt, plot-w), align: horizon, gutter: 0pt,
+                  rows.push(block(height: if categories.len() * series.len() <= 8 { 30pt } else { 18pt }, grid(columns: (120pt, plot-w), align: horizon, gutter: 0pt,
                     el("chart-label", sec.id, str(category)),
                     el("chart-mark", sec.id, rect(width: plot-w * calc.max(0, value) / maximum, height: 12pt, fill: chart-colour(j), stroke: none)),
                   )))

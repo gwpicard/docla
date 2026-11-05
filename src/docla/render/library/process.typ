@@ -9,7 +9,8 @@
   let source-line = sec.source_line
   let content = sec.at("content", default: (:))
   let gutter = space(2)
-  let width = (content-frame.w - gutter * 5) / 6
+  let columns = calc.min(6, calc.max(1, items.len()))
+  let width = (content-frame.w - gutter * (columns - 1)) / columns
   let step-height = content-frame.h / 5
   let item-height = content-frame.h - step-height
   slide-title(sec + (title: el("title", sec.id, sec.title)))
@@ -17,7 +18,7 @@
     set block(above: 0pt, below: 0pt)
     fit-box("process", sec.id, content-frame.w, content-frame.h, {
       grid(
-        columns: (width,) * 6,
+        columns: (width,) * columns,
         column-gutter: gutter,
         ..items.enumerate().map(((i, item)) => {
           let citations = sec.at("citations", default: ()).at(i, default: ())
@@ -33,7 +34,11 @@
             if i < items.len() - 1 {
               place(top + right, dx: gutter, {
                 set text(..type-style("slides", "body"), fill: colour("accent"))
-                el("step", sec.id, [→])
+                el("step", sec.id, block(width: gutter / 2, height: gutter / 2, {
+                  place(left + horizon, line(length: gutter / 2, stroke: colour("accent")))
+                  place(right + horizon, line(length: gutter / 3, angle: -45deg, stroke: colour("accent")))
+                  place(right + horizon, line(length: gutter / 3, angle: 45deg, stroke: colour("accent")))
+                }))
               })
             }
           })
