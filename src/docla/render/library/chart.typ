@@ -13,7 +13,7 @@
   let series = data.at("series", default: ())
   let kind = data.at("type", default: "")
   let plot-w = content-frame.w - 120pt
-  let plot-h = 280pt
+  let plot-h = categories.len() * calc.max(1, series.len()) * 15pt
   slide-title(sec + (title: el("title", sec.id, sec.title)))
   place(top + left, dx: content-frame.x, dy: content-frame.y, {
     fit-box("figure", sec.id, content-frame.w, content-frame.h, {
@@ -37,18 +37,24 @@
               }
               stack(dir: ttb, spacing: 0pt, ..rows)
             } else {
-              block(width: content-frame.w, height: plot-h + 50pt, {
+              let slot = plot-w / calc.max(1, categories.len())
+              let count = calc.max(1, series.len())
+              block(width: content-frame.w, height: plot-h, {
                 for (i, category) in categories.enumerate() {
                   for (j, s) in series.enumerate() {
-                    let slot = plot-w / calc.max(1, categories.len())
-                    let count = calc.max(1, series.len())
                     let length = plot-h * calc.max(0, s.values.at(i, default: 0)) / maximum
                     let x = 100pt + i * slot + j * slot / count
                     place(top + left, dx: x, dy: plot-h - length, el("chart-mark", sec.id, rect(width: slot / count * 0.7, height: length, fill: chart-colour(j), stroke: none)))
-                    place(top + left, dx: x, dy: plot-h + 2pt, el("chart-label", sec.id, rotate(90deg, reflow: true, str(category))))
                   }
                 }
               })
+              let labels = ()
+              for category in categories {
+                for s in series {
+                  labels.push(el("chart-label", sec.id, rotate(90deg, reflow: true, str(category))))
+                }
+              }
+              pad(left: 100pt, grid(columns: (slot / count,) * labels.len(), ..labels))
             }
           })
           if series.len() >= 2 {
