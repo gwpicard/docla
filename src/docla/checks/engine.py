@@ -124,6 +124,12 @@ def _tiers_to_run(ctx: CheckContext) -> tuple[Tier, ...]:
     return TIERS if ctx.facts is not None else ("source",)
 
 
+def _check_tier(rule: Rule, check: Check) -> Tier:
+    if rule.check["kind"] in ("all-of", "any-of", "not"):
+        return rule.tier
+    return check.tier
+
+
 def _in_scope(finding: Finding, rule: Rule, ctx: CheckContext) -> bool:
     scope = rule.scope
     if scope.components is not None and (
@@ -146,7 +152,7 @@ def run_checks(rules: list[Rule], ctx: CheckContext) -> list[Finding]:
         produced = [
             f
             for rule, check in applicable
-            if check.tier == tier
+            if _check_tier(rule, check) == tier
             for f in check.run(ctx, rule)
             if _in_scope(f, rule, ctx)
         ]
