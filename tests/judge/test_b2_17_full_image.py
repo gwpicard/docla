@@ -1,4 +1,6 @@
 # Intent: full-image routes and renders a full-frame image with a caption at its stated capacity.
+import importlib.util
+import json
 import re
 from pathlib import Path
 
@@ -14,6 +16,8 @@ try:
     from docla.render import components
 except ImportError as error:
     if error.name not in ("docla.render.components",):
+        raise
+    if importlib.util.find_spec(error.name) is not None:
         raise
     components = None
 
@@ -48,12 +52,16 @@ def _render(tmp_path, sec):
     route = chooser.load_chooser(manifests=_manifests())
     assert route.knows("full-image", "slides"), "the chooser must have slides entries for intent full-image"
     doc = Document(front={}, format="slides", sections=[sec])
-    comp = compose.compose(doc, chooser=route)
+    assets = tmp_path / "assets"
+    _asset(assets, sec)
+    comp = compose.compose(doc, chooser=route, assets=[assets])
     assert [s.component for s in comp.sections] == ["full-image"]
     dest = tmp_path / "render"
     dest.parent.mkdir(parents=True, exist_ok=True)
     main = compose.assemble(comp, dest, theme=neutral_theme())
-    _asset(dest, sec)
+    content = json.loads((dest / "composition.json").read_text())["sections"][0]["content"]
+    image_path = content["image"]
+    assert image_path.startswith("/assets/") and (dest / image_path.lstrip("/")).is_file()
     fonts = compose.font_paths(dest)
     pdf = dest / "page.pdf"
     typst.compile_pdf(main, dest, pdf, fonts)
@@ -98,6 +106,8 @@ def test_D3_fixture_page_and_marks(tmp_path):
     assert [(m.id, m.edge) for m in sections] == [(sec.id, "start"), (sec.id, "end")]
     elements = [m for m in facts.marks if isinstance(m, marks.ElementMark)]
     assert {m.role for m in elements if m.id == sec.id} >= {"image", "caption"}
+    image = [m for m in elements if m.id == sec.id and m.role == "image"]
+    assert any(m.w >= 480 and m.h >= 270 for m in image)
 
 
 def test_D4_caption_capacity_boundary(tmp_path):
@@ -115,7 +125,7 @@ def test_D5_check_fixture_deck_has_no_findings(tmp_path, capsys):
 
     _manifests()
     sec = _fixture()
-    _asset(tmp_path, sec)
+    _asset(tmp_path / "assets", sec)
     doc = Document(front={"doctype": "pitch-deck", "format": "slides", "title": "Deck"}, format="slides", sections=[sec])
     source = tmp_path / "deck.md"
     source.write_text(serialise(doc))
@@ -131,5 +141,4 @@ def test_D5_check_fixture_deck_has_no_findings(tmp_path, capsys):
 def test_D6_full_image_source_has_no_colour_literals():
     assert SOURCE.is_file(), "full-image.typ must exist"
     text = SOURCE.read_text()
-    assert not any(literal in text for literal in ("rgb(", "luma(", "cmyk("))
-    assert re.search(r"#[0-9a-fA-F]{6}", text) is None
+    assert re.search(r"\b(?:rgb|luma|cmyk)\s*\(|#[0-9a-fA-F]{6}\b", text) is None
