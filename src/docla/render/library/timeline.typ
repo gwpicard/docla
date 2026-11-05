@@ -9,15 +9,16 @@
   let source-line = sec.source_line
   let content = sec.at("content", default: (:))
   let gutter = space(1)
-  let width = (content-frame.w - gutter * 5) / 6
-  let date-height = content-frame.h / 5
+  let columns = calc.min(6, calc.max(1, items.len()))
+  let width = (content-frame.w - gutter * (columns - 1)) / columns
+  let date-height = content-frame.h / 2
   let item-height = content-frame.h - date-height
   slide-title(sec + (title: el("title", sec.id, sec.title)))
   place(top + left, dx: content-frame.x, dy: content-frame.y, {
     set block(above: 0pt, below: 0pt)
     fit-box("timeline", sec.id, content-frame.w, content-frame.h, {
       grid(
-        columns: (width,) * 6,
+        columns: (width,) * columns,
         column-gutter: gutter,
         ..items.enumerate().map(((i, item)) => {
           let citations = sec.at("citations", default: ()).at(i, default: ())

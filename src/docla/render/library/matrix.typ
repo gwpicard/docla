@@ -39,7 +39,7 @@
       ..("x", "y").map(key => {
         if data.at(key, default: "") != "" {
           fit-box("axis-label", sec.id, width, label-height,
-            el("axis-label", sec.id, str(data.at(key)), width: width))
+            el("axis-label", sec.id, text(fill: colour("muted"), str(data.at(key))), width: width))
         } else { [] }
       }),
     )
