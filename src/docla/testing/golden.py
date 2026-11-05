@@ -5,12 +5,23 @@ from pathlib import Path
 from typing import Any
 
 import yaml  # type: ignore[import-untyped]
+from PIL import Image
 
 from docla.model import Document, Section
 from docla.render.components import all_manifests
 from docla.render.marks import ElementMark
 from docla.render.swatch import swatch
 from docla.theme import neutral_theme
+
+
+def _fixture_assets(section: Section, folder: Path) -> list[Path] | None:
+    if not section.image:
+        return None
+    assets = folder / "assets"
+    image = assets / section.image
+    image.parent.mkdir(parents=True, exist_ok=True)
+    Image.new("RGB", (1600, 900)).save(image, format="PNG")
+    return [assets]
 
 
 def facts_for(name: str, fixtures_dir: Path) -> dict[str, Any]:
@@ -24,7 +35,8 @@ def facts_for(name: str, fixtures_dir: Path) -> dict[str, Any]:
     if not section.id:
         raise ValueError(f"fixture {name!r} has no section id")
     with tempfile.TemporaryDirectory() as folder:
-        facts = swatch(doc, section.id, Path(folder), neutral_theme()).facts
+        workdir = Path(folder)
+        facts = swatch(doc, section.id, workdir, neutral_theme(), assets=_fixture_assets(section, workdir)).facts
     result: dict[str, Any] = {}
     for mark in facts.marks:
         if isinstance(mark, ElementMark):
