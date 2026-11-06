@@ -152,18 +152,6 @@ class SectionResult:
     attempts: int = 0
     rejected: list[str] = field(default_factory=list)
 
-    @classmethod
-    def clean(
-        cls, state: SectionState, history: list[SectionState], attempts: int = 0, rejected: list[str] | None = None
-    ) -> SectionResult:
-        return cls("clean", state, history, attempts, rejected or [])
-
-    @classmethod
-    def residual(
-        cls, state: SectionState, history: list[SectionState], attempts: int = 0, rejected: list[str] | None = None
-    ) -> SectionResult:
-        return cls("residual", state, history, attempts, rejected or [])
-
 
 async def _candidate(
     job: JobLike, ctx: LoopContext, state: SectionState, history: list[SectionState]
@@ -196,7 +184,7 @@ async def write_section(job: JobLike, ctx: LoopContext) -> SectionResult:
             rejected.append(str(exc))
             continue
         if candidate is None:
-            return SectionResult.residual(state, history, attempts - 1, rejected)
+            return SectionResult("residual", state, history, attempts - 1, rejected)
         new = await evaluate(candidate, job, ctx, tag=f"{job.section_id}-{attempts}", attempt=attempts, action=action)
         oscillation = any(old.text_hash == new.text_hash for old in history)
         history.append(new)
@@ -205,14 +193,14 @@ async def write_section(job: JobLike, ctx: LoopContext) -> SectionResult:
             cleared.update(state.fingerprints - new.fingerprints)
             state = new
         if not state.blocking:
-            return SectionResult.clean(state, history, attempts, rejected)
+            return SectionResult("clean", state, history, attempts, rejected)
         if stall >= 2 or oscillation:
             break
     if not state.blocking:
-        return SectionResult.clean(state, history, attempts, rejected)
+        return SectionResult("clean", state, history, attempts, rejected)
     if ctx.best_of_n is not None:
         result = await ctx.best_of_n(state, job, ctx, original=original)
         if result is not None and not result.blocking:
-            return SectionResult.clean(result, history, attempts, rejected)
+            return SectionResult("clean", result, history, attempts, rejected)
     best = min(history, key=lambda item: (item.phi, item is not state))
-    return SectionResult.residual(best, history, attempts, rejected)
+    return SectionResult("residual", best, history, attempts, rejected)
