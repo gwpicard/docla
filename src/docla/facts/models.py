@@ -1,6 +1,6 @@
 from typing import Literal
 
-from pydantic import BaseModel
+from pydantic import BaseModel, Field
 
 # All lengths are in pt with the origin at the top left of the page; pages count from 1.
 
@@ -31,9 +31,18 @@ class Shape(BaseModel):
     box: FactBox
 
 
+class ImageFact(BaseModel):
+    box: FactBox
+    native_w: int
+    native_h: int
+    dpi_x: float
+    dpi_y: float
+
+
 class PageFacts(BaseModel):
     page: int
     width: float
     height: float
     words: list[Word]
     shapes: list[Shape]
+    images: list[ImageFact] = Field(default_factory=list)
