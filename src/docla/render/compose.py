@@ -164,7 +164,7 @@ def assemble(comp: Composition, dest: Path, *, theme: Theme | None = None, libra
 
     With a theme, `lib/theme.typ` is generated from its tokens and its fonts are copied to `fonts/`.
     """
-    if dest.exists() and (not dest.is_dir() or any(dest.iterdir())):
+    if dest.exists():
         raise FileExistsError(f"render folder already exists: {dest}")
     library = library_dir() if library is None else library
     all_manifests(library)
