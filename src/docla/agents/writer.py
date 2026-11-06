@@ -92,7 +92,7 @@ def _repair_prompt(section: Section, findings: list[Finding], history: list[str]
     return "\n".join(lines)
 
 
-def _repair_ops(reply: RepairReply, section_id: str) -> list[PatchOp]:
+def _repair_ops(reply: RepairReply, section_id: str | None) -> list[PatchOp]:
     if not reply.ops:
         raise PatchRejected("repair-empty", f"No operations for section {section_id}")
     ops = []
@@ -106,7 +106,7 @@ def _repair_ops(reply: RepairReply, section_id: str) -> list[PatchOp]:
             fields["items"] = [item.model_dump() for item in op.items]
         if not fields:
             raise PatchRejected("repair-empty", f"No fields for section {section_id}")
-        ops.append(PatchOp(op="set_fields", section_id=section_id, fields=fields))
+        ops.append(PatchOp(op="set_fields", section_id=op.section_id, fields=fields))
     return ops
 
 
