@@ -2,3 +2,6 @@ summary:
   slides: Write plain British English in short, direct phrases; contractions are fine.
   doc: Write plain British English in full sentences; do not use contractions.
 banned: [leverage, synergy, unlock, journey]
+terminology:
+  - preferred: customer
+    avoid: [client]

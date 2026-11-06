@@ -72,6 +72,21 @@
     },
     "Scope": {
       "properties": {
+        "components": {
+          "anyOf": [
+            {
+              "items": {
+                "type": "string"
+              },
+              "type": "array"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Components"
+        },
         "format": {
           "anyOf": [
             {
@@ -87,6 +102,21 @@
           ],
           "default": null,
           "title": "Format"
+        },
+        "intents": {
+          "anyOf": [
+            {
+              "items": {
+                "type": "string"
+              },
+              "type": "array"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Intents"
         },
         "roles": {
           "anyOf": [
@@ -116,6 +146,16 @@
     },
     "id": {
       "title": "Id",
+      "type": "string"
+    },
+    "loop": {
+      "default": "both",
+      "enum": [
+        "micro",
+        "macro",
+        "both"
+      ],
+      "title": "Loop",
       "type": "string"
     },
     "origin": {
