@@ -7,4 +7,3 @@ capacity:
   items: [1, 6]
   item_chars: [10, 140]
 elements: [title, body, item]
-fixture: tests/fixtures/components/bullets.yaml
