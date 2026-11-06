@@ -183,6 +183,13 @@ def _build_parser() -> argparse.ArgumentParser:
     theme_commands = theme.add_subparsers(dest="theme_command", required=True)
     test = theme_commands.add_parser("test", help="test a theme")
     test.add_argument("--theme", type=Path, default=None, help="theme folder")
+    evaluation = subparsers.add_parser("eval", help="run evaluations")
+    eval_commands = evaluation.add_subparsers(dest="eval_command", required=True)
+    heal = eval_commands.add_parser("heal", help="run the heal evaluation")
+    heal.add_argument("--live", action="store_true")
+    heal.add_argument("--cases", type=Path, default=Path("tests/fixtures/heal-eval"))
+    heal.add_argument("--out", type=Path, default=Path("evals/RESULTS.md"))
+    heal.add_argument("--theme", type=Path, default=None)
     return parser
 
 
@@ -220,7 +227,55 @@ def main(argv: list[str] | None = None) -> int:
         return _run_file_command(args)
     if args.command == "theme":
         return _run_theme_test(args.theme)
+    if args.command == "eval":
+        return _heal(args)
     return 1
+
+
+def _heal(args: argparse.Namespace) -> int:
+    if args.live and os.environ.get("DOCLA_LIVE") != "1":
+        print("Live evaluation requires DOCLA_LIVE=1", file=sys.stderr)
+        return 2
+    from docla.evals.heal import ScriptedWriter, load_cases, render_results, run_heal
+
+    cases = load_cases(args.cases)
+    theme = _theme(args.theme)
+
+    def spent():
+        return 0.0
+
+    writer_for = ScriptedWriter
+    if args.live:
+        from docla.agents.ledger import Ledger
+        from docla.agents.scheduler import Scheduler
+        from docla.config import load_project_config
+        from docla.write import ClaudeWriter, ScheduledClaude, live_transport, role_models
+
+        config = load_project_config(Path.cwd())
+        ledger = Ledger(args.out.parent / "heal-ledger.jsonl", config.prices, config.budget.max_usd_per_document)
+        claude = ScheduledClaude(
+            live_transport(), ledger, role_models(config), scheduler=Scheduler(config.loop.max_parallel_sections)
+        )
+
+        class LiveWriter(ClaudeWriter):
+            def __init__(self, case: Any) -> None:
+                super().__init__(claude, [], theme, case.document)
+                self.case = case
+
+            async def draft(self, job: Any) -> Any:
+                return self.case.document.sections[0]
+
+        writer_for = LiveWriter
+
+        def spent():
+            return ledger.total
+
+    with tempfile.TemporaryDirectory() as directory:
+        report = asyncio.run(run_heal(cases, writer_for=writer_for, theme=theme, workdir=Path(directory), spent=spent))
+    report.mode = "live" if args.live else "offline"
+    args.out.parent.mkdir(parents=True, exist_ok=True)
+    args.out.write_text(render_results(report))
+    return 0 if report.gate else 1
 
 
 def _write(args: argparse.Namespace) -> int:
