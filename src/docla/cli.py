@@ -233,17 +233,29 @@ def _write(args: argparse.Namespace) -> int:
 
     project = args.file.parent
     config = load_project_config(project)
-    ledger = Ledger(project / '.docla' / 'write' / args.file.stem / 'ledger.jsonl', config.prices,
-                    config.budget.max_usd_per_document)
+    ledger = Ledger(
+        project / ".docla" / "write" / args.file.stem / "ledger.jsonl",
+        config.prices,
+        config.budget.max_usd_per_document,
+    )
     try:
         theme = _theme(args.theme)
-        claude = ScheduledClaude(transport_for(project), ledger, role_models(config),
-                                 scheduler=Scheduler(config.loop.max_parallel_sections))
-        return asyncio.run(run_write(args.file, agents=claude_agents(claude, theme), theme=theme,
-                                     out=_out_dir(args.file, args.out), approve=args.approve, yes=args.yes,
-                                     spent=lambda: ledger.total))
+        claude = ScheduledClaude(
+            transport_for(project), ledger, role_models(config), scheduler=Scheduler(config.loop.max_parallel_sections)
+        )
+        return asyncio.run(
+            run_write(
+                args.file,
+                agents=claude_agents(claude, theme),
+                theme=theme,
+                out=_out_dir(args.file, args.out),
+                approve=args.approve,
+                yes=args.yes,
+                spent=lambda: ledger.total,
+            )
+        )
     except CassetteMiss as error:
-        print(f'{project / ".docla" / "cassette.json"}: {error}; set DOCLA_LIVE=1 for live calls', file=sys.stderr)
+        print(f"{project / '.docla' / 'cassette.json'}: {error}; set DOCLA_LIVE=1 for live calls", file=sys.stderr)
     except (AgentRefused, AgentTruncated, AgentInvalid, _BuildFailed) as error:
         print(error, file=sys.stderr)
     return 2

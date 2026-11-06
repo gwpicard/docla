@@ -4,10 +4,11 @@ import asyncio
 import os
 import shutil
 import sys
+from collections.abc import Callable
 from dataclasses import dataclass
 from functools import partial
 from pathlib import Path
-from typing import Any, Callable
+from typing import Any
 
 from pydantic import TypeAdapter
 
@@ -44,26 +45,26 @@ ESTIMATE_USD_PER_SECTION = 0.10
 
 @dataclass
 class Agents:
-    gather: Callable
-    outline: Callable
-    writer: Callable
+    gather: Callable[..., Any]
+    outline: Callable[..., Any]
+    writer: Callable[..., Any]
 
 
 class ScheduledClaude(Claude):
-    def __init__(self, transport, ledger, models, *, scheduler: Scheduler):
+    def __init__(self, transport: Any, ledger: Any, models: dict[str, str], *, scheduler: Scheduler) -> None:
         super().__init__(transport, ledger, models)
         self.scheduler = scheduler
 
-    async def call(self, *args, **kwargs):
+    async def call(self, *args: Any, **kwargs: Any) -> Any:
         return await self.scheduler.run(lambda: super(ScheduledClaude, self).call(*args, **kwargs))
 
-    async def cite(self, *args, **kwargs):
+    async def cite(self, *args: Any, **kwargs: Any) -> Any:
         return await self.scheduler.run(lambda: super(ScheduledClaude, self).cite(*args, **kwargs))
 
 
 def role_models(config: ProjectConfig) -> dict[str, str]:
     models = config.models
-    return {**models, **{role: models.get(role, models['critic' if role == 'planner' else 'writer']) for role in ROLES}}
+    return {**models, **{role: models.get(role, models["critic" if role == "planner" else "writer"]) for role in ROLES}}
 
 
 def live_transport() -> Transport:
@@ -71,53 +72,57 @@ def live_transport() -> Transport:
 
 
 def transport_for(project: Path) -> Transport:
-    path = project / '.docla' / 'cassette.json'
-    if os.environ.get('DOCLA_LIVE') != '1':
-        return CassetteTransport(Cassette(path, 'replay'))
+    path = project / ".docla" / "cassette.json"
+    if os.environ.get("DOCLA_LIVE") != "1":
+        return CassetteTransport(Cassette(path, "replay"))
     transport = live_transport()
-    if os.environ.get('DOCLA_RECORD') == '1':
-        return CassetteTransport(Cassette(path, 'record', transport=transport))
+    if os.environ.get("DOCLA_RECORD") == "1":
+        return CassetteTransport(Cassette(path, "record", transport=transport))
     return transport
 
 
 class ClaudeWriter:
-    def __init__(self, claude, facts, theme, doc):
+    def __init__(self, claude: Any, facts: Any, theme: Any, doc: Any) -> None:
         self.claude, self.facts, self.theme, self.doc = claude, facts, theme, doc
         self.drafts: dict[str, Any] = {}
 
-    def card(self, job):
+    def card(self, job: Any) -> str:
         return brief_card(self.theme, job.format, job.intent, all_manifests()[job.component], all_rules())
 
-    async def draft(self, job):
+    async def draft(self, job: Any) -> Any:
         result = await draft(self.claude, job, self.facts, self.card(job), None, theme=self.theme)
         self.drafts[job.section_id] = result
         return draft_to_section(result, job)
 
-    async def repair(self, job, state, history, *, strategy=None):
-        lines = [f"attempt {s.attempt}: {s.action}; findings {', '.join(f.rule_id for f in s.findings)}" for s in history]
+    async def repair(self, job: Any, state: Any, history: Any, *, strategy: Any = None) -> Any:
+        lines = [
+            f"attempt {s.attempt}: {s.action}; findings {', '.join(f.rule_id for f in s.findings)}" for s in history
+        ]
         previous = self.drafts.get(job.section_id)
         if previous is not None and len(previous.items) == len(state.section.items):
-            lines.append('draft priority: ' + ', '.join(f'items[{i}]={item.priority}' for i, item in enumerate(previous.items)))
+            lines.append(
+                "draft priority: " + ", ".join(f"items[{i}]={item.priority}" for i, item in enumerate(previous.items))
+            )
         if strategy is not None:
-            lines.append(f'strategy: {strategy}')
+            lines.append(f"strategy: {strategy}")
         findings = [f for f in state.findings if f.remedy.class_ in ACTIONABLE]
         return await repair(self.claude, state.section, findings, lines, self.card(job), theme=self.theme)
 
 
-def claude_agents(claude, theme) -> Agents:
-    async def gather_sources(extracted):
+def claude_agents(claude: Any, theme: Any) -> Agents:
+    async def gather_sources(extracted: Any) -> Any:
         return await gather(claude, extracted)
 
-    async def outline(facts, doctype, front, store):
-        brief = '\n'.join(f'{key}: {front.get(key, "")}' for key in ('audience', 'purpose'))
+    async def outline(facts: Any, doctype: Any, front: Any, store: Any) -> Any:
+        brief = "\n".join(f"{key}: {front.get(key, '')}" for key in ("audience", "purpose"))
         result = await plan(claude, facts, doctype, brief, theme=theme)
         return outline_to_document(result, front, store=store), result.questions
 
     return Agents(gather_sources, outline, lambda facts, doc: ClaudeWriter(claude, facts, theme, doc))
 
 
-async def _facts(project, run_dir, agents):
-    path = run_dir / 'facts.json'
+async def _facts(project: Any, run_dir: Any, agents: Any) -> Any:
+    path = run_dir / "facts.json"
     if path.exists():
         return TypeAdapter(list[Fact]).validate_json(path.read_text())
     facts = await agents.gather(extract(project))
@@ -126,21 +131,21 @@ async def _facts(project, run_dir, agents):
     return facts
 
 
-def _outline_output(file, doc, questions=()):
+def _outline_output(file: Any, doc: Any, questions: Any = ()) -> None:
     for section in doc.sections:
-        print(f'{section.id} {section.intent} {section.title}')
+        print(f"{section.id} {section.intent} {section.title}")
     for question in questions:
-        print(f'question: {question}')
-    print(f'approve the outline with: docla write {file} --approve')
+        print(f"question: {question}")
+    print(f"approve the outline with: docla write {file} --approve")
 
 
-async def _make_outline(file, doc, agents, run_dir, ids):
+async def _make_outline(file: Any, doc: Any, agents: Any, run_dir: Any, ids: Any) -> None:
     extracted = extract(file.parent)
     facts = await agents.gather(extracted)
     run_dir.mkdir(parents=True, exist_ok=True)
-    (run_dir / 'facts.json').write_bytes(TypeAdapter(list[Fact]).dump_json(facts, indent=2))
-    front = {**doc.front, 'format': doc.format}
-    doc, questions = await agents.outline(facts, load_doctypes()[front['doctype']], front, ids)
+    (run_dir / "facts.json").write_bytes(TypeAdapter(list[Fact]).dump_json(facts, indent=2))
+    front = {**doc.front, "format": doc.format}
+    doc, questions = await agents.outline(facts, load_doctypes()[front["doctype"]], front, ids)
     doc, _ = stamp(doc, ids)
     ids.save()
     doc.sources = [Source(key=s.key, text=s.name) for s in extracted]
@@ -148,23 +153,32 @@ async def _make_outline(file, doc, agents, run_dir, ids):
     _outline_output(file, doc, questions)
 
 
-def _build(file, doc, theme, out, assets):
+def _build(file: Any, doc: Any, theme: Any, out: Any, assets: Any) -> None:
     out.mkdir(parents=True, exist_ok=True)
-    render = out / 'render'
+    render = out / "render"
     if render.exists():
         shutil.rmtree(render)
     main = assemble(compose(doc, assets=assets), render, theme=theme)
-    pdf = out / f'{file.stem}.pdf'
+    pdf = out / f"{file.stem}.pdf"
     compile_pdf(main, render, pdf, font_paths(render))
     print(pdf)
 
 
-async def run_write(file: Path, *, agents: Agents, theme, out: Path, approve: bool, yes: bool = False,
-                    confirm: Callable[[str], str] = input, spent: Callable[[], float] = lambda: 0.0) -> int:
+async def run_write(
+    file: Path,
+    *,
+    agents: Agents,
+    theme: Any,
+    out: Path,
+    approve: bool,
+    yes: bool = False,
+    confirm: Callable[[str], str] = input,
+    spent: Callable[[], float] = lambda: 0.0,
+) -> int:
     project = file.parent
-    run_dir = project / '.docla' / 'write' / file.stem
-    oplog = project / '.docla' / 'oplog.jsonl'
-    ids = IdStore(project / '.docla' / 'ids.json')
+    run_dir = project / ".docla" / "write" / file.stem
+    oplog = project / ".docla" / "oplog.jsonl"
+    ids = IdStore(project / ".docla" / "ids.json")
     doc, _ = parse(file.read_text())
     if not approve:
         if doc.sections:
@@ -173,43 +187,67 @@ async def run_write(file: Path, *, agents: Agents, theme, out: Path, approve: bo
             await _make_outline(file, doc, agents, run_dir, ids)
         return 0
     if not doc.sections:
-        print('no outline', file=sys.stderr)
+        print("no outline", file=sys.stderr)
         return 2
     if len(doc.sections) > 40:
-        print(f'estimate: {len(doc.sections)} sections, about ${len(doc.sections) * ESTIMATE_USD_PER_SECTION:.2f}')
-        if not yes and confirm('continue? [y/N] ').strip().lower() not in ('y', 'yes'):
-            print('cancelled')
+        print(f"estimate: {len(doc.sections)} sections, about ${len(doc.sections) * ESTIMATE_USD_PER_SECTION:.2f}")
+        if not yes and confirm("continue? [y/N] ").strip().lower() not in ("y", "yes"):
+            print("cancelled")
             return 1
     try:
         facts = await _facts(project, run_dir, agents)
         config = load_project_config(project)
-        assets = [project / 'assets', theme.root / 'assets']
-        evidence = [f.text for f in facts] + [f'{s.key} {s.text}' for s in doc.sources]
+        assets = [project / "assets", theme.root / "assets"]
+        evidence = [f.text for f in facts] + [f"{s.key} {s.text}" for s in doc.sources]
         evidence += [v for v in doc.front.values() if isinstance(v, str)]
-        ctx = LoopContext(doc, theme, run_dir, agents.writer(facts, doc), assets=assets,
-                          fact_guard=FactGuard(evidence, {s.key for s in doc.sources}),
-                          micro_attempts=config.loop.micro_attempts, best_of_n=partial(best_of_n, n=config.loop.best_of_n),
-                          heal_log=HealLog(run_dir), spent=spent)
+        ctx = LoopContext(
+            doc,
+            theme,
+            run_dir,
+            agents.writer(facts, doc),
+            assets=assets,
+            fact_guard=FactGuard(evidence, {s.key for s in doc.sources}),
+            micro_attempts=config.loop.micro_attempts,
+            best_of_n=partial(best_of_n, n=config.loop.best_of_n),
+            heal_log=HealLog(run_dir),
+            spent=spent,
+        )
         semaphore = asyncio.Semaphore(config.loop.max_parallel_sections)
-        async def process(i, section):
+
+        async def process(i: int, section: Any) -> str:
             async with semaphore:
-                job = SectionJob(section_id=section.id, format=doc.format, intent=section.intent,
-                                 component=component_for(section, doc.format, i, len(doc.sections)),
-                                 outline=section.title or '', section=section.section,
-                                 audience=doc.front.get('audience', ''), purpose=doc.front.get('purpose', ''))
+                component = component_for(section, doc.format, i, len(doc.sections))
+                assert component is not None
+                job = SectionJob(
+                    section_id=section.id,
+                    format=doc.format,
+                    intent=section.intent,
+                    component=component,
+                    outline=section.title or "",
+                    section=section.section,
+                    audience=doc.front.get("audience", ""),
+                    purpose=doc.front.get("purpose", ""),
+                )
                 result = await write_section(job, ctx)
-                fields = result.state.section.model_dump(include=set(TEXT_FIELDS), mode='json')
+                fields = result.state.section.model_dump(include=set(TEXT_FIELDS), mode="json")
                 if result.state.section.component != section.component:
                     fields.update(component=result.state.section.component, because=result.state.section.because)
-                patch = Patch(base_rev=current_rev(oplog), author='ai', reason='Draft section',
-                              ops=[PatchOp(op='set_fields', section_id=section.id, fields=fields)])
+                patch = Patch(
+                    base_rev=current_rev(oplog),
+                    author="ai",
+                    reason="Draft section",
+                    ops=[PatchOp(op="set_fields", section_id=section.id, fields=fields)],
+                )
                 apply_to_file(file, patch, oplog, ids)
-                print(f'section {section.id}: {result.status}; total cost ${spent():.4f}')
+                print(f"section {section.id}: {result.status}; total cost ${spent():.4f}")
                 return result.status
-        statuses = await asyncio.gather(*(process(i, s) for i, s in enumerate(doc.sections) if s.owner != 'human' and not s.lock))
+
+        statuses = await asyncio.gather(
+            *(process(i, s) for i, s in enumerate(doc.sections) if s.owner != "human" and not s.lock)
+        )
         updated, _ = parse(file.read_text())
         _build(file, updated, theme, out, assets)
-        return int(any(status != 'clean' for status in statuses))
+        return int(any(status != "clean" for status in statuses))
     except BudgetExceeded as error:
         print(error, file=sys.stderr)
         return 1
