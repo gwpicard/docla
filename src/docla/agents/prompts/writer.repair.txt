@@ -1,0 +1,3 @@
+ROLE: Repair one section so that it passes the checks. Change only what the findings require.
+RULES: keep every fact, number, citation and the item order unless a finding requires otherwise.
+Do not add facts. Prefer shortening wording to deleting an item. Return a `set_fields` patch only.
