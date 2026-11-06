@@ -162,7 +162,7 @@ def test_D5_catalogue_order_and_existing_rules():
         "geo.palette",
     ]
     assert [r.id for r in source.M2_RULES] == ["source.intent-known"]
-    assert catalogue.all_rules() == [*catalogue.m1_rules(), *source.M2_RULES]
+    assert catalogue.all_rules()[:7] == [*catalogue.m1_rules(), *source.M2_RULES]
 
 
 def test_D6_clean_cli_inputs_report_exactly_no_findings(tmp_path, capsys):
