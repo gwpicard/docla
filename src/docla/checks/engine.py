@@ -5,7 +5,8 @@ from typing import Any, Protocol, get_args
 
 from docla.facts.layout import LayoutFacts
 from docla.model import Box, Document, Finding, Rule
-from docla.model.rules import Tier
+from docla.model.rules import Severity, Tier
+from docla.render.compose import Composition
 from docla.theme import Theme
 
 # Tiers run in the order the model declares them.
@@ -19,10 +20,12 @@ class CheckContext:
     facts: LayoutFacts | None = None
     tokens: dict[str, str] = field(default_factory=dict)
     theme: Theme | None = None
+    composition: Composition | None = None
+    final: bool = False
 
 
 class Check(Protocol):
-    tier: Tier
+    tier: Tier | None
 
     def run(self, ctx: CheckContext, rule: Rule) -> list[Finding]: ...
 
@@ -85,13 +88,14 @@ def make_finding(
     page: int | None = None,
     region: Box | None = None,
     measured: dict[str, Any] | None = None,
+    severity: Severity | None = None,
 ) -> Finding:
     fp = fingerprint(rule.id, section_id, role, region, _page_size(ctx, page))
     return Finding(
         id=_sha1(f"{rule.id}|{section_id}|{fp}")[:12],
         rule_id=rule.id,
         tier=rule.tier,
-        severity=rule.severity,
+        severity=severity if severity is not None else rule.severity,
         format=ctx.doc.format,
         section_id=section_id,
         page=page,
@@ -120,12 +124,32 @@ def _tiers_to_run(ctx: CheckContext) -> tuple[Tier, ...]:
     return TIERS if ctx.facts is not None else ("source",)
 
 
+def _in_scope(finding: Finding, rule: Rule, ctx: CheckContext) -> bool:
+    scope = rule.scope
+    if scope.components is not None and (
+        ctx.composition is None
+        or not any(s.id == finding.section_id and s.component in scope.components for s in ctx.composition.sections)
+    ):
+        return False
+    if scope.intents is not None and not any(
+        s.id is not None and s.id == finding.section_id and s.intent in scope.intents for s in ctx.doc.sections
+    ):
+        return False
+    return True
+
+
 def run_checks(rules: list[Rule], ctx: CheckContext) -> list[Finding]:
     applicable = [(rule, _check_for(rule)) for rule in rules if _applies(rule, ctx)]
     blocked: set[str | None] = set()
     findings: list[Finding] = []
     for tier in _tiers_to_run(ctx):
-        produced = [f for rule, check in applicable if check.tier == tier for f in check.run(ctx, rule)]
+        produced = [
+            f
+            for rule, check in applicable
+            if (check.tier or rule.tier) == tier
+            for f in check.run(ctx, rule)
+            if _in_scope(f, rule, ctx)
+        ]
         kept = [f for f in produced if f.section_id not in blocked]
         blocked |= {f.section_id for f in kept if f.severity == "error"}
         findings.extend(kept)
