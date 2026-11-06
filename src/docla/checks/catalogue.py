@@ -1,4 +1,18 @@
-from docla.checks import assets, bounds, capacity, figures, fit, fonts, gaps, images, outline, palette, source, text
+from docla.checks import (
+    adjacent,
+    assets,
+    bounds,
+    capacity,
+    figures,
+    fit,
+    fonts,
+    gaps,
+    images,
+    outline,
+    palette,
+    source,
+    text,
+)
 from docla.checks import dsl as dsl
 from docla.model import Provenance, Remedy, Rule
 from docla.source import parser
@@ -49,6 +63,7 @@ def all_rules() -> list[Rule]:
         *assets.RULES,
         *fonts.RULES,
         *images.RULES,
+        *adjacent.RULES,
     ]
 
 
