@@ -1,4 +1,6 @@
 import argparse
+import asyncio
+import os
 import shutil
 import sys
 import tempfile
@@ -10,6 +12,7 @@ from pydantic import TypeAdapter
 from docla import __version__
 from docla.checks.catalogue import all_rules, document_rules
 from docla.checks.engine import CheckContext, run_checks
+from docla.config import default_config_text
 from docla.facts.layout import layout_facts
 from docla.model import Document, Finding
 from docla.render.compose import ComposeError, Composition, assemble, compose, font_paths
@@ -45,7 +48,22 @@ def _doctor() -> int:
     print(python_line)
     for line in _typst_lines():
         print(line)
+    print(f"anthropic key: {'set' if os.environ.get('ANTHROPIC_API_KEY') else 'missing'}")
     return 0 if python_ok else 1
+
+
+def _init(directory: Path) -> int:
+    path = directory / "docla.toml"
+    directory.mkdir(parents=True, exist_ok=True)
+    try:
+        with path.open("x", encoding="utf-8") as file:
+            file.write(default_config_text())
+    except FileExistsError:
+        print(f"{path} already exists", file=sys.stderr)
+        return 1
+    (directory / "sources").mkdir(exist_ok=True)
+    print(path)
+    return 0
 
 
 class _Built(NamedTuple):
@@ -153,8 +171,14 @@ def _build_parser() -> argparse.ArgumentParser:
     parser.add_argument("--version", action="version", version=f"docla {__version__}")
     subparsers = parser.add_subparsers(dest="command", required=True)
     subparsers.add_parser("doctor", help="report what is installed and what is missing")
+    init = subparsers.add_parser("init", help="initialise a project")
+    init.add_argument("directory", type=Path, help="project folder")
     _add_file_command(subparsers, "build", "render a working file to PDF")
     _add_file_command(subparsers, "check", "render a working file and report what the M1 rules find")
+    _add_file_command(subparsers, "write", "prepare and draft a working file")
+    write = subparsers.choices["write"]
+    write.add_argument("--approve", action="store_true")
+    write.add_argument("--yes", action="store_true")
     theme = subparsers.add_parser("theme", help="work with themes")
     theme_commands = theme.add_subparsers(dest="theme_command", required=True)
     test = theme_commands.add_parser("test", help="test a theme")
@@ -188,11 +212,53 @@ def main(argv: list[str] | None = None) -> int:
     args = _build_parser().parse_args(argv)
     if args.command == "doctor":
         return _doctor()
+    if args.command == "init":
+        return _init(args.directory)
+    if args.command == "write":
+        return _write(args)
     if args.command in FILE_COMMANDS:
         return _run_file_command(args)
     if args.command == "theme":
         return _run_theme_test(args.theme)
     return 1
+
+
+def _write(args: argparse.Namespace) -> int:
+    from docla.agents.cassette import CassetteMiss
+    from docla.agents.client import AgentInvalid, AgentRefused, AgentTruncated
+    from docla.agents.ledger import Ledger
+    from docla.agents.scheduler import Scheduler
+    from docla.config import load_project_config
+    from docla.write import ScheduledClaude, claude_agents, role_models, run_write, transport_for
+
+    project = args.file.parent
+    config = load_project_config(project)
+    ledger = Ledger(
+        project / ".docla" / "write" / args.file.stem / "ledger.jsonl",
+        config.prices,
+        config.budget.max_usd_per_document,
+    )
+    try:
+        theme = _theme(args.theme)
+        claude = ScheduledClaude(
+            transport_for(project), ledger, role_models(config), scheduler=Scheduler(config.loop.max_parallel_sections)
+        )
+        return asyncio.run(
+            run_write(
+                args.file,
+                agents=claude_agents(claude, theme),
+                theme=theme,
+                out=_out_dir(args.file, args.out),
+                approve=args.approve,
+                yes=args.yes,
+                spent=lambda: ledger.total,
+            )
+        )
+    except CassetteMiss as error:
+        print(f"{project / '.docla' / 'cassette.json'}: {error}; set DOCLA_LIVE=1 for live calls", file=sys.stderr)
+    except (AgentRefused, AgentTruncated, AgentInvalid, _BuildFailed) as error:
+        print(error, file=sys.stderr)
+    return 2
 
 
 def _run_theme_test(folder: Path | None) -> int:
