@@ -1,3 +1,4 @@
+import threading
 from pathlib import Path
 from typing import Protocol, runtime_checkable
 
@@ -8,6 +9,9 @@ OUTLINE_COLOUR = "#DC0000"
 OUTLINE_WIDTH = 4
 # crop reads a page at the scale it was rendered at, so render and crop share one default.
 DEFAULT_SCALE = 2.0
+# pdfium is not thread-safe, and the micro loop renders swatches in worker threads (best-of-N runs
+# several at once), so every use of pdfium goes through this lock.
+_PDFIUM_LOCK = threading.Lock()
 
 
 @runtime_checkable
@@ -18,11 +22,12 @@ class Rasteriser(Protocol):
 class PdfiumRasteriser:
     def render(self, pdf: Path, out_dir: Path, scale: float = DEFAULT_SCALE) -> list[Path]:
         out_dir.mkdir(parents=True, exist_ok=True)
-        document = pdfium.PdfDocument(pdf)
-        try:
-            return [_render_page(page, index, out_dir, scale) for index, page in enumerate(document, start=1)]
-        finally:
-            document.close()
+        with _PDFIUM_LOCK:
+            document = pdfium.PdfDocument(pdf)
+            try:
+                return [_render_page(page, index, out_dir, scale) for index, page in enumerate(document, start=1)]
+            finally:
+                document.close()
 
 
 def _render_page(page: pdfium.PdfPage, number: int, out_dir: Path, scale: float) -> Path:
