@@ -70,7 +70,8 @@ def _calculation(line: str, allowed: set[str]) -> str | None:
                 value = values[0] / values[1]
                 if op == "percentage":
                     value *= 100
-            if value.quantize(Decimal(1).scaleb(expected.as_tuple().exponent)) == expected:
+            places = len(result.rstrip("%").partition(".")[2])
+            if value.quantize(Decimal(1).scaleb(-places)) == expected:
                 return result
     except (InvalidOperation, ZeroDivisionError):
         pass
@@ -115,7 +116,7 @@ def _rule(rule_id: str, title: str, hint: str) -> Rule:
         severity="error",
         tier="source",
         check={"kind": "fact-guard"},
-        remedy=Remedy(class_="redraft", hint=hint),
+        remedy=Remedy.model_validate({"class": "redraft", "hint": hint}),
         provenance=Provenance(source={"doc": "DESIGN.md", "section": "11.5", "spike": "docs/spikes/S4-repair.md"}),
     )
 
