@@ -83,6 +83,24 @@ class Chooser:
                 return entry.component
         raise ChooserError(f"intent {section.intent!r}, format {fmt!r}: no entry matches section {section.id}")
 
+    def alternates(self, section: Section, fmt: Format, index: int, total: int) -> list[str]:
+        """Return distinct matching components after the first choice."""
+        entries = self.entries.get((section.intent, fmt))
+        if entries is None:
+            raise ChooserError(f"intent {section.intent!r} has no entries for format {fmt!r}")
+        matches = [
+            entry.component for entry in entries if entry.when is None or entry.when.matches(section, index, total)
+        ]
+        if not matches:
+            return []
+        seen = {matches[0]}
+        result: list[str] = []
+        for component in matches[1:]:
+            if component is not None and component not in seen:
+                result.append(component)
+                seen.add(component)
+        return result
+
     def knows(self, intent: str, fmt: Format) -> bool:
         """Return whether the chooser has entries for `intent` in format `fmt`."""
         return (intent, fmt) in self.entries
