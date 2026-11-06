@@ -163,7 +163,7 @@ def test_D5_status_error_translation():
     module = require_scheduler()
     assert client is not None and hasattr(client, "AnthropicTransport"), "AnthropicTransport must exist"
     import anthropic
-    import httpx
+    import httpx2 as httpx  # anthropic 2.6.0 depends on httpx2, not httpx
 
     response = httpx.Response(429, headers={"retry-after": "3"}, request=httpx.Request("POST", "https://example.com"))
     sdk_error = anthropic.RateLimitError("limited", response=response, body=None)
