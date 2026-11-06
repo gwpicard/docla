@@ -1,10 +1,12 @@
+from typing import Any
+
 from docla.checks.engine import CheckContext, make_finding, register
 from docla.model import Box, Finding, Provenance, Remedy, Rule
 from docla.model.rules import Tier
 from docla.render.marks import ElementMark
 
 
-def _matches(mark: ElementMark, selector: dict) -> bool:
+def _matches(mark: ElementMark, selector: dict[str, Any]) -> bool:
     roles = selector["role"]
     return mark.role in ([roles] if isinstance(roles, str) else roles)
 
