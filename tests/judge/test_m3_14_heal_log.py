@@ -183,3 +183,22 @@ def test_D5_without_log_preserves_micro_loop(tmp_path):
     result = asyncio.run(micro.write_section(Job(), context(tmp_path, doc, writer, None)))
     assert result.status == "clean"
     assert writer.repairs == 1
+
+
+def test_D3_resume_survives_a_cut_multibyte_line_and_appends_after_it(tmp_path):
+    h, _ = interface()
+    log = tmp_path / "heal.jsonl"
+    log.parent.mkdir(parents=True, exist_ok=True)
+    # A run killed in the middle of a multibyte character leaves invalid UTF-8 at the end.
+    log.write_bytes('{"scope":"section:other","note":"caf'.encode() + "é".encode()[:1])
+
+    def resumed():
+        try:
+            return h.resume(tmp_path)
+        except UnicodeDecodeError as error:
+            raise AssertionError(f"resume must skip a cut multibyte line: {error}") from error
+
+    assert resumed() == set()
+    # A later run appends after the fragment; its finish line must still be read.
+    completed(tmp_path)
+    assert resumed() == {"c4e10"}
