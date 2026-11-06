@@ -98,11 +98,13 @@ class FakeAgents:
         ), ["Who is the audience?"]
 
     def writer(self, facts, doc):
+        self.doc = doc
         return self
 
     async def draft(self, job):
         self.drafts.append(job.section_id)
-        section = job.section.model_copy(deep=True)
+        # SectionJob.section is the outline slot name (M3.09); find the section by id.
+        section = next(s for s in self.doc.sections if s.id == job.section_id).model_copy(deep=True)
         if section.intent == "bullets":
             section.items = [
                 Item(body="Short intervals catch drift early.", citations=[Citation(key="S1", locator="00:41")]),
