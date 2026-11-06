@@ -8,7 +8,7 @@ from collections.abc import Awaitable, Callable
 from dataclasses import dataclass, field
 from difflib import SequenceMatcher
 from pathlib import Path
-from typing import Literal, Protocol
+from typing import TYPE_CHECKING, Literal, Protocol
 
 from docla.checks.catalogue import all_rules
 from docla.checks.engine import TIERS, CheckContext, run_checks
@@ -20,6 +20,9 @@ from docla.render.swatch import SwatchRender, swatch
 from docla.render.typst import TypstError
 from docla.source.patches import FactGuard, PatchRejected, apply_patch
 from docla.theme import Theme
+
+if TYPE_CHECKING:
+    from docla.loop.heal_log import HealLog
 
 
 class JobLike(Protocol):
@@ -65,6 +68,9 @@ class LoopContext:
     best_of_n: BestOfN | None = None
     blocking_severities: frozenset[str] = frozenset({"error"})
     final: bool = False
+    heal_log: HealLog | None = None
+    spent: Callable[[], float] | None = None
+    _logged_spent: float = field(default=0.0, init=False, repr=False)
 
 
 def micro_rules(rules: list[Rule]) -> list[Rule]:
@@ -168,7 +174,30 @@ async def _candidate(
     return patched.sections[0], "redraft"
 
 
+def _cost(ctx: LoopContext) -> float:
+    if ctx.spent is None:
+        return 0.0
+    total = ctx.spent()
+    cost = total - ctx._logged_spent
+    ctx._logged_spent = total
+    return cost
+
+
+def _finish(ctx: LoopContext, result: SectionResult) -> SectionResult:
+    if ctx.heal_log is not None:
+        ctx.heal_log.finish(result, cost_usd=_cost(ctx))
+    return result
+
+
 async def write_section(job: JobLike, ctx: LoopContext) -> SectionResult:
+    if ctx.heal_log is not None:
+        entries = ctx.heal_log._finished_entries()
+        if job.section_id in entries:
+            entry = entries[job.section_id]
+            section = Section.model_validate(entry.section)
+            state = await evaluate(section, job, ctx, tag=f"{job.section_id}-resume")
+            assert entry.status is not None
+            return SectionResult(entry.status, state, [state], entry.attempt)
     original = await ctx.writer.draft(job)
     state = await evaluate(original, job, ctx, tag=f"{job.section_id}-0")
     history = [state]
@@ -184,8 +213,10 @@ async def write_section(job: JobLike, ctx: LoopContext) -> SectionResult:
             rejected.append(str(exc))
             continue
         if candidate is None:
-            return SectionResult("residual", state, history, attempts - 1, rejected)
+            return _finish(ctx, SectionResult("residual", state, history, attempts - 1, rejected))
         new = await evaluate(candidate, job, ctx, tag=f"{job.section_id}-{attempts}", attempt=attempts, action=action)
+        if ctx.heal_log is not None:
+            ctx.heal_log.attempt(state, new, cost_usd=_cost(ctx))
         oscillation = any(old.text_hash == new.text_hash for old in history)
         history.append(new)
         stall = stall + 1 if new.phi == state.phi else 0
@@ -193,14 +224,14 @@ async def write_section(job: JobLike, ctx: LoopContext) -> SectionResult:
             cleared.update(state.fingerprints - new.fingerprints)
             state = new
         if not state.blocking:
-            return SectionResult("clean", state, history, attempts, rejected)
+            return _finish(ctx, SectionResult("clean", state, history, attempts, rejected))
         if stall >= 2 or oscillation:
             break
     if not state.blocking:
-        return SectionResult("clean", state, history, attempts, rejected)
+        return _finish(ctx, SectionResult("clean", state, history, attempts, rejected))
     if ctx.best_of_n is not None:
         result = await ctx.best_of_n(state, job, ctx, original=original)
         if result is not None and not result.blocking:
-            return SectionResult("clean", result, history, attempts, rejected)
+            return _finish(ctx, SectionResult("clean", result, history, attempts, rejected))
     best = min(history, key=lambda item: (item.phi, item is not state))
-    return SectionResult("residual", best, history, attempts, rejected)
+    return _finish(ctx, SectionResult("residual", best, history, attempts, rejected))
