@@ -7,11 +7,11 @@
 
 #let bullets(sec) = section(sec.id, {
   set text(fill: colour("ink"))
-  place(top + left, dx: title-frame.x, dy: title-frame.y + type-style("slides", "title").size / 20, fit-box("title", sec.id, title-frame.w, title-frame.h, {
+  place(top + left, dx: 40pt, dy: title-frame.y + type-style("slides", "title").size / 20, fit-box("title", sec.id, 880pt, title-frame.h, {
     set text(..type-style("slides", "title"))
     el("title", sec.id, sec.title)
   }))
-  place(top + left, dx: content-frame.x, dy: content-frame.y, fit-box("body", sec.id, content-frame.w, content-frame.h, {
+  place(top + left, dx: 40pt, dy: content-frame.y, fit-box("body", sec.id, 880pt, content-frame.h, {
     set text(..type-style("slides", "body"))
     for (i, item) in sec.items.enumerate() {
       let citations = sec.at("citations", default: ()).at(i, default: ())
