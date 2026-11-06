@@ -1,6 +1,7 @@
 import argparse
 import shutil
 import sys
+import tempfile
 from pathlib import Path
 from typing import Any, NamedTuple
 
@@ -154,6 +155,10 @@ def _build_parser() -> argparse.ArgumentParser:
     subparsers.add_parser("doctor", help="report what is installed and what is missing")
     _add_file_command(subparsers, "build", "render a working file to PDF")
     _add_file_command(subparsers, "check", "render a working file and report what the M1 rules find")
+    theme = subparsers.add_parser("theme", help="work with themes")
+    theme_commands = theme.add_subparsers(dest="theme_command", required=True)
+    test = theme_commands.add_parser("test", help="test a theme")
+    test.add_argument("--theme", type=Path, default=None, help="theme folder")
     return parser
 
 
@@ -185,7 +190,24 @@ def main(argv: list[str] | None = None) -> int:
         return _doctor()
     if args.command in FILE_COMMANDS:
         return _run_file_command(args)
+    if args.command == "theme":
+        return _run_theme_test(args.theme)
     return 1
+
+
+def _run_theme_test(folder: Path | None) -> int:
+    from docla.theme.suite import theme_test
+
+    try:
+        theme = _theme(folder)
+    except _BuildFailed as error:
+        print(error, file=sys.stderr)
+        return 2
+    with tempfile.TemporaryDirectory() as directory:
+        lines = theme_test(theme, Path(directory))
+    for line in lines:
+        print(line)
+    return int(any(line.startswith("fail ") for line in lines))
 
 
 if __name__ == "__main__":
