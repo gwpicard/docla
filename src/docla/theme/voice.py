@@ -7,9 +7,15 @@ from docla.theme.models import Theme
 VOICE_FILE = "voice/terminology.yaml"
 
 
+class Term(BaseModel):
+    preferred: str
+    avoid: list[str]
+
+
 class Voice(BaseModel):
     summary: dict[Format, str] = {}
     banned: list[str] = []
+    terminology: list[Term] = []
 
 
 def load_voice(theme: Theme) -> Voice:
