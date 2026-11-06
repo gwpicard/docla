@@ -18,6 +18,7 @@ class ImageResolves:
                 message=f"image {section.image} was not found in: {folders}",
                 section_id=section.id,
                 measured={"image": section.image},
+                severity="error" if ctx.final else "warning",
             )
             for section in ctx.doc.sections
             if section.image and not any((folder / section.image).is_file() for folder in ctx.assets)
@@ -31,7 +32,7 @@ RULES: list[Rule] = [
         origin="manual",
         strength="hard",
         status="active",
-        severity="error",
+        severity="warning",
         tier="source",
         check={"kind": "image-resolves"},
         remedy=Remedy.model_validate({"class": "ask", "hint": "supply the file in assets/ or name another image"}),
