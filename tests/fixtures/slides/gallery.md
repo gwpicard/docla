@@ -101,7 +101,7 @@ rows:
 :::
 
 ::: {#chronology intent=chronology}
-## Our journey
+## Our history
 - **2020** The project begins with a small team. [S1]
 - **2021** The first product reaches its customers. [S1]
 - **2022** The team expands into new markets. [S1]

@@ -4,7 +4,7 @@ from typing import Any, Literal
 import yaml  # type: ignore[import-untyped]
 from pydantic import BaseModel, ConfigDict, Field, ValidationError, model_validator
 
-from docla.model import Format
+from docla.model import Document, Format
 from docla.render.chooser import Chooser
 from docla.render.compose import default_chooser
 
@@ -71,6 +71,41 @@ class Doctype(BaseModel):
         for unit, bounds in self.length.items():
             _check_range(f"length {unit!r}", bounds)
         return self
+
+
+class Gap(BaseModel):
+    kind: Literal["missing", "order", "repeat"]
+    section: str
+    message: str
+
+
+def conformance(doc: Document, doctype: Doctype) -> list[Gap]:
+    """Compare labelled document sections with the top-level outline."""
+    positions = {entry.section: index for index, entry in enumerate(doctype.outline)}
+    names = [section.section for section in doc.sections if section.section in positions]
+    gaps = [
+        Gap(kind="missing", section=entry.section, message=f"required section {entry.section} is missing")
+        for entry in doctype.outline
+        if entry.required and entry.section not in names
+    ]
+    highest = -1
+    for name in names:
+        assert name is not None
+        position = positions[name]
+        if position < highest:
+            gaps.append(Gap(kind="order", section=name, message=f"section {name} is out of outline order"))
+            break
+        highest = position
+    for entry in doctype.outline:
+        if entry.repeat is not None and not entry.repeat[0] <= names.count(entry.section) <= entry.repeat[1]:
+            gaps.append(
+                Gap(
+                    kind="repeat",
+                    section=entry.section,
+                    message=f"section {entry.section} is outside its repeat bounds",
+                )
+            )
+    return gaps
 
 
 def load_doctype(path: Path, chooser: Chooser | None = None) -> Doctype:
