@@ -100,6 +100,7 @@ def make_finding(
         severity=severity if severity is not None else rule.severity,
         format=ctx.doc.format,
         section_id=section_id,
+        role=role,
         page=page,
         region=region,
         message=message,

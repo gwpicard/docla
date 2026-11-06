@@ -3,6 +3,7 @@ from docla.checks import (
     assets,
     bounds,
     capacity,
+    charts,
     figures,
     fit,
     fonts,
@@ -64,6 +65,7 @@ def all_rules() -> list[Rule]:
         *fonts.RULES,
         *images.RULES,
         *adjacent.RULES,
+        *charts.RULES,
     ]
 
 

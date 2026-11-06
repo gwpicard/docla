@@ -67,6 +67,7 @@ class Finding(BaseModel):
     severity: Severity
     format: Format
     section_id: str | None = None
+    role: str | None = None
     page: int | None = None
     region: Box | None = None
     message: str
