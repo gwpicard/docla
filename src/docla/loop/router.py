@@ -69,4 +69,6 @@ def deterministic_fix(state: RouteState, job: RouteJob, chooser: Chooser | None 
         return None
     next_component = order[order.index(current) + 1]
     rules = ", ".join(finding.rule_id for finding in findings)
-    return section.model_copy(update={"component": next_component, "because": f"router: switched from {current} after {rules}"})
+    return section.model_copy(
+        update={"component": next_component, "because": f"router: switched from {current} after {rules}"}
+    )

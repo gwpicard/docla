@@ -88,7 +88,9 @@ class Chooser:
         entries = self.entries.get((section.intent, fmt))
         if entries is None:
             raise ChooserError(f"intent {section.intent!r} has no entries for format {fmt!r}")
-        matches = [entry.component for entry in entries if entry.when is None or entry.when.matches(section, index, total)]
+        matches = [
+            entry.component for entry in entries if entry.when is None or entry.when.matches(section, index, total)
+        ]
         if not matches:
             return []
         seen = {matches[0]}
