@@ -114,12 +114,13 @@ def test_D3_seeded_fail(tmp_path):
     fixture = SEEDED / "fail/main.typ"
     assert fixture.is_file(), "seeded fail main.typ must exist"
     doc = _doc(Section(id="s1", intent="chart"))
-    main = compose.assemble(compose.compose(doc), tmp_path, theme=theme.neutral_theme())
+    kit = tmp_path / "kit"
+    main = compose.assemble(compose.compose(doc), kit, theme=theme.neutral_theme())
     main.write_text(fixture.read_text())
-    fonts = compose.font_paths(tmp_path)
+    fonts = compose.font_paths(kit)
     pdf = tmp_path / "fixture.pdf"
-    typst.compile_pdf(main, tmp_path, pdf, fonts)
-    facts = layout_facts(pdf, main, tmp_path, font_paths=fonts)
+    typst.compile_pdf(main, kit, pdf, fonts)
+    facts = layout_facts(pdf, main, kit, font_paths=fonts)
     findings = [
         f
         for f in engine.run_checks([rule], engine.CheckContext(doc, facts, theme=theme.neutral_theme()))
