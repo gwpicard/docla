@@ -34,8 +34,12 @@ class TextPattern:
             if breaking is not None:
                 findings.append(
                     make_finding(
-                        rule, ctx, message=f'{field} "{breaking}" does not satisfy the text pattern',
-                        section_id=section.id, role=field, measured={"field": field, "text": breaking},
+                        rule,
+                        ctx,
+                        message=f'{field} "{breaking}" does not satisfy the text pattern',
+                        section_id=section.id,
+                        role=field,
+                        measured={"field": field, "text": breaking},
                     )
                 )
         return findings
