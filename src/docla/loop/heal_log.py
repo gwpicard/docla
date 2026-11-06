@@ -35,12 +35,20 @@ class HealEntry(BaseModel):
 def _entries(path: Path) -> Iterator[HealEntry]:
     if not path.exists():
         return
-    with path.open(encoding="utf-8") as stream:
+    with path.open("rb") as stream:
         for line in stream:
             try:
-                yield HealEntry.model_validate_json(line)
-            except ValidationError:
+                yield HealEntry.model_validate_json(line.decode("utf-8"))
+            except (UnicodeDecodeError, ValidationError):
                 continue
+
+
+def _needs_newline(path: Path) -> bool:
+    if not path.exists() or path.stat().st_size == 0:
+        return False
+    with path.open("rb") as stream:
+        stream.seek(-1, 2)
+        return stream.read(1) != b"\n"
 
 
 class HealLog:
@@ -51,8 +59,9 @@ class HealLog:
 
     def _write(self, entry: HealEntry) -> HealEntry:
         self.run_dir.mkdir(parents=True, exist_ok=True)
+        prefix = "\n" if _needs_newline(self.path) else ""
         with self.path.open("a", encoding="utf-8", newline="\n") as stream:
-            stream.write(entry.model_dump_json() + "\n")
+            stream.write(prefix + entry.model_dump_json() + "\n")
         return entry
 
     def _image(self, state: SectionState, attempt: int, side: str) -> str | None:
