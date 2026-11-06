@@ -1,10 +1,38 @@
+from collections.abc import Callable
 from pathlib import Path
 from typing import Any, Literal
 
 import yaml  # type: ignore[import-untyped]
 from pydantic import BaseModel, Field, ValidationError, field_validator
 
+from docla.model import Section
 from docla.render.kit import components_dir, library_dir
+
+
+def _data_list_length(section: Section, key: str) -> int:
+    value = (section.data or {}).get(key)
+    return len(value) if isinstance(value, list) else 0
+
+
+def _rows(section: Section) -> int:
+    value = (section.data or {}).get("rows")
+    if isinstance(value, list):
+        return len(value)
+    return max((len(item.sub) for item in section.items), default=0)
+
+
+MEASURES: dict[str, Callable[[Section], int]] = {
+    "title_words": lambda section: len((section.title or "").split()),
+    "items": lambda section: len(section.items),
+    "item_chars": lambda section: max(
+        (len(item.head or "") + len(item.body) for item in section.items), default=0
+    ),
+    "paragraphs": lambda section: len(section.paragraphs),
+    "columns": lambda section: _data_list_length(section, "columns"),
+    "rows": _rows,
+    "categories": lambda section: _data_list_length(section, "categories"),
+    "series": lambda section: _data_list_length(section, "series"),
+}
 
 
 class ManifestError(ValueError):
