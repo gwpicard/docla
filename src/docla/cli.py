@@ -116,10 +116,14 @@ def _check(file: Path, out: Path, theme: Theme, *, final: bool = False, outline:
         comp = compose(doc, assets=assets)
     except ComposeError:
         # Without layout facts the engine runs only the source tier.
-        return _report(file, out, parsed + run_checks(rules, CheckContext(doc, theme=theme, final=final, assets=assets)))
+        return _report(
+            file, out, parsed + run_checks(rules, CheckContext(doc, theme=theme, final=final, assets=assets))
+        )
     built = _draw(file, out, doc, parsed, comp, theme)
     facts = layout_facts(built.pdf, built.main, built.render, font_paths=font_paths(built.render))
-    ctx = CheckContext(built.doc, facts, read_tokens(built.render), theme=theme, composition=comp, final=final, assets=assets)
+    ctx = CheckContext(
+        built.doc, facts, read_tokens(built.render), theme=theme, composition=comp, final=final, assets=assets
+    )
     return _report(file, out, built.findings + run_checks(rules, ctx))
 
 

@@ -8,8 +8,10 @@ from PIL import Image, ImageDraw
 
 def main() -> None:
     root = Path(__file__).resolve().parent.parent
-    folder = Path(sys.argv[1]) if len(sys.argv) > 1 else (
-        root / "tests/fixtures/seeded-defects/source.image-resolves/pass/assets"
+    folder = (
+        Path(sys.argv[1])
+        if len(sys.argv) > 1
+        else (root / "tests/fixtures/seeded-defects/source.image-resolves/pass/assets")
     )
     folder.mkdir(parents=True, exist_ok=True)
     picture = Image.new("RGB", (2000, 1125), "#dce8e8")
