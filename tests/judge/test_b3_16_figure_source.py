@@ -8,6 +8,7 @@ import yaml
 
 from docla import cli, source, theme
 from docla.checks import catalogue, engine
+from docla.checks import source as rule_source
 from docla.facts.layout import LayoutFacts, layout_facts
 from docla.model import Document, Section
 from docla.render import compose, swatch, typst
@@ -78,16 +79,16 @@ def test_D1_catalogue_rule_and_order():
         "geo.min-font",
         "geo.palette",
     ]
-    assert [r.id for r in source.RULES] == ["source.citations-resolve", "source.empty-section"]
+    assert [r.id for r in rule_source.RULES] == ["source.citations-resolve", "source.empty-section"]
     ids = [r.id for r in catalogue.all_rules()]
-    assert all(ids.index(r.id) < ids.index(rule.id) for r in [*catalogue.m1_rules(), *source.M2_RULES])
+    assert all(ids.index(r.id) < ids.index(rule.id) for r in [*catalogue.m1_rules(), *rule_source.M2_RULES])
 
 
 def test_D2_synthetic_gaps_and_edge():
     rule = _rule()
     figure = _mark("figure", 100, h=100)
     for intent in ("chart", "table", "statement"):
-        doc = Document(format="slides", sections=[Section(id="s1", intent=intent)])
+        doc = _doc(Section(id="s1", intent=intent))
 
         def run(marks, selected=rule, document=doc):
             return engine.run_checks([selected], engine.CheckContext(document, _facts(marks)))
@@ -112,7 +113,7 @@ def test_D3_seeded_fail(tmp_path):
     rule = _rule()
     fixture = SEEDED / "fail/main.typ"
     assert fixture.is_file(), "seeded fail main.typ must exist"
-    doc = Document(format="slides", sections=[Section(id="s1", intent="chart")])
+    doc = _doc(Section(id="s1", intent="chart"))
     main = compose.assemble(compose.compose(doc), tmp_path, theme=theme.neutral_theme())
     main.write_text(fixture.read_text())
     fonts = compose.font_paths(tmp_path)
