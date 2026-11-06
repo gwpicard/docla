@@ -4,7 +4,7 @@ from docla.model.rules import Rule
 from docla.model.source import Format
 from docla.render.components import ComponentManifest
 from docla.theme.models import Theme
-from docla.theme.voice import load_voice
+from docla.theme.voice import Term, load_voice
 
 HARD_PREFIX = "Hard rules that fail the build: "
 
@@ -27,15 +27,23 @@ def brief_card(
     if fmt in voice.summary:
         head.append(f"Voice: {voice.summary[fmt]}")
     banned = f"Banned: {', '.join(sorted(voice.banned))}" if voice.banned else None
+    preferred = _preferred_line(voice.terminology)
     entries = [f"{rule.title} (r:{rule.id})" for rule in _hard_rules(rules, fmt)]
-    card = _assemble(head, banned, entries, keep=len(entries))
+    card = _assemble(head, banned, preferred, entries, keep=len(entries))
     for keep in range(len(entries) - 1, -1, -1):
         if _tokens(card) <= max_tokens:
             return card
-        card = _assemble(head, banned, entries, keep)
+        card = _assemble(head, banned, preferred, entries, keep)
     if _tokens(card) > max_tokens:
-        card = _assemble(head, None, entries, keep=0)
+        card = _assemble(head, None, None, entries, keep=0)
     return card
+
+
+def _preferred_line(terms: list[Term]) -> str | None:
+    if not terms:
+        return None
+    entries = [f"{term.preferred} (not {', '.join(term.avoid)})" for term in sorted(terms, key=lambda t: t.preferred)]
+    return "Preferred: " + "; ".join(entries)
 
 
 def _hard_rules(rules: list[Rule], fmt: Format) -> list[Rule]:
@@ -47,10 +55,12 @@ def _hard_rules(rules: list[Rule], fmt: Format) -> list[Rule]:
     return sorted(applies, key=lambda rule: rule.id)
 
 
-def _assemble(head: list[str], banned: str | None, entries: list[str], keep: int) -> str:
+def _assemble(head: list[str], banned: str | None, preferred: str | None, entries: list[str], keep: int) -> str:
     lines = list(head)
     if banned is not None:
         lines.append(banned)
+    if preferred is not None:
+        lines.append(preferred)
     if not entries:
         lines.append(HARD_PREFIX + "none")
     elif keep > 0:
