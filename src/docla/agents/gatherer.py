@@ -23,11 +23,14 @@ class Fact(BaseModel):
 
 def _chunks(source: Extracted) -> Iterator[tuple[int, dict[str, Any]]]:
     if source.kind == "pdf" and source.pages is not None and source.pages <= MAX_PDF_PAGES:
-        yield 0, {
-            "type": "base64",
-            "media_type": "application/pdf",
-            "data": base64.standard_b64encode(source.source.read_bytes()).decode("ascii"),
-        }
+        yield (
+            0,
+            {
+                "type": "base64",
+                "media_type": "application/pdf",
+                "data": base64.standard_b64encode(source.source.read_bytes()).decode("ascii"),
+            },
+        )
         return
     offset = 0
     while offset < len(source.text):
@@ -77,9 +80,12 @@ async def gather(claude: Claude, extracted: list[Extracted]) -> list[Fact]:
                 "title": f"{source.key} {source.name}",
                 "citations": {"enabled": True},
             }
-            content = [
+            content: list[dict[str, Any]] = [
                 document,
-                {"type": "text", "text": "State every usable fact, including numbers, dates, names and findings, with a citation."},
+                {
+                    "type": "text",
+                    "text": "State every usable fact, including numbers, dates, names and findings, with a citation.",
+                },
             ]
             response = await claude.cite("gatherer", system=system_blocks("gatherer"), content=content)
             for fact in _facts(source, response, offset):
