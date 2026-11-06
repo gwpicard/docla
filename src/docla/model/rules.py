@@ -34,6 +34,8 @@ class Provenance(BaseModel):
 class Scope(BaseModel):
     format: Format | None = None
     roles: list[str] | None = None
+    components: list[str] | None = None
+    intents: list[str] | None = None
 
 
 class Rule(BaseModel):
@@ -44,6 +46,7 @@ class Rule(BaseModel):
     status: Literal["proposed", "probation", "active", "retired"] = "proposed"
     severity: Severity
     tier: Tier
+    loop: Literal["micro", "macro", "both"] = "both"
     scope: Scope = Field(default_factory=Scope)
     check: dict[str, Any]
     remedy: Remedy
