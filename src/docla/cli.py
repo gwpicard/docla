@@ -111,14 +111,19 @@ def _check(file: Path, out: Path, theme: Theme, *, final: bool = False, outline:
             rules += document_rules()
     except ThemeError as error:
         raise _BuildFailed(str(error)) from error
+    assets = [file.parent / "assets", theme.root / "assets"]
     try:
-        comp = compose(doc, assets=[file.parent / "assets", theme.root / "assets"])
+        comp = compose(doc, assets=assets)
     except ComposeError:
         # Without layout facts the engine runs only the source tier.
-        return _report(file, out, parsed + run_checks(rules, CheckContext(doc, theme=theme, final=final)))
+        return _report(
+            file, out, parsed + run_checks(rules, CheckContext(doc, theme=theme, final=final, assets=assets))
+        )
     built = _draw(file, out, doc, parsed, comp, theme)
     facts = layout_facts(built.pdf, built.main, built.render, font_paths=font_paths(built.render))
-    ctx = CheckContext(built.doc, facts, read_tokens(built.render), theme=theme, composition=comp, final=final)
+    ctx = CheckContext(
+        built.doc, facts, read_tokens(built.render), theme=theme, composition=comp, final=final, assets=assets
+    )
     return _report(file, out, built.findings + run_checks(rules, ctx))
 
 
