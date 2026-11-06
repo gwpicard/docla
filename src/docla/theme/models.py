@@ -121,6 +121,10 @@ class Spacing(BaseModel):
     scale: list[float]
 
 
+class Imagery(BaseModel):
+    min_dpi: float
+
+
 class Tokens(BaseModel):
     model_config = ConfigDict(populate_by_name=True)
 
@@ -129,6 +133,7 @@ class Tokens(BaseModel):
     type: TypeTokens
     pages: dict[Format, Page]
     spacing: Spacing
+    imagery: Imagery | None = None
 
 
 class Theme(BaseModel):
