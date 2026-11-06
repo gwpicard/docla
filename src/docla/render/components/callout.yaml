@@ -7,3 +7,4 @@ capacity:
   items: [1, 6]
   item_chars: [10, 160]
 elements: [callout]
+fixture: tests/fixtures/components/callout.yaml
