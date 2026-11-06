@@ -150,7 +150,7 @@ def test_D1_statement_body_follows_title(tmp_path):
         assert min(word.box.y0 for word in body) > max(word.box.y1 for word in title)
 
 
-@pytest.mark.parametrize("name", NAMES)
+@pytest.mark.parametrize("name", ["statement", "body", "callout"])
 def test_D2_manifest_fixture_and_golden_match(name):
     _require(components, "all_manifests")
     _require(golden, "facts_for", "compare_facts")
@@ -168,7 +168,15 @@ def test_D2_manifest_fixture_and_golden_match(name):
 
 @pytest.mark.parametrize("name", ["statement", "bullets"])
 def test_D3_contrast_slides_are_safe_and_use_theme_fonts(name, contrast, tmp_path):
-    rendered = _render(name, contrast, tmp_path)
+    # bullets has no manifest fixture (see the spec), so it renders an inline section.
+    inline = None
+    if name == "bullets":
+        inline = model.Section.model_validate(
+            {"id": "s1", "intent": "bullets", "title": "Key points",
+             "items": [{"body": "Start with a clear purpose."}, {"body": "Share the important details."},
+                       {"body": "Agree on the next steps."}]}
+        )
+    rendered = _render(name, contrast, tmp_path, section=inline)
     _, section, facts, _ = rendered
     assert facts.words and section.items
     title = _words_for(section.title, facts.words)
