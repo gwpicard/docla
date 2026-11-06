@@ -1,0 +1,601 @@
+cases:
+- id: overflow-01
+  file: overflow-01.md
+  kind: overflow
+  rule: geo.text-fits
+  facts:
+  - 12% of readings
+  repair:
+    title: Inspection overview
+    items:
+    - head: null
+      body: The pipeline drops 12% of readings.
+      sub: []
+      citations:
+      - key: S1
+        locator: p.4
+- id: overflow-02
+  file: overflow-02.md
+  kind: overflow
+  rule: geo.text-fits
+  facts:
+  - 12% of readings
+  repair:
+    title: Inspection overview
+    items:
+    - head: null
+      body: The pipeline drops 12% of readings.
+      sub: []
+      citations:
+      - key: S1
+        locator: p.4
+- id: overflow-03
+  file: overflow-03.md
+  kind: overflow
+  rule: geo.text-fits
+  facts:
+  - 12% of readings
+  repair:
+    title: Inspection overview
+    items:
+    - head: null
+      body: The pipeline drops 12% of readings.
+      sub: []
+      citations:
+      - key: S1
+        locator: p.4
+- id: overflow-04
+  file: overflow-04.md
+  kind: overflow
+  rule: geo.text-fits
+  facts:
+  - 12% of readings
+  repair:
+    title: Inspection overview
+    items:
+    - head: null
+      body: The pipeline drops 12% of readings.
+      sub: []
+      citations:
+      - key: S1
+        locator: p.4
+- id: overflow-05
+  file: overflow-05.md
+  kind: overflow
+  rule: geo.text-fits
+  facts:
+  - 12% of readings
+  repair:
+    title: Inspection overview
+    items:
+    - head: null
+      body: The pipeline drops 12% of readings.
+      sub: []
+      citations:
+      - key: S1
+        locator: p.4
+- id: overflow-06
+  file: overflow-06.md
+  kind: overflow
+  rule: geo.text-fits
+  facts:
+  - 12% of readings
+  repair:
+    title: Inspection overview
+    items:
+    - head: null
+      body: The pipeline drops 12% of readings.
+      sub: []
+      citations:
+      - key: S1
+        locator: p.4
+- id: overflow-07
+  file: overflow-07.md
+  kind: overflow
+  rule: geo.text-fits
+  facts:
+  - 12% of readings
+  repair:
+    title: Inspection overview
+    items:
+    - head: null
+      body: The pipeline drops 12% of readings.
+      sub: []
+      citations:
+      - key: S1
+        locator: p.4
+- id: overflow-08
+  file: overflow-08.md
+  kind: overflow
+  rule: geo.text-fits
+  facts:
+  - 12% of readings
+  repair:
+    title: Inspection overview
+    items:
+    - head: null
+      body: The pipeline drops 12% of readings.
+      sub: []
+      citations:
+      - key: S1
+        locator: p.4
+- id: long-title-01
+  file: long-title-01.md
+  kind: long-title
+  rule: geo.text-fits
+  facts:
+  - 12% of readings
+  repair:
+    title: Inspection overview
+    items:
+    - head: null
+      body: The pipeline drops 12% of readings.
+      sub: []
+      citations:
+      - key: S1
+        locator: p.4
+- id: long-title-02
+  file: long-title-02.md
+  kind: long-title
+  rule: geo.text-fits
+  facts:
+  - 12% of readings
+  repair:
+    title: Inspection overview
+    items:
+    - head: null
+      body: The pipeline drops 12% of readings.
+      sub: []
+      citations:
+      - key: S1
+        locator: p.4
+- id: long-title-03
+  file: long-title-03.md
+  kind: long-title
+  rule: geo.text-fits
+  facts:
+  - 12% of readings
+  repair:
+    title: Inspection overview
+    items:
+    - head: null
+      body: The pipeline drops 12% of readings.
+      sub: []
+      citations:
+      - key: S1
+        locator: p.4
+- id: long-title-04
+  file: long-title-04.md
+  kind: long-title
+  rule: geo.text-fits
+  facts:
+  - 12% of readings
+  repair:
+    title: Inspection overview
+    items:
+    - head: null
+      body: The pipeline drops 12% of readings.
+      sub: []
+      citations:
+      - key: S1
+        locator: p.4
+- id: long-title-05
+  file: long-title-05.md
+  kind: long-title
+  rule: geo.text-fits
+  facts:
+  - 12% of readings
+  repair:
+    title: Inspection overview
+    items:
+    - head: null
+      body: The pipeline drops 12% of readings.
+      sub: []
+      citations:
+      - key: S1
+        locator: p.4
+- id: long-title-06
+  file: long-title-06.md
+  kind: long-title
+  rule: geo.text-fits
+  facts:
+  - 12% of readings
+  repair:
+    title: Inspection overview
+    items:
+    - head: null
+      body: The pipeline drops 12% of readings.
+      sub: []
+      citations:
+      - key: S1
+        locator: p.4
+- id: long-title-07
+  file: long-title-07.md
+  kind: long-title
+  rule: geo.text-fits
+  facts:
+  - 12% of readings
+  repair:
+    title: Inspection overview
+    items:
+    - head: null
+      body: The pipeline drops 12% of readings.
+      sub: []
+      citations:
+      - key: S1
+        locator: p.4
+- id: long-title-08
+  file: long-title-08.md
+  kind: long-title
+  rule: geo.text-fits
+  facts:
+  - 12% of readings
+  repair:
+    title: Inspection overview
+    items:
+    - head: null
+      body: The pipeline drops 12% of readings.
+      sub: []
+      citations:
+      - key: S1
+        locator: p.4
+- id: banned-term-01
+  file: banned-term-01.md
+  kind: banned-term
+  rule: source.banned-terms
+  facts:
+  - 12% of readings
+  repair:
+    title: Inspection overview
+    items:
+    - head: null
+      body: The pipeline drops 12% of readings.
+      sub: []
+      citations:
+      - key: S1
+        locator: p.4
+- id: banned-term-02
+  file: banned-term-02.md
+  kind: banned-term
+  rule: source.banned-terms
+  facts:
+  - 12% of readings
+  repair:
+    title: Inspection overview
+    items:
+    - head: null
+      body: The pipeline drops 12% of readings.
+      sub: []
+      citations:
+      - key: S1
+        locator: p.4
+- id: banned-term-03
+  file: banned-term-03.md
+  kind: banned-term
+  rule: source.banned-terms
+  facts:
+  - 12% of readings
+  repair:
+    title: Inspection overview
+    items:
+    - head: null
+      body: The pipeline drops 12% of readings.
+      sub: []
+      citations:
+      - key: S1
+        locator: p.4
+- id: banned-term-04
+  file: banned-term-04.md
+  kind: banned-term
+  rule: source.banned-terms
+  facts:
+  - 12% of readings
+  repair:
+    title: Inspection overview
+    items:
+    - head: null
+      body: The pipeline drops 12% of readings.
+      sub: []
+      citations:
+      - key: S1
+        locator: p.4
+- id: banned-term-05
+  file: banned-term-05.md
+  kind: banned-term
+  rule: source.banned-terms
+  facts:
+  - 12% of readings
+  repair:
+    title: Inspection overview
+    items:
+    - head: null
+      body: The pipeline drops 12% of readings.
+      sub: []
+      citations:
+      - key: S1
+        locator: p.4
+- id: banned-term-06
+  file: banned-term-06.md
+  kind: banned-term
+  rule: source.banned-terms
+  facts:
+  - 12% of readings
+  repair:
+    title: Inspection overview
+    items:
+    - head: null
+      body: The pipeline drops 12% of readings.
+      sub: []
+      citations:
+      - key: S1
+        locator: p.4
+- id: banned-term-07
+  file: banned-term-07.md
+  kind: banned-term
+  rule: source.banned-terms
+  facts:
+  - 12% of readings
+  repair:
+    title: Inspection overview
+    items:
+    - head: null
+      body: The pipeline drops 12% of readings.
+      sub: []
+      citations:
+      - key: S1
+        locator: p.4
+- id: banned-term-08
+  file: banned-term-08.md
+  kind: banned-term
+  rule: source.banned-terms
+  facts:
+  - 12% of readings
+  repair:
+    title: Inspection overview
+    items:
+    - head: null
+      body: The pipeline drops 12% of readings.
+      sub: []
+      citations:
+      - key: S1
+        locator: p.4
+- id: drift-01
+  file: drift-01.md
+  kind: drift
+  rule: source.terminology-drift
+  facts:
+  - 12% of readings
+  repair:
+    title: Inspection overview
+    items:
+    - head: null
+      body: The customer reviews the pipeline that drops 12% of readings.
+      sub: []
+      citations:
+      - key: S1
+        locator: p.4
+- id: drift-02
+  file: drift-02.md
+  kind: drift
+  rule: source.terminology-drift
+  facts:
+  - 12% of readings
+  repair:
+    title: Inspection overview
+    items:
+    - head: null
+      body: The customer reviews the pipeline that drops 12% of readings.
+      sub: []
+      citations:
+      - key: S1
+        locator: p.4
+- id: drift-03
+  file: drift-03.md
+  kind: drift
+  rule: source.terminology-drift
+  facts:
+  - 12% of readings
+  repair:
+    title: Inspection overview
+    items:
+    - head: null
+      body: The customer reviews the pipeline that drops 12% of readings.
+      sub: []
+      citations:
+      - key: S1
+        locator: p.4
+- id: drift-04
+  file: drift-04.md
+  kind: drift
+  rule: source.terminology-drift
+  facts:
+  - 12% of readings
+  repair:
+    title: Inspection overview
+    items:
+    - head: null
+      body: The customer reviews the pipeline that drops 12% of readings.
+      sub: []
+      citations:
+      - key: S1
+        locator: p.4
+- id: drift-05
+  file: drift-05.md
+  kind: drift
+  rule: source.terminology-drift
+  facts:
+  - 12% of readings
+  repair:
+    title: Inspection overview
+    items:
+    - head: null
+      body: The customer reviews the pipeline that drops 12% of readings.
+      sub: []
+      citations:
+      - key: S1
+        locator: p.4
+- id: drift-06
+  file: drift-06.md
+  kind: drift
+  rule: source.terminology-drift
+  facts:
+  - 12% of readings
+  repair:
+    title: Inspection overview
+    items:
+    - head: null
+      body: The customer reviews the pipeline that drops 12% of readings.
+      sub: []
+      citations:
+      - key: S1
+        locator: p.4
+- id: drift-07
+  file: drift-07.md
+  kind: drift
+  rule: source.terminology-drift
+  facts:
+  - 12% of readings
+  repair:
+    title: Inspection overview
+    items:
+    - head: null
+      body: The customer reviews the pipeline that drops 12% of readings.
+      sub: []
+      citations:
+      - key: S1
+        locator: p.4
+- id: drift-08
+  file: drift-08.md
+  kind: drift
+  rule: source.terminology-drift
+  facts:
+  - 12% of readings
+  repair:
+    title: Inspection overview
+    items:
+    - head: null
+      body: The customer reviews the pipeline that drops 12% of readings.
+      sub: []
+      citations:
+      - key: S1
+        locator: p.4
+- id: missing-citation-01
+  file: missing-citation-01.md
+  kind: missing-citation
+  rule: source.uncited-figure
+  facts:
+  - 12% of readings
+  repair:
+    title: Inspection overview
+    items:
+    - head: null
+      body: The pipeline drops 12% of readings.
+      sub: []
+      citations:
+      - key: S1
+        locator: p.4
+- id: missing-citation-02
+  file: missing-citation-02.md
+  kind: missing-citation
+  rule: source.uncited-figure
+  facts:
+  - 12% of readings
+  repair:
+    title: Inspection overview
+    items:
+    - head: null
+      body: The pipeline drops 12% of readings.
+      sub: []
+      citations:
+      - key: S1
+        locator: p.4
+- id: missing-citation-03
+  file: missing-citation-03.md
+  kind: missing-citation
+  rule: source.uncited-figure
+  facts:
+  - 12% of readings
+  repair:
+    title: Inspection overview
+    items:
+    - head: null
+      body: The pipeline drops 12% of readings.
+      sub: []
+      citations:
+      - key: S1
+        locator: p.4
+- id: missing-citation-04
+  file: missing-citation-04.md
+  kind: missing-citation
+  rule: source.uncited-figure
+  facts:
+  - 12% of readings
+  repair:
+    title: Inspection overview
+    items:
+    - head: null
+      body: The pipeline drops 12% of readings.
+      sub: []
+      citations:
+      - key: S1
+        locator: p.4
+- id: missing-citation-05
+  file: missing-citation-05.md
+  kind: missing-citation
+  rule: source.uncited-figure
+  facts:
+  - 12% of readings
+  repair:
+    title: Inspection overview
+    items:
+    - head: null
+      body: The pipeline drops 12% of readings.
+      sub: []
+      citations:
+      - key: S1
+        locator: p.4
+- id: missing-citation-06
+  file: missing-citation-06.md
+  kind: missing-citation
+  rule: source.uncited-figure
+  facts:
+  - 12% of readings
+  repair:
+    title: Inspection overview
+    items:
+    - head: null
+      body: The pipeline drops 12% of readings.
+      sub: []
+      citations:
+      - key: S1
+        locator: p.4
+- id: missing-citation-07
+  file: missing-citation-07.md
+  kind: missing-citation
+  rule: source.uncited-figure
+  facts:
+  - 12% of readings
+  repair:
+    title: Inspection overview
+    items:
+    - head: null
+      body: The pipeline drops 12% of readings.
+      sub: []
+      citations:
+      - key: S1
+        locator: p.4
+- id: missing-citation-08
+  file: missing-citation-08.md
+  kind: missing-citation
+  rule: source.uncited-figure
+  facts:
+  - 12% of readings
+  repair:
+    title: Inspection overview
+    items:
+    - head: null
+      body: The pipeline drops 12% of readings.
+      sub: []
+      citations:
+      - key: S1
+        locator: p.4
