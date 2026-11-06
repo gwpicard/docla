@@ -1,1 +1,1 @@
-"""Helpers for testing component rendering."""
+"""Helpers for testing docla."""
