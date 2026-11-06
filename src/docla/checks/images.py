@@ -29,9 +29,7 @@ class ImageDpi:
         imagery = ctx.theme.tokens.imagery if ctx.theme is not None else None
         minimum = imagery.min_dpi if imagery is not None else rule.check["min"]
         return [
-            _finding(ctx, rule, image, minimum)
-            for image in ctx.facts.images
-            if min(image.dpi_x, image.dpi_y) < minimum
+            _finding(ctx, rule, image, minimum) for image in ctx.facts.images if min(image.dpi_x, image.dpi_y) < minimum
         ]
 
 

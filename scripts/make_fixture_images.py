@@ -9,7 +9,9 @@ from PIL import Image, ImageDraw
 def main() -> None:
     root = Path(__file__).resolve().parent.parent
     parser = argparse.ArgumentParser()
-    parser.add_argument("folder", nargs="?", type=Path, default=root / "tests/fixtures/seeded-defects/source.image-resolves/pass/assets")
+    parser.add_argument(
+        "folder", nargs="?", type=Path, default=root / "tests/fixtures/seeded-defects/source.image-resolves/pass/assets"
+    )
     parser.add_argument("--name", default="picture.png")
     parser.add_argument("--size", default="2000x1125")
     args = parser.parse_args()
