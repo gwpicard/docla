@@ -1,0 +1,7 @@
+id: callout1
+intent: callout
+title: Next steps
+items:
+  - body: Agree the direction together
+  - body: Share progress across the team
+  - body: Review the next steps

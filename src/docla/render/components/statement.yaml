@@ -5,3 +5,4 @@ intents: [statement]
 capacity:
   title_words: [1, 14]
 elements: [title]
+fixture: tests/fixtures/components/statement.yaml
