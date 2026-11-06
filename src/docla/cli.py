@@ -7,7 +7,7 @@ from typing import Any, NamedTuple
 from pydantic import TypeAdapter
 
 from docla import __version__
-from docla.checks.catalogue import all_rules
+from docla.checks.catalogue import all_rules, document_rules
 from docla.checks.engine import CheckContext, run_checks
 from docla.facts.layout import layout_facts
 from docla.model import Document, Finding
@@ -16,6 +16,7 @@ from docla.render.kit import read_tokens
 from docla.render.typst import INSTALL_COMMAND, TYPST_VERSION, TypstError, compile_pdf, typst_version
 from docla.source.parser import parse
 from docla.theme import Theme, ThemeError, load_theme, neutral_theme
+from docla.theme.rules import load_theme_rules
 
 MIN_PYTHON = (3, 12)
 
@@ -102,17 +103,28 @@ def _build(file: Path, out: Path, theme: Theme) -> int:
     return 0
 
 
-def _check(file: Path, out: Path, theme: Theme) -> int:
+def _check(file: Path, out: Path, theme: Theme, *, final: bool = False, outline: bool = False) -> int:
     doc, parsed = _parse(file)
     try:
-        comp = compose(doc, assets=[file.parent / "assets", theme.root / "assets"])
+        rules = all_rules() + load_theme_rules(theme)
+        if outline:
+            rules += document_rules()
+    except ThemeError as error:
+        raise _BuildFailed(str(error)) from error
+    assets = [file.parent / "assets", theme.root / "assets"]
+    try:
+        comp = compose(doc, assets=assets)
     except ComposeError:
         # Without layout facts the engine runs only the source tier.
-        return _report(file, out, parsed + run_checks(all_rules(), CheckContext(doc, theme=theme)))
+        return _report(
+            file, out, parsed + run_checks(rules, CheckContext(doc, theme=theme, final=final, assets=assets))
+        )
     built = _draw(file, out, doc, parsed, comp, theme)
     facts = layout_facts(built.pdf, built.main, built.render, font_paths=font_paths(built.render))
-    ctx = CheckContext(built.doc, facts, read_tokens(built.render), theme=theme)
-    return _report(file, out, built.findings + run_checks(all_rules(), ctx))
+    ctx = CheckContext(
+        built.doc, facts, read_tokens(built.render), theme=theme, composition=comp, final=final, assets=assets
+    )
+    return _report(file, out, built.findings + run_checks(rules, ctx))
 
 
 def _report(file: Path, out: Path, findings: list[Finding]) -> int:
@@ -130,6 +142,9 @@ def _add_file_command(subparsers: Any, name: str, help: str) -> None:
     command.add_argument("file", type=Path, help="the working file")
     command.add_argument("--out", type=Path, default=None, help="output folder (default: build beside the file)")
     command.add_argument("--theme", type=Path, default=None, help="theme folder (default: the neutral theme)")
+    if name == "check":
+        command.add_argument("--final", action="store_true", help="check the working file as a final build")
+        command.add_argument("--outline", action="store_true", help="check conformance to the doctype outline")
 
 
 def _build_parser() -> argparse.ArgumentParser:
@@ -156,6 +171,8 @@ def _run_file_command(args: argparse.Namespace) -> int:
     out = _out_dir(args.file, args.out)
     out.mkdir(parents=True, exist_ok=True)
     try:
+        if args.command == "check":
+            return _check(args.file, out, _theme(args.theme), final=args.final, outline=args.outline)
         return FILE_COMMANDS[args.command](args.file, out, _theme(args.theme))
     except _BuildFailed as error:
         print(error, file=sys.stderr)
