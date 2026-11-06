@@ -5,7 +5,7 @@ from dataclasses import dataclass
 from pathlib import Path
 from typing import Any
 
-import yaml
+import yaml  # type: ignore[import-untyped]
 from pydantic import BaseModel
 
 from docla.agents.writer import SectionJob
@@ -104,6 +104,7 @@ async def run_heal(
     for case in cases:
         doc = case.document
         section = doc.sections[0]
+        assert section.id is not None
         component = component_for(section, "slides")
         assert component is not None
         job = SectionJob(
@@ -139,7 +140,7 @@ def render_results(report: HealReport) -> str:
     kept = sum(r.facts_kept for r in results)
     total = sum(len(r.case.facts) for r in results)
 
-    def percent(a, b):
+    def percent(a: int, b: int) -> float:
         return 100 * a / b if b else 0.0
 
     lines = [

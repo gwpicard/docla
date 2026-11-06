@@ -4,6 +4,7 @@ import os
 import shutil
 import sys
 import tempfile
+from collections.abc import Callable
 from pathlib import Path
 from typing import Any, NamedTuple
 
@@ -236,15 +237,16 @@ def _heal(args: argparse.Namespace) -> int:
     if args.live and os.environ.get("DOCLA_LIVE") != "1":
         print("Live evaluation requires DOCLA_LIVE=1", file=sys.stderr)
         return 2
-    from docla.evals.heal import ScriptedWriter, load_cases, render_results, run_heal
+    from docla.evals.heal import HealCase, ScriptedWriter, load_cases, render_results, run_heal
+    from docla.loop.micro import SectionWriter
 
     cases = load_cases(args.cases)
     theme = _theme(args.theme)
 
-    def spent():
+    def spent() -> float:
         return 0.0
 
-    writer_for = ScriptedWriter
+    writer_for: Callable[[HealCase], SectionWriter] = ScriptedWriter
     if args.live:
         from docla.agents.ledger import Ledger
         from docla.agents.scheduler import Scheduler
@@ -267,7 +269,7 @@ def _heal(args: argparse.Namespace) -> int:
 
         writer_for = LiveWriter
 
-        def spent():
+        def spent() -> float:
             return ledger.total
 
     with tempfile.TemporaryDirectory() as directory:
