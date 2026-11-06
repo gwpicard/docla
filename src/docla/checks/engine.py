@@ -1,6 +1,7 @@
 import hashlib
 from collections.abc import Callable
 from dataclasses import dataclass, field
+from pathlib import Path
 from typing import Any, Protocol, get_args
 
 from docla.facts.layout import LayoutFacts
@@ -22,6 +23,7 @@ class CheckContext:
     theme: Theme | None = None
     composition: Composition | None = None
     final: bool = False
+    assets: list[Path] | None = None
 
 
 class Check(Protocol):
