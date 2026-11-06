@@ -89,8 +89,10 @@ def test_D2_each_seeded_defect_is_reported_without_unrelated_findings(tmp_path, 
         doc, _ = parse(source.read_text())
         section_id = doc.sections[0].id
         output = tmp_path / case.id
-        _, out, err = _run(["check", str(source), "--out", str(output)], capsys)
-        severity = "error" if case.kind in ("overflow", "long-title", "banned-term") else "warning"
+        # source.uncited-figure reports only with --final (owner decision for B3.09).
+        final = ["--final"] if case.kind == "missing-citation" else []
+        _, out, err = _run(["check", str(source), "--out", str(output), *final], capsys)
+        severity = "warning" if case.kind == "drift" else "error"
         assert any(line.startswith(f"{severity} {case.rule} {section_id} ") for line in out.splitlines()), (
             case.id,
             out,
@@ -121,7 +123,8 @@ def test_D3_repairs_clear_all_findings_and_keep_the_facts(tmp_path, capsys):
         assert all(fact in _text(repaired.sections[0]) for fact in case.facts), case.id
         source = tmp_path / f"{case.id}.md"
         source.write_text(serialise(repaired))
-        code, out, err = _run(["check", str(source), "--out", str(tmp_path / case.id)], capsys)
+        final = ["--final"] if case.kind == "missing-citation" else []
+        code, out, err = _run(["check", str(source), "--out", str(tmp_path / case.id), *final], capsys)
         assert code == 0 and out.splitlines() == ["no findings"], (case.id, out, err)
 
 
