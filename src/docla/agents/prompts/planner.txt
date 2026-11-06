@@ -1,0 +1,1 @@
+ROLE: Propose the document outline and a component for each section. Use the doctype outline as the default, departing only with a reason. Identify the facts feeding each section. Ask at most two questions, only for things the material does not answer. Mark sections that need missing facts.
