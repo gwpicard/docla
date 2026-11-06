@@ -24,14 +24,8 @@ def _strings(value: Any) -> Iterator[str]:
 
 def _section_gaps(section: Section) -> list[str]:
     fields = section.model_dump(include=set(TEXT_FIELDS))
-    fields["items"] = [
-        {key: item[key] for key in ("head", "body", "sub")} for item in fields["items"]
-    ]
-    texts = (
-        text
-        for field in TEXT_FIELDS
-        for text in _strings(fields[field])
-    )
+    fields["items"] = [{key: item[key] for key in ("head", "body", "sub")} for item in fields["items"]]
+    texts = (text for field in TEXT_FIELDS for text in _strings(fields[field]))
     return [match.group(1) for text in texts for match in MARKER.finditer(text)]
 
 
@@ -44,7 +38,7 @@ class GapPresent:
             make_finding(
                 rule,
                 ctx,
-                message=f"{len(gaps)} gap marker(s), first: \"[GAP: {gaps[0]}]\"",
+                message=f'{len(gaps)} gap marker(s), first: "[GAP: {gaps[0]}]"',
                 section_id=section.id,
                 measured={"gaps": gaps},
                 severity="error" if ctx.final else "warning",
