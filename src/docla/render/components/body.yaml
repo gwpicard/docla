@@ -6,3 +6,4 @@ capacity:
   title_words: [1, 10]
   paragraphs: [1, 40]
 elements: [heading, source]
+fixture: tests/fixtures/components/body.yaml
