@@ -139,6 +139,18 @@
     "remedy": {
       "$ref": "#/$defs/Remedy"
     },
+    "role": {
+      "anyOf": [
+        {
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Role"
+    },
     "rule_id": {
       "title": "Rule Id",
       "type": "string"

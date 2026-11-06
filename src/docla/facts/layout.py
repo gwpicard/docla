@@ -2,9 +2,9 @@ import hashlib
 from collections.abc import Sequence
 from pathlib import Path
 
-from pydantic import BaseModel
+from pydantic import BaseModel, Field
 
-from docla.facts.models import FactBox, PageFacts, Shape, Word
+from docla.facts.models import FactBox, ImageFact, PageFacts, Shape, Word
 from docla.facts.pdf import PdfFacts, PdfPlumberFacts
 from docla.render.marks import ElementMark, Mark, SectionMark, read_marks
 
@@ -21,12 +21,18 @@ class PlacedShape(Shape):
     section_id: str | None
 
 
+class PlacedImage(ImageFact):
+    role: str | None
+    section_id: str | None
+
+
 class LayoutFacts(BaseModel):
     pdf_sha256: str
     pages: list[PageFacts]
     words: list[PlacedWord]
     shapes: list[PlacedShape]
     marks: list[Mark]
+    images: list[PlacedImage] = Field(default_factory=list)
 
 
 def centre(box: FactBox) -> Point:
@@ -78,12 +84,17 @@ class _Placer:
         role, section_id = self.place(shape.box)
         return PlacedShape(**shape.model_dump(), role=role, section_id=section_id)
 
+    def image(self, image: ImageFact) -> PlacedImage:
+        role, section_id = self.place(image.box)
+        return PlacedImage(**image.model_dump(), role=role, section_id=section_id)
+
 
 def join(pages: list[PageFacts], marks: list[Mark], pdf_sha256: str) -> LayoutFacts:
     placer = _Placer(marks)
     words = [placer.word(word) for page in pages for word in page.words]
     shapes = [placer.shape(shape) for page in pages for shape in page.shapes]
-    return LayoutFacts(pdf_sha256=pdf_sha256, pages=pages, words=words, shapes=shapes, marks=marks)
+    images = [placer.image(image) for page in pages for image in page.images]
+    return LayoutFacts(pdf_sha256=pdf_sha256, pages=pages, words=words, shapes=shapes, marks=marks, images=images)
 
 
 def layout_facts(

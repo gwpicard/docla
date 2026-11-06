@@ -5,7 +5,7 @@ from typing import Any, Protocol, runtime_checkable
 import pdfplumber
 from pdfplumber.page import Page
 
-from docla.facts.models import FactBox, PageFacts, Shape, ShapeKind, Word
+from docla.facts.models import FactBox, ImageFact, PageFacts, Shape, ShapeKind, Word
 
 
 @runtime_checkable
@@ -79,6 +79,18 @@ def _shape(page: int, kind: ShapeKind, raw: dict[str, Any]) -> Shape:
     return Shape(kind=kind, fill=fill, stroke=stroke, box=_box(page, raw))
 
 
+def _image(page: int, raw: dict[str, Any]) -> ImageFact:
+    box = _box(page, raw)
+    native_w, native_h = raw["srcsize"]
+    return ImageFact(
+        box=box,
+        native_w=native_w,
+        native_h=native_h,
+        dpi_x=native_w * 72 / (box.x1 - box.x0),
+        dpi_y=native_h * 72 / (box.y1 - box.y0),
+    )
+
+
 def _page_facts(number: int, page: Page) -> PageFacts:
     height = float(page.height)
     raw_words = page.extract_words(extra_attrs=["fontname", "size"], return_chars=True)
@@ -93,6 +105,7 @@ def _page_facts(number: int, page: Page) -> PageFacts:
         height=height,
         words=[_word(number, height, raw) for raw in raw_words],
         shapes=[_shape(number, kind, raw) for kind, items in groups for raw in items],
+        images=[_image(number, raw) for raw in page.images],
     )
 
 
