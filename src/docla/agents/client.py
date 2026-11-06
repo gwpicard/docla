@@ -9,6 +9,7 @@ from typing import Any, Literal, Protocol, TypeVar
 from pydantic import BaseModel, ValidationError
 
 from docla.agents.cassette import Cassette, Transport
+from docla.agents.scheduler import TransportError
 
 T = TypeVar("T", bound=BaseModel)
 USAGE_KEYS = ("input_tokens", "output_tokens", "cache_read_input_tokens", "cache_creation_input_tokens")
@@ -123,8 +124,18 @@ class AnthropicTransport:
     def __init__(self, client: Any | None = None) -> None:
         import anthropic
 
-        self.client = client if client is not None else anthropic.Anthropic()
+        self.client = client if client is not None else anthropic.Anthropic(max_retries=0)
 
     def __call__(self, request: dict[str, Any]) -> dict[str, Any]:
-        result: dict[str, Any] = self.client.messages.create(**request).model_dump(mode="json")
+        import anthropic
+
+        try:
+            result: dict[str, Any] = self.client.messages.create(**request).model_dump(mode="json")
+        except anthropic.APIStatusError as error:
+            header = error.response.headers.get("retry-after")
+            try:
+                retry_after = float(header) if header is not None else None
+            except ValueError:
+                retry_after = None
+            raise TransportError(error.status_code, str(error), retry_after) from error
         return result
