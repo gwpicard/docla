@@ -1,4 +1,5 @@
 import argparse
+import os
 import shutil
 import sys
 import tempfile
@@ -10,6 +11,7 @@ from pydantic import TypeAdapter
 from docla import __version__
 from docla.checks.catalogue import all_rules, document_rules
 from docla.checks.engine import CheckContext, run_checks
+from docla.config import default_config_text
 from docla.facts.layout import layout_facts
 from docla.model import Document, Finding
 from docla.render.compose import ComposeError, Composition, assemble, compose, font_paths
@@ -45,7 +47,22 @@ def _doctor() -> int:
     print(python_line)
     for line in _typst_lines():
         print(line)
+    print(f"anthropic key: {'set' if os.environ.get('ANTHROPIC_API_KEY') else 'missing'}")
     return 0 if python_ok else 1
+
+
+def _init(directory: Path) -> int:
+    path = directory / "docla.toml"
+    directory.mkdir(parents=True, exist_ok=True)
+    try:
+        with path.open("x", encoding="utf-8") as file:
+            file.write(default_config_text())
+    except FileExistsError:
+        print(f"{path} already exists", file=sys.stderr)
+        return 1
+    (directory / "sources").mkdir(exist_ok=True)
+    print(path)
+    return 0
 
 
 class _Built(NamedTuple):
@@ -153,6 +170,8 @@ def _build_parser() -> argparse.ArgumentParser:
     parser.add_argument("--version", action="version", version=f"docla {__version__}")
     subparsers = parser.add_subparsers(dest="command", required=True)
     subparsers.add_parser("doctor", help="report what is installed and what is missing")
+    init = subparsers.add_parser("init", help="initialise a project")
+    init.add_argument("directory", type=Path, help="project folder")
     _add_file_command(subparsers, "build", "render a working file to PDF")
     _add_file_command(subparsers, "check", "render a working file and report what the M1 rules find")
     theme = subparsers.add_parser("theme", help="work with themes")
@@ -188,6 +207,8 @@ def main(argv: list[str] | None = None) -> int:
     args = _build_parser().parse_args(argv)
     if args.command == "doctor":
         return _doctor()
+    if args.command == "init":
+        return _init(args.directory)
     if args.command in FILE_COMMANDS:
         return _run_file_command(args)
     if args.command == "theme":
