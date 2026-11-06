@@ -67,6 +67,7 @@ def extract(project: Path) -> list[Extracted]:
     for number, source in enumerate(sources, 1):
         suffix = source.suffix.lower()
         pages = None
+        kind: Literal["pdf", "text", "vtt"]
         if suffix == ".pdf":
             kind = "pdf"
             content, pages = _pdf(source)
