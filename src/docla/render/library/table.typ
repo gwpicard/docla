@@ -17,7 +17,7 @@
   place(top + left, dx: content-frame.x, dy: content-frame.y, {
     set block(above: 0pt, below: 0pt)
     set text(..type-style("slides", "body"), fill: colour("ink"))
-    fit-box("figure", sec.id, content-frame.w, content-frame.h, {
+    fit-box("figure", sec.id, content-frame.w, row-height * 11, {
       el("figure", sec.id, {
         place(top + left, dy: row-height - space(1), line(length: content-frame.w, stroke: 0.5pt + colour("hairline")))
         grid(
@@ -26,10 +26,10 @@
           ..rows.flatten().map(cell => fit-box("table-cell", sec.id, width, row-height, el("table-cell", sec.id, str(cell), width: width))),
         )
       }, width: content-frame.w)
-      if source-line != "" {
-        fit-box("figure-source", sec.id, content-frame.w, space(4), el("figure-source", sec.id, source-line, width: content-frame.w))
-      }
     })
+    if source-line != "" {
+      fit-box("figure-source", sec.id, content-frame.w, space(4), el("figure-source", sec.id, source-line, width: content-frame.w))
+    }
     for (i, item) in items.enumerate() {
       let citations = sec.at("citations", default: ()).at(i, default: ())
       fit-box("item", sec.id, content-frame.w, row-height, el("item", sec.id, [#item.body #cite-keys(citations)]))

@@ -47,7 +47,7 @@ class Section(BaseModel):
 
 
 class Document(BaseModel):
-    front: dict[str, Any] = Field(default_factory=dict)
+    front: dict[str, Any]
     format: Format
     context: str = ""
     sources: list[Source] = Field(default_factory=list)
