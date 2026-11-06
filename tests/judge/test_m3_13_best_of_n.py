@@ -139,7 +139,7 @@ def test_D2_picks_clear_candidate_and_renders_separately(tmp_path):
     _require()
     job, ctx, state, writer = _setup(
         tmp_path,
-        lambda original, passed: [original.items, passed.items, passed.items + [Item(head="Extra", body="Short.")]],
+        lambda original, passed: [original.items, passed.items, passed.items + [Item(head="Extra", body="We leverage this.")]],
     )
     result = asyncio.run(best.best_of_n(state, job, ctx, n=3))
     assert result is not None
@@ -185,7 +185,7 @@ def test_D4_rejected_patches_return_none(tmp_path):
 def test_D5_write_section_calls_best_of_n_on_stall(tmp_path):
     _require()
     doc, original, passed = _documents()
-    writer = Writer(original, [original.items, passed.items, passed.items + [Item(head="Extra", body="Short.")]])
+    writer = Writer(original, [original.items, passed.items, passed.items + [Item(head="Extra", body="We leverage this.")]])
     ctx = micro.LoopContext(doc=doc, theme=neutral_theme(), workdir=tmp_path, writer=writer, best_of_n=best.best_of_n)
     result = asyncio.run(micro.write_section(Job(), ctx))
     assert writer.loop_calls >= 1
