@@ -40,7 +40,13 @@ def m1_rules() -> list[Rule]:
 def all_rules() -> list[Rule]:
     """Return every built-in rule in catalogue order."""
     return [
-        *m1_rules(), *source.M2_RULES, *text.RULES, *capacity.RULES, *gaps.RULES, *figures.RULES, *assets.RULES,
+        *m1_rules(),
+        *source.M2_RULES,
+        *text.RULES,
+        *capacity.RULES,
+        *gaps.RULES,
+        *figures.RULES,
+        *assets.RULES,
         *fonts.RULES,
     ]
 
