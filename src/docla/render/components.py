@@ -24,9 +24,7 @@ def _rows(section: Section) -> int:
 MEASURES: dict[str, Callable[[Section], int]] = {
     "title_words": lambda section: len((section.title or "").split()),
     "items": lambda section: len(section.items),
-    "item_chars": lambda section: max(
-        (len(item.head or "") + len(item.body) for item in section.items), default=0
-    ),
+    "item_chars": lambda section: max((len(item.head or "") + len(item.body) for item in section.items), default=0),
     "paragraphs": lambda section: len(section.paragraphs),
     "columns": lambda section: _data_list_length(section, "columns"),
     "rows": _rows,

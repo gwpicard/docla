@@ -2,8 +2,8 @@ from docla.checks.engine import CheckContext, make_finding, register
 from docla.checks.source import PROVENANCE
 from docla.model import Finding, Remedy, Rule, Section
 from docla.model.rules import Tier
-from docla.render.compose import component_for
 from docla.render.components import MEASURES, ComponentManifest, all_manifests
+from docla.render.compose import component_for
 
 
 def _findings(
