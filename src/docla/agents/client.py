@@ -64,6 +64,37 @@ class Claude:
         self.ledger = ledger
         self.models = models
 
+    async def cite(
+        self,
+        role: str,
+        *,
+        system: list[dict[str, Any]],
+        content: list[dict[str, Any]],
+        effort: Literal["low", "medium", "high"] = "medium",
+        max_tokens: int = 16000,
+    ) -> dict[str, Any]:
+        if role not in self.models:
+            raise ValueError(f"No model for role {role}")
+        model = self.models[role]
+        blocks = deepcopy(system)
+        if blocks and not any("cache_control" in block for block in blocks):
+            blocks[-1]["cache_control"] = {"type": "ephemeral"}
+        request = {
+            "model": model,
+            "max_tokens": max_tokens,
+            "system": blocks,
+            "messages": [{"role": "user", "content": content}],
+            "output_config": {"effort": effort},
+        }
+        response = await asyncio.to_thread(self.transport, request)
+        usage = response.get("usage") or {}
+        self.ledger.add(role, model, {key: usage.get(key) or 0 for key in USAGE_KEYS})
+        if response.get("stop_reason") == "refusal":
+            raise AgentRefused(f"Agent {role} refused")
+        if response.get("stop_reason") == "max_tokens":
+            raise AgentTruncated(f"Agent {role} was truncated")
+        return response
+
     async def call(
         self,
         role: str,
