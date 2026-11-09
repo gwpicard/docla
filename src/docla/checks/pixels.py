@@ -1,4 +1,5 @@
 from pathlib import Path
+from typing import cast
 
 from PIL import Image
 
@@ -11,10 +12,11 @@ from docla.render.marks import SectionMark
 def _coverage(path: Path) -> float:
     with Image.open(path) as source:
         image = source.convert("RGB")
-        colours = image.getcolors(image.width * image.height)
-        assert colours is not None
+        colours = cast(list[tuple[int, tuple[int, int, int]]], image.getcolors(image.width * image.height))
         background = max(colours, key=lambda entry: entry[0])[1]
-        ink = sum(count for count, colour in colours if any(abs(a - b) > 48 for a, b in zip(colour, background)))
+        ink = sum(
+            count for count, colour in colours if any(abs(a - b) > 48 for a, b in zip(colour, background, strict=True))
+        )
         return ink / (image.width * image.height)
 
 
