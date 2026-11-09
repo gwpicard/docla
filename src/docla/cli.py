@@ -15,6 +15,7 @@ from docla.checks.catalogue import all_rules, document_rules
 from docla.checks.engine import CheckContext, run_checks
 from docla.config import default_config_text
 from docla.facts.layout import layout_facts
+from docla.facts.raster import PdfiumRasteriser
 from docla.model import Document, Finding
 from docla.render.compose import ComposeError, Composition, assemble, compose, font_paths
 from docla.render.kit import read_tokens
@@ -73,6 +74,7 @@ class _Built(NamedTuple):
     render: Path
     main: Path
     pdf: Path
+    comp: Composition
 
 
 class _BuildFailed(Exception):
@@ -101,7 +103,7 @@ def _draw(file: Path, out: Path, doc: Document, findings: list[Finding], comp: C
         compile_pdf(main, render, pdf, font_paths(render))
     except TypstError as error:
         raise _BuildFailed(str(error)) from error
-    return _Built(doc, findings, render, main, pdf)
+    return _Built(doc, findings, render, main, pdf, comp)
 
 
 def _render(file: Path, out: Path, theme: Theme) -> _Built:
@@ -117,9 +119,83 @@ def _line(finding: Finding) -> str:
     return f"{finding.severity} {finding.rule_id} {finding.section_id or '-'} {finding.message}"
 
 
-def _build(file: Path, out: Path, theme: Theme) -> int:
+def _build(file: Path, out: Path, theme: Theme, *, final: bool = False) -> int:
     built = _render(file, out, theme)
     print(built.pdf)
+    return _final_build(file, out, theme, built) if final else 0
+
+
+def _final_build(file: Path, out: Path, theme: Theme, built: _Built) -> int:
+    from docla.loop.look import LookContext, look
+    from docla.store import write_version
+    from docla.store.gate import ship_gate
+
+    try:
+        rules = all_rules() + load_theme_rules(theme)
+    except ThemeError as error:
+        raise _BuildFailed(str(error)) from error
+    result = asyncio.run(
+        look(
+            built.pdf,
+            built.comp,
+            LookContext(
+                doc=built.doc,
+                theme=theme,
+                main=built.main,
+                project=file.parent,
+                workdir=out,
+                rules=rules,
+                critic=None,
+                final=True,
+                assets=[file.parent / "assets", theme.root / "assets"],
+            ),
+        )
+    )
+    version = write_version(
+        file,
+        built.doc,
+        built.comp,
+        built.pdf,
+        result.facts,
+        built.findings + result.findings,
+        result.pngs,
+        None,
+        theme=theme,
+        final=True,
+        look=result.record(),
+    )
+    print(version.path)
+    return _gate_report(ship_gate(version))
+
+
+def _gate_report(reasons: list[str]) -> int:
+    for reason in reasons:
+        print(f"not ready: {reason}")
+    if not reasons:
+        print("gate: passed")
+    return int(bool(reasons))
+
+
+def _ready(args: argparse.Namespace) -> int:
+    from docla.store import load_version
+    from docla.store.gate import mark_ready
+
+    if (args.force and (args.reason is None or not args.reason.strip())) or (
+        args.reason is not None and not args.force
+    ):
+        print("--reason requires --force and must be non-blank when forced", file=sys.stderr)
+        return 2
+    try:
+        version = load_version(args.version_dir)
+        reasons = mark_ready(version, force=args.force, reason=args.reason)
+    except (OSError, ValueError) as error:
+        print(error, file=sys.stderr)
+        return 2
+    if reasons and not args.force:
+        for reason in reasons:
+            print(f"not ready: {reason}")
+        return 1
+    print(f"ready (forced: {args.reason})" if args.force else "ready")
     return 0
 
 
@@ -141,8 +217,16 @@ def _check(file: Path, out: Path, theme: Theme, *, final: bool = False, outline:
         )
     built = _draw(file, out, doc, parsed, comp, theme)
     facts = layout_facts(built.pdf, built.main, built.render, font_paths=font_paths(built.render))
+    pages_png = PdfiumRasteriser().render(built.pdf, out / "pages")
     ctx = CheckContext(
-        built.doc, facts, read_tokens(built.render), theme=theme, composition=comp, final=final, assets=assets
+        built.doc,
+        facts,
+        read_tokens(built.render),
+        theme=theme,
+        composition=comp,
+        final=final,
+        assets=assets,
+        pages_png=pages_png,
     )
     return _report(file, out, built.findings + run_checks(rules, ctx))
 
@@ -162,8 +246,9 @@ def _add_file_command(subparsers: Any, name: str, help: str) -> None:
     command.add_argument("file", type=Path, help="the working file")
     command.add_argument("--out", type=Path, default=None, help="output folder (default: build beside the file)")
     command.add_argument("--theme", type=Path, default=None, help="theme folder (default: the neutral theme)")
+    if name in ("build", "check"):
+        command.add_argument("--final", action="store_true", help="treat the working file as a final build")
     if name == "check":
-        command.add_argument("--final", action="store_true", help="check the working file as a final build")
         command.add_argument("--outline", action="store_true", help="check conformance to the doctype outline")
 
 
@@ -177,6 +262,10 @@ def _build_parser() -> argparse.ArgumentParser:
     _add_file_command(subparsers, "build", "render a working file to PDF")
     _add_file_command(subparsers, "check", "render a working file and report what the M1 rules find")
     _add_file_command(subparsers, "write", "prepare and draft a working file")
+    ready = subparsers.add_parser("ready", help="mark a version ready")
+    ready.add_argument("version_dir", type=Path)
+    ready.add_argument("--force", action="store_true")
+    ready.add_argument("--reason")
     write = subparsers.choices["write"]
     write.add_argument("--approve", action="store_true")
     write.add_argument("--yes", action="store_true")
@@ -210,7 +299,7 @@ def _run_file_command(args: argparse.Namespace) -> int:
     try:
         if args.command == "check":
             return _check(args.file, out, _theme(args.theme), final=args.final, outline=args.outline)
-        return FILE_COMMANDS[args.command](args.file, out, _theme(args.theme))
+        return _build(args.file, out, _theme(args.theme), final=args.final)
     except _BuildFailed as error:
         print(error, file=sys.stderr)
         return 2
@@ -222,6 +311,8 @@ def main(argv: list[str] | None = None) -> int:
         return _doctor()
     if args.command == "init":
         return _init(args.directory)
+    if args.command == "ready":
+        return _ready(args)
     if args.command == "write":
         return _write(args)
     if args.command in FILE_COMMANDS:

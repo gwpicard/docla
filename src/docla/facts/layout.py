@@ -76,8 +76,20 @@ class _Placer:
             return element.role, element.id
         return None, _section(self.starts, self.ends, point)
 
+    def _point_section(self, box: FactBox) -> str | None:
+        section_id = _section(self.starts, {}, centre(box))
+        if section_id is None or any(mark.id == section_id for mark in self.elements):
+            return None
+        start = next(mark for mark in self.starts if mark.id == section_id)
+        end = self.ends.get(section_id)
+        if end is not None and (start.page, start.y) == (end.page, end.y) and box.page == start.page:
+            return section_id
+        return None
+
     def word(self, word: Word) -> PlacedWord:
         role, section_id = self.place(word.box)
+        if section_id is None:
+            section_id = self._point_section(word.box)
         return PlacedWord(**word.model_dump(), role=role, section_id=section_id)
 
     def shape(self, shape: Shape) -> PlacedShape:
