@@ -56,7 +56,7 @@ def _section(starts: list[SectionMark], ends: dict[str, SectionMark], point: Poi
         return None
     start = before[-1]
     end = ends.get(start.id)
-    if end is not None and (end.page, end.y) < (page, y):
+    if end is not None and (end.page, end.y) < (page, y) and (end.page, end.y) != (start.page, start.y):
         return None
     return start.id
 
