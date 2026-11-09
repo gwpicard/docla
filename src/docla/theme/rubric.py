@@ -67,11 +67,16 @@ class Rubric(BaseModel):
         raise KeyError(rubric_id)
 
     def applies(
-        self, format: Format, component: str | None = None, intent: str | None = None, *,
+        self,
+        format: Format,
+        component: str | None = None,
+        intent: str | None = None,
+        *,
         view: Literal["page", "sheet"] = "page",
     ) -> list[RubricItem]:
         return [
-            item for item in self.items
+            item
+            for item in self.items
             if item.view == view
             and (item.applies.formats is None or format in item.applies.formats)
             and (item.applies.components is None or component in item.applies.components)
