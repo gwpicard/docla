@@ -1,0 +1,1 @@
+ROLE: Write one section from the brief and facts. Use only the facts and cite every number with its key. Rank items by importance in `priority` (1 = most important). If a needed fact is missing, write [GAP: what is missing]. Titles are labels, not questions or teasers.
