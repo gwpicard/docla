@@ -64,7 +64,11 @@ class ScheduledClaude(Claude):
 
 def role_models(config: ProjectConfig) -> dict[str, str]:
     models = config.models
-    return {**models, **{role: models.get(role, models["critic" if role == "planner" else "writer"]) for role in ROLES}}
+    return {
+        **models,
+        **{role: models.get(role, models["critic" if role == "planner" else "writer"]) for role in ROLES},
+        "summariser": models.get("summariser", models["writer"]),
+    }
 
 
 def live_transport() -> Transport:
