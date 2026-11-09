@@ -183,8 +183,8 @@ def test_D4_agent_factories_are_available():
 def test_D5_frozen_approved_write_and_replay(tmp_path, monkeypatch, capsys):
     (tmp_path / "approved").mkdir()
     (tmp_path / "replay").mkdir()
-    FROZEN["test_D2_approved_outline_drafts_patches_and_builds"](tmp_path / "approved", capsys)
-    FROZEN["test_D4_replay_never_constructs_live_transport"](tmp_path / "replay", monkeypatch, capsys)
+    assert FROZEN["test_D2_approved_outline_drafts_patches_and_builds"](tmp_path / "approved", capsys) is None
+    assert FROZEN["test_D4_replay_never_constructs_live_transport"](tmp_path / "replay", monkeypatch, capsys) is None
 
 
 def test_D6_frozen_clean_checks(tmp_path, capsys):
