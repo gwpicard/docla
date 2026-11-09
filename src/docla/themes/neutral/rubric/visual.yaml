@@ -1,0 +1,25 @@
+items:
+  - id: sem.focal-point
+    question: Is there one element a reader would look at first, or do all elements have equal weight?
+    applies:
+      components: [chart, key-figures, statement]
+    severity: warning
+    remedy: {class: restructure, hint: Give the most important element clear visual emphasis.}
+  - id: sem.repetition
+    question: Does the deck read as one slide repeated?
+    applies:
+      formats: [slides]
+    view: sheet
+    severity: warning
+    remedy: {class: restructure, hint: Vary the composition to suit each slide's content.}
+  - id: sem.balance
+    question: Does the spread lean to one side?
+    applies:
+      formats: [doc]
+    view: sheet
+    severity: warning
+    remedy: {class: restructure, hint: Redistribute the visual weight across the spread.}
+  - id: sem.reader-words
+    question: Does the page contain an unexplained term, a label meaningless out of context, an idiom or a coined term?
+    severity: warning
+    remedy: {class: redraft, hint: Explain or replace words that may confuse the reader.}
