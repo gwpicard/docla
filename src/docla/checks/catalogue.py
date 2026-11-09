@@ -11,6 +11,7 @@ from docla.checks import (
     images,
     outline,
     palette,
+    pixels,
     sequence,
     source,
     text,
@@ -68,6 +69,7 @@ def all_rules() -> list[Rule]:
         *adjacent.RULES,
         *charts.RULES,
         *sequence.RULES,
+        *pixels.RULES,
     ]
 
 
