@@ -40,7 +40,7 @@
       fit-box("item", sec.id, content-frame.w, 40pt, {
         el("item", sec.id, {
           set text(..type-style("slides", "body"), fill: colour("on-dark"))
-          [#item.body #cite-keys(citations)]
+          [#item.body #cite-keys(citations, fill: colour("on-dark"))]
         })
       })
     })
