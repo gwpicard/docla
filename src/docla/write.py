@@ -271,7 +271,8 @@ async def run_write(
             heal_log=HealLog(run_dir),
             spent=spent,
         )
-        doctype = load_doctypes().get(doc.front.get("doctype"))
+        doctype_name = doc.front.get("doctype")
+        doctype = load_doctypes().get(doctype_name) if isinstance(doctype_name, str) else None
         summaries = summary_sources(doc, doctype) if doctype else {}
         semaphore = asyncio.Semaphore(config.loop.max_parallel_sections)
 
