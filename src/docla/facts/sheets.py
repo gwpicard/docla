@@ -48,8 +48,7 @@ def _sheet(pngs: list[Path], labels: list[str], out: Path, font: Path | None, sp
     tile_height = max(1, int(height * scale))
     sheet = Image.new(
         "RGB",
-        (columns * slots * tile_width + (columns - 1) * _GAP,
-         rows * (tile_height + _LABEL_HEIGHT) + (rows - 1) * _GAP),
+        (columns * slots * tile_width + (columns - 1) * _GAP, rows * (tile_height + _LABEL_HEIGHT) + (rows - 1) * _GAP),
         "white",
     )
     label_font = ImageFont.truetype(font or neutral_theme().fonts_dir / "Inter-Regular.ttf", 14)
