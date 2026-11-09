@@ -14,11 +14,13 @@ from pydantic import TypeAdapter
 
 from docla.agents.cassette import Cassette, Transport
 from docla.agents.client import AnthropicTransport, CassetteTransport, Claude
+from docla.agents.critic import CriticImage, calibrate, corroborate
 from docla.agents.gatherer import Fact, gather
 from docla.agents.ledger import BudgetExceeded
 from docla.agents.planner import outline_to_document, plan
 from docla.agents.prompts import ROLES
 from docla.agents.scheduler import Scheduler
+from docla.agents.summariser import summarise, summary_sources
 from docla.agents.writer import SectionJob, draft, draft_to_section, repair
 from docla.checks.catalogue import all_rules
 from docla.config import ProjectConfig, load_project_config
@@ -26,12 +28,13 @@ from docla.doctypes import load_doctypes
 from docla.loop.best_of import best_of_n
 from docla.loop.guards import FactGuard
 from docla.loop.heal_log import HealLog
+from docla.loop.look import CriticPage, PageCritic
+from docla.loop.macro import MacroContext, Summariser, build_document
 from docla.loop.micro import LoopContext, write_section
 from docla.loop.router import ACTIONABLE
-from docla.model import Patch, PatchOp, Source
+from docla.model import Document, Finding, Patch, PatchOp, Source
 from docla.render.components import all_manifests
-from docla.render.compose import assemble, component_for, compose, font_paths
-from docla.render.typst import compile_pdf
+from docla.render.compose import component_for
 from docla.source.files import apply_to_file, current_rev
 from docla.source.ids import IdStore, stamp
 from docla.source.parser import parse
@@ -39,6 +42,7 @@ from docla.source.patches import TEXT_FIELDS
 from docla.source.serialiser import serialise
 from docla.sources import extract
 from docla.theme.brief import brief_card
+from docla.theme.rubric import load_calibration, load_rubric
 
 ESTIMATE_USD_PER_SECTION = 0.10
 
@@ -48,6 +52,8 @@ class Agents:
     gather: Callable[..., Any]
     outline: Callable[..., Any]
     writer: Callable[..., Any]
+    critic: Callable[[Document], PageCritic] | None = None
+    summariser: Callable[[Document], Summariser] | None = None
 
 
 class ScheduledClaude(Claude):
@@ -113,7 +119,44 @@ class ClaudeWriter:
         return await repair(self.claude, state.section, findings, lines, self.card(job), theme=self.theme)
 
 
-def claude_agents(claude: Any, theme: Any) -> Agents:
+class ClaudeCritic:
+    def __init__(self, claude: Any, theme: Any, format: Any, *, act_on_uncorroborated: bool = False) -> None:
+        self.claude, self.format = claude, format
+        self.rubric = load_rubric(theme)
+        self.calibration = load_calibration(theme)
+        self.act_on_uncorroborated = act_on_uncorroborated
+
+    async def __call__(self, page: CriticPage) -> list[Finding]:
+        ids = {
+            item.id
+            for sid in page.sections
+            for item in self.rubric.applies(self.format, page.components.get(sid), page.intents.get(sid), view="page")
+        }
+        items = [item for item in self.rubric.items if item.id in ids]
+        if not items:
+            return []
+        findings = await corroborate(
+            self.claude,
+            [CriticImage(page.png, page.page, page.width, page.height, f"page {page.page}")],
+            items,
+            page.findings,
+            page.regions,
+            format=self.format,
+        )
+        return calibrate(findings, self.calibration, act_on_uncorroborated=self.act_on_uncorroborated)
+
+
+class ClaudeSummariser:
+    def __init__(self, claude: Any, theme: Any, brief: str) -> None:
+        self.claude, self.theme, self.brief = claude, theme, brief
+
+    async def __call__(self, job: Any, sections: Any) -> Any:
+        return await summarise(self.claude, sections, job=job, brief=self.brief, theme=self.theme)
+
+
+def claude_agents(claude: Any, theme: Any, *, config: ProjectConfig | None = None) -> Agents:
+    config = config or ProjectConfig()
+
     async def gather_sources(extracted: Any) -> Any:
         return await gather(claude, extracted)
 
@@ -122,7 +165,19 @@ def claude_agents(claude: Any, theme: Any) -> Agents:
         result = await plan(claude, facts, doctype, brief, theme=theme)
         return outline_to_document(result, front, store=store), result.questions
 
-    return Agents(gather_sources, outline, lambda facts, doc: ClaudeWriter(claude, facts, theme, doc))
+    def summariser_factory(doc: Document) -> ClaudeSummariser:
+        brief = "\n".join(f"{key}: {doc.front.get(key, '')}" for key in ("audience", "purpose"))
+        return ClaudeSummariser(claude, theme, brief)
+
+    return Agents(
+        gather_sources,
+        outline,
+        lambda facts, doc: ClaudeWriter(claude, facts, theme, doc),
+        critic=lambda doc: ClaudeCritic(
+            claude, theme, doc.format, act_on_uncorroborated=config.loop.act_on_uncorroborated
+        ),
+        summariser=summariser_factory,
+    )
 
 
 async def _facts(project: Any, run_dir: Any, agents: Any) -> Any:
@@ -157,15 +212,15 @@ async def _make_outline(file: Any, doc: Any, agents: Any, run_dir: Any, ids: Any
     _outline_output(file, doc, questions)
 
 
-def _build(file: Any, doc: Any, theme: Any, out: Any, assets: Any) -> None:
-    out.mkdir(parents=True, exist_ok=True)
-    render = out / "render"
-    if render.exists():
-        shutil.rmtree(render)
-    main = assemble(compose(doc, assets=assets), render, theme=theme)
-    pdf = out / f"{file.stem}.pdf"
-    compile_pdf(main, render, pdf, font_paths(render))
-    print(pdf)
+class _DraftedWriter:
+    def __init__(self, doc: Document, writer: Any) -> None:
+        self.doc, self.writer = doc, writer
+
+    async def draft(self, job: Any) -> Any:
+        return next(section for section in self.doc.sections if section.id == job.section_id).model_copy(deep=True)
+
+    async def repair(self, job: Any, state: Any, history: Any, *, strategy: Any = None) -> Any:
+        return await self.writer.repair(job, state, history, strategy=strategy)
 
 
 async def run_write(
@@ -216,6 +271,9 @@ async def run_write(
             heal_log=HealLog(run_dir),
             spent=spent,
         )
+        doctype_name = doc.front.get("doctype")
+        doctype = load_doctypes().get(doctype_name) if isinstance(doctype_name, str) else None
+        summaries = summary_sources(doc, doctype) if doctype else {}
         semaphore = asyncio.Semaphore(config.loop.max_parallel_sections)
 
         async def process(i: int, section: Any) -> str:
@@ -247,10 +305,40 @@ async def run_write(
                 return result.status
 
         statuses = await asyncio.gather(
-            *(process(i, s) for i, s in enumerate(doc.sections) if s.owner != "human" and not s.lock)
+            *(
+                process(i, s)
+                for i, s in enumerate(doc.sections)
+                if s.owner != "human" and not s.lock and s.id not in summaries
+            )
         )
         updated, _ = parse(file.read_text())
-        _build(file, updated, theme, out, assets)
+        macro_dir = out / "macro"
+        if macro_dir.exists():
+            shutil.rmtree(macro_dir)
+        version = await build_document(
+            updated,
+            MacroContext(
+                doc_path=file,
+                theme=theme,
+                writer=_DraftedWriter(updated, ctx.writer),
+                workdir=macro_dir,
+                doctype=doctype,
+                summarise=agents.summariser(updated) if agents.summariser else None,
+                critic=agents.critic(updated) if agents.critic else None,
+                fact_guard=ctx.fact_guard,
+                micro_attempts=config.loop.micro_attempts,
+                best_of_n=ctx.best_of_n,
+                macro_rounds=config.loop.macro_rounds,
+                max_parallel_sections=config.loop.max_parallel_sections,
+                assets=assets,
+                heal_log=ctx.heal_log,
+                spent=spent,
+            ),
+        )
+        pdf = out / f"{file.stem}.pdf"
+        shutil.copyfile(version.path / pdf.name, pdf)
+        print(pdf)
+        print(version.path)
         return int(any(status != "clean" for status in statuses))
     except BudgetExceeded as error:
         print(error, file=sys.stderr)

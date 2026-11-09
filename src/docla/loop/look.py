@@ -2,7 +2,7 @@
 
 import hashlib
 from collections.abc import Awaitable, Callable
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from pathlib import Path
 
 from pydantic import BaseModel
@@ -29,6 +29,8 @@ class CriticPage:
     sections: list[str]
     regions: list[Region]
     findings: list[Finding]
+    components: dict[str, str] = field(default_factory=dict)
+    intents: dict[str, str] = field(default_factory=dict)
 
 
 PageCritic = Callable[[CriticPage], Awaitable[list[Finding]]]
@@ -144,6 +146,8 @@ async def look(pdf: Path, comp: Composition, ctx: LookContext) -> Look:
             page["sections"],
             _regions(facts, number, page["sections"], regions),
             page_findings,
+            {s.id: s.component for s in comp.sections if s.id in page["sections"]},
+            {s.id: s.intent for s in ctx.doc.sections if s.id in page["sections"] and s.id is not None},
         )
         called.append(number)
         try:

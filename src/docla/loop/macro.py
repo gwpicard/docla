@@ -157,6 +157,7 @@ async def _repair(doc: Document, ctx: MacroContext, rules: list[Rule], findings:
         candidate = deterministic_fix(SimpleNamespace(section=section, findings=relevant), job)
         if candidate is None and plan.redraft:
             micro = _micro_context(doc, ctx, rules, _CurrentWriter(section, ctx.writer))
+            micro.heal_log = None
             result = await write_section(job, micro)
             candidate = result.state.section
         if candidate is not None and candidate != section:
