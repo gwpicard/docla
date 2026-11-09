@@ -280,6 +280,12 @@ def _build_parser() -> argparse.ArgumentParser:
     heal.add_argument("--cases", type=Path, default=Path("tests/fixtures/heal-eval"))
     heal.add_argument("--out", type=Path, default=Path("evals/RESULTS.md"))
     heal.add_argument("--theme", type=Path, default=None)
+    critic = eval_commands.add_parser("critic", help="run the critic evaluation")
+    critic.add_argument("--live", action="store_true")
+    critic.add_argument("--cases", type=Path, default=Path("tests/fixtures/critic-eval"))
+    critic.add_argument("--out", type=Path, default=Path("evals/CRITIC.md"))
+    critic.add_argument("--calibration", type=Path, default=None)
+    critic.add_argument("--theme", type=Path, default=None)
     return parser
 
 
@@ -320,8 +326,63 @@ def main(argv: list[str] | None = None) -> int:
     if args.command == "theme":
         return _run_theme_test(args.theme)
     if args.command == "eval":
-        return _heal(args)
+        return _heal(args) if args.eval_command == "heal" else _critic_eval(args)
     return 1
+
+
+def _critic_eval(args: argparse.Namespace) -> int:
+    if args.live and os.environ.get("DOCLA_LIVE") != "1":
+        print("Live evaluation requires DOCLA_LIVE=1", file=sys.stderr)
+        return 2
+    from docla.evals.critic import ScriptedCritic, calibration_yaml, load_cases, render_results, run_critic
+
+    cases = load_cases(args.cases)
+    theme = _theme(args.theme)
+    verdict = _live_critic(args.out, theme) if args.live else ScriptedCritic()
+    report = asyncio.run(run_critic(cases, verdict))
+    report.mode = "live" if args.live else "offline"
+    args.out.parent.mkdir(parents=True, exist_ok=True)
+    args.out.write_text(render_results(report))
+    calibration = args.calibration or (theme.root / "rubric/calibration.yaml" if args.live else None)
+    if calibration is not None:
+        calibration.parent.mkdir(parents=True, exist_ok=True)
+        calibration.write_text(calibration_yaml(report))
+    return 0
+
+
+def _live_critic(out: Path, theme: Theme) -> Any:
+    from PIL import Image
+
+    from docla.agents.critic import CriticImage, Region, critique
+    from docla.agents.ledger import Ledger
+    from docla.agents.scheduler import Scheduler
+    from docla.config import load_project_config
+    from docla.model import Box
+    from docla.theme.rubric import load_rubric
+    from docla.write import ScheduledClaude, live_transport, role_models
+
+    config = load_project_config(Path.cwd())
+    ledger = Ledger(out.parent / "critic-ledger.jsonl", config.prices, config.budget.max_usd_per_document)
+    claude = ScheduledClaude(
+        live_transport(), ledger, role_models(config), scheduler=Scheduler(config.loop.max_parallel_sections)
+    )
+    rubric = load_rubric(theme)
+
+    async def verdict(case: Any, run: int) -> str:
+        with Image.open(case.crop) as image:
+            width, height = image.size
+        item = rubric.get(case.rubric_id)
+        findings = await critique(
+            claude,
+            [CriticImage(case.crop, 1, width, height, "crop")],
+            [item],
+            [],
+            [Region("crop", None, 1, Box(x=0, y=0, w=width, h=height))],
+            format=(item.applies.formats or ["slides"])[0],
+        )
+        return "fail" if any(f.rule_id == case.rubric_id for f in findings) else "pass"
+
+    return verdict
 
 
 def _heal(args: argparse.Namespace) -> int:
