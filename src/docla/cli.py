@@ -15,6 +15,7 @@ from docla.checks.catalogue import all_rules, document_rules
 from docla.checks.engine import CheckContext, run_checks
 from docla.config import default_config_text
 from docla.facts.layout import layout_facts
+from docla.facts.raster import PdfiumRasteriser
 from docla.model import Document, Finding
 from docla.render.compose import ComposeError, Composition, assemble, compose, font_paths
 from docla.render.kit import read_tokens
@@ -141,8 +142,16 @@ def _check(file: Path, out: Path, theme: Theme, *, final: bool = False, outline:
         )
     built = _draw(file, out, doc, parsed, comp, theme)
     facts = layout_facts(built.pdf, built.main, built.render, font_paths=font_paths(built.render))
+    pages_png = PdfiumRasteriser().render(built.pdf, out / "pages")
     ctx = CheckContext(
-        built.doc, facts, read_tokens(built.render), theme=theme, composition=comp, final=final, assets=assets
+        built.doc,
+        facts,
+        read_tokens(built.render),
+        theme=theme,
+        composition=comp,
+        final=final,
+        assets=assets,
+        pages_png=pages_png,
     )
     return _report(file, out, built.findings + run_checks(rules, ctx))
 
