@@ -175,7 +175,9 @@ def test_D4_offline_results_and_calibration(tmp_path, capsys):
     loaded_items = loaded if isinstance(loaded, dict) else loaded.items
     for item in items:
         entry = loaded_items[item]
-        assert (entry["precision"] if isinstance(entry, dict) else entry.precision) == 1.0
+        # load_calibration (M4.06, merged) returns {item: precision} as floats.
+        value = entry if isinstance(entry, (int, float)) else (entry["precision"] if isinstance(entry, dict) else entry.precision)
+        assert value == 1.0
 
 
 def test_D5_live_opt_in_and_offline_does_not_write_theme(tmp_path, capsys, monkeypatch):
