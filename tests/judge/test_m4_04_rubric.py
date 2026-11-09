@@ -147,4 +147,5 @@ def test_D4_missing_and_existing_examples_and_repeat_load(tmp_path):
     assert loaded.ids() == ["sem.example"]
     assert loaded.get("sem.example").examples.fail == ["crops/flat.png"]
     assert loaded.get("sem.example").examples.pass_ == []
-    assert _load(neutral_theme()) == _load(neutral_theme())
+    first, second = _load(neutral_theme()), _load(neutral_theme())
+    assert first == second
