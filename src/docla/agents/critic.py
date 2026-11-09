@@ -247,9 +247,7 @@ def _engine_agrees(finding: Finding, engine_findings: list[Finding]) -> bool:
 
 def _critic_agrees(finding: Finding, others: list[Finding]) -> bool:
     return any(
-        other.rule_id == finding.rule_id
-        and other.page == finding.page
-        and _overlaps(other.region, finding.region)
+        other.rule_id == finding.rule_id and other.page == finding.page and _overlaps(other.region, finding.region)
         for other in others
     )
 
