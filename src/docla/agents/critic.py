@@ -221,3 +221,77 @@ async def critique(
             findings.append(finding)
             seen.add(finding.fingerprint)
     return findings
+
+
+PRECISION_MIN = 0.8
+
+
+def _overlaps(first: Box | None, second: Box | None) -> bool:
+    return (
+        first is not None
+        and second is not None
+        and min(first.x + first.w, second.x + second.w) > max(first.x, second.x)
+        and min(first.y + first.h, second.y + second.h) > max(first.y, second.y)
+    )
+
+
+def _engine_agrees(finding: Finding, engine_findings: list[Finding]) -> bool:
+    return finding.section_id is not None and any(
+        engine.tier != "semantic"
+        and engine.page == finding.page
+        and engine.section_id == finding.section_id
+        and _overlaps(engine.region, finding.region)
+        for engine in engine_findings
+    )
+
+
+def _critic_agrees(finding: Finding, others: list[Finding]) -> bool:
+    return any(
+        other.rule_id == finding.rule_id
+        and other.page == finding.page
+        and _overlaps(other.region, finding.region)
+        for other in others
+    )
+
+
+async def corroborate(
+    claude: Claude,
+    images: list[CriticImage],
+    rubric_items: list[RubricItem],
+    engine_findings: list[Finding],
+    regions: list[Region],
+    *,
+    format: Format,
+) -> list[Finding]:
+    findings = await critique(claude, images, rubric_items, engine_findings, regions, format=format)
+    agreed = [_engine_agrees(finding, engine_findings) for finding in findings]
+    if all(agreed):
+        return [finding.model_copy(update={"corroborated": True}) for finding in findings]
+    second = await critique(claude, images, list(reversed(rubric_items)), engine_findings, regions, format=format)
+    return [
+        finding.model_copy(update={"corroborated": agrees or _critic_agrees(finding, second)})
+        for finding, agrees in zip(findings, agreed, strict=True)
+    ]
+
+
+def calibrate(
+    findings: list[Finding],
+    calibration: dict[str, float],
+    *,
+    act_on_uncorroborated: bool = False,
+    min_precision: float = PRECISION_MIN,
+) -> list[Finding]:
+    return [_calibrate_finding(f, calibration, act_on_uncorroborated, min_precision) for f in findings]
+
+
+def _calibrate_finding(
+    finding: Finding, calibration: dict[str, float], act_on_uncorroborated: bool, min_precision: float
+) -> Finding:
+    if finding.tier != "semantic":
+        return finding.model_copy()
+    updates: dict[str, Any] = {}
+    if finding.rule_id not in calibration or calibration[finding.rule_id] < min_precision:
+        updates["severity"] = "info"
+    if finding.corroborated is not True and not act_on_uncorroborated:
+        updates["remedy"] = finding.remedy.model_copy(update={"class_": "report"})
+    return finding.model_copy(update=updates)

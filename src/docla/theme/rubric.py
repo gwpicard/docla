@@ -108,3 +108,30 @@ def load_rubric(theme: Theme) -> Rubric:
         return rubric
     except (yaml.YAMLError, ValidationError, ValueError, OSError) as error:
         raise ThemeError(f"rubric/visual.yaml: {error}") from error
+
+
+class CalibrationEntry(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+
+    precision: float = Field(ge=0, le=1)
+    recall: float | None = Field(default=None, ge=0, le=1)
+    agreement: float | None = Field(default=None, ge=0, le=1)
+    n: int | None = None
+
+
+class _Calibration(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+
+    items: dict[str, CalibrationEntry]
+
+
+def load_calibration(theme: Theme) -> dict[str, float]:
+    path = theme.root / "rubric" / "calibration.yaml"
+    if not path.exists():
+        return {}
+    try:
+        data = yaml.safe_load(path.read_text(encoding="utf-8"))
+        calibration = _Calibration.model_validate(data)
+        return {key: entry.precision for key, entry in calibration.items.items()}
+    except (yaml.YAMLError, ValidationError, ValueError, OSError) as error:
+        raise ThemeError(f"rubric/calibration.yaml: {error}") from error
