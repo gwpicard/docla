@@ -2,7 +2,7 @@
 
 from collections.abc import Awaitable, Callable
 from pathlib import Path
-from typing import Literal
+from typing import Literal, cast
 
 import yaml  # type: ignore[import-untyped]
 from PIL import Image, ImageChops
@@ -139,4 +139,4 @@ def calibration_yaml(report: CriticEvalReport) -> str:
         for item, row in sorted(report.items.items())
         if row.precision is not None
     }
-    return f"# docla eval critic, mode: {report.mode}\n" + yaml.safe_dump({"items": items}, sort_keys=False)
+    return f"# docla eval critic, mode: {report.mode}\n" + cast(str, yaml.safe_dump({"items": items}, sort_keys=False))
