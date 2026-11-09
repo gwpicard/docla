@@ -455,7 +455,7 @@ def _write(args: argparse.Namespace) -> int:
         return asyncio.run(
             run_write(
                 args.file,
-                agents=claude_agents(claude, theme),
+                agents=claude_agents(claude, theme, config=config),
                 theme=theme,
                 out=_out_dir(args.file, args.out),
                 approve=args.approve,
