@@ -12,7 +12,7 @@ from PIL import Image
 from pydantic import BaseModel, Field
 
 from docla.agents.client import Claude
-from docla.checks.engine import GRID, fingerprint
+from docla.checks.engine import _cell, fingerprint
 from docla.facts.layout import LayoutFacts
 from docla.model import Box, Finding, Format
 from docla.render.marks import ElementMark
@@ -59,19 +59,19 @@ class Region:
 def regions_from_facts(facts: LayoutFacts) -> list[Region]:
     elements = [m for m in facts.marks if isinstance(m, ElementMark)]
     regions = [Region(m.id, m.role, m.page, Box(x=m.x, y=m.y, w=m.w, h=m.h)) for m in elements]
-    groups: dict[tuple[str, int], list[Box]] = {}
-    for region in regions:
-        groups.setdefault((region.section_id, region.page), []).append(region.box)
-    for (section, page), boxes in groups.items():
-        x, y = min(b.x for b in boxes), min(b.y for b in boxes)
-        right, bottom = max(b.x + b.w for b in boxes), max(b.y + b.h for b in boxes)
+    groups: dict[tuple[str, int], list[ElementMark]] = {}
+    for mark in elements:
+        groups.setdefault((mark.id, mark.page), []).append(mark)
+    for (section, page), marks in groups.items():
+        x, y = min(m.x for m in marks), min(m.y for m in marks)
+        right, bottom = max(m.x + m.w for m in marks), max(m.y + m.h for m in marks)
         regions.append(Region(section, None, page, Box(x=x, y=y, w=right - x, h=bottom - y)))
     return regions
 
 
 def critic_blocks() -> list[dict[str, Any]]:
     resources = files("docla.agents.prompts")
-    blocks = [
+    blocks: list[dict[str, Any]] = [
         {"type": "text", "text": resources.joinpath(name).read_text(encoding="utf-8")}
         for name in ("header.txt", "critic.txt")
     ]
@@ -81,11 +81,11 @@ def critic_blocks() -> list[dict[str, Any]]:
 
 def _image_block(image: CriticImage) -> dict[str, Any]:
     data = image.png.read_bytes()
-    with Image.open(io.BytesIO(data)) as source:
-        if max(source.size) > 1568:
-            source.thumbnail((1568, 1568), Image.Resampling.LANCZOS)
+    with Image.open(io.BytesIO(data)) as png:
+        if max(png.size) > 1568:
+            png.thumbnail((1568, 1568), Image.Resampling.LANCZOS)
             output = io.BytesIO()
-            source.save(output, format="PNG")
+            png.save(output, format="PNG")
             data = output.getvalue()
     return {
         "type": "image",
@@ -94,15 +94,17 @@ def _image_block(image: CriticImage) -> dict[str, Any]:
 
 
 def _content(
-    images: list[CriticImage], rubrics: list[RubricItem], findings: list[Finding], regions: list[Region]
+    images: list[CriticImage], rubric: list[RubricItem], findings: list[Finding], regions: list[Region]
 ) -> list[dict[str, Any]]:
     content: list[dict[str, Any]] = []
     for n, image in enumerate(images, 1):
         content.extend([{"type": "text", "text": f"Image {n} = {image.label}"}, _image_block(image)])
     lines = ["RUBRIC ITEMS (answer only these):"]
-    lines.extend(f"- {r.id}: {r.question}" for r in rubrics)
+    lines.extend(f"- {item.id}: {item.question}" for item in rubric)
     lines.append("ALREADY REPORTED BY CODE (do not repeat):")
-    lines.extend([f"- {f.rule_id} {f.section_id or '-'} {f.message}" for f in findings] or ["none"])
+    lines.extend(f"- {f.rule_id} {f.section_id or '-'} {f.message}" for f in findings)
+    if not findings:
+        lines.append("none")
     lines.append("REGIONS (normalised 0..1000, use these to anchor):")
     for n, image in enumerate(images, 1):
         for region in regions:
@@ -119,14 +121,16 @@ def _content(
     return content
 
 
-def _mapped_box(b: BBox | None, image: CriticImage | None) -> Box | None:
-    if b is None or image is None or not (0 <= b.x0 < b.x1 <= 1000 and 0 <= b.y0 < b.y1 <= 1000):
+def _mapped_box(bbox: BBox | None, image: CriticImage | None) -> Box | None:
+    if bbox is None or image is None:
+        return None
+    if not (0 <= bbox.x0 < bbox.x1 <= 1000 and 0 <= bbox.y0 < bbox.y1 <= 1000):
         return None
     return Box(
-        x=b.x0 * image.width / 1000,
-        y=b.y0 * image.height / 1000,
-        w=(b.x1 - b.x0) * image.width / 1000,
-        h=(b.y1 - b.y0) * image.height / 1000,
+        x=bbox.x0 / 1000 * image.width,
+        y=bbox.y0 / 1000 * image.height,
+        w=(bbox.x1 - bbox.x0) / 1000 * image.width,
+        h=(bbox.y1 - bbox.y0) / 1000 * image.height,
     )
 
 
@@ -134,32 +138,12 @@ def _anchor(box: Box | None, image: CriticImage | None, regions: list[Region]) -
     if box is None or image is None:
         return None
     x, y = box.x + box.w / 2, box.y + box.h / 2
-    candidates = [
+    matches = [
         r
         for r in regions
         if r.page == image.page and r.box.x <= x <= r.box.x + r.box.w and r.box.y <= y <= r.box.y + r.box.h
     ]
-    return min(candidates, key=lambda r: r.box.w * r.box.h, default=None)
-
-
-def _cell(box: Box, image: CriticImage) -> tuple[int, int]:
-    return (
-        min(max(int((box.x + box.w / 2) / image.width * GRID), 0), GRID - 1),
-        min(max(int((box.y + box.h / 2) / image.height * GRID), 0), GRID - 1),
-    )
-
-
-def _repeat(finding: Finding, image: CriticImage | None, existing: list[Finding]) -> bool:
-    if image is None or finding.region is None:
-        return False
-    return any(
-        f.page == finding.page
-        and f.section_id == finding.section_id
-        and f.role == finding.role
-        and f.region is not None
-        and _cell(f.region, image) == _cell(finding.region, image)
-        for f in existing
-    )
+    return min(matches, key=lambda r: r.box.w * r.box.h, default=None)
 
 
 def _finding(
@@ -193,6 +177,21 @@ def _finding(
     )
 
 
+def _repeats(finding: Finding, engine: list[Finding], images: list[CriticImage]) -> bool:
+    image = next((i for i in images if i.page == finding.page), None)
+    if image is None or finding.region is None:
+        return False
+    size = (image.width, image.height)
+    return any(
+        f.page == finding.page
+        and f.section_id == finding.section_id
+        and f.role == finding.role
+        and f.region is not None
+        and _cell(f.region, size) == _cell(finding.region, size)
+        for f in engine
+    )
+
+
 async def critique(
     claude: Claude,
     images: list[CriticImage],
@@ -211,15 +210,14 @@ async def critique(
         content=_content(images, rubric_items, engine_findings, regions),
         effort="medium",
     )
-    rubrics = {r.id: r for r in rubric_items}
+    rubric = {item.id: item for item in rubric_items}
     findings: list[Finding] = []
     seen: set[str] = set()
     for item in report.items + report.anything_else:
-        if item.verdict != "fail" or item.rubric_id not in rubrics:
+        if item.verdict != "fail" or item.rubric_id not in rubric:
             continue
-        finding = _finding(item, rubrics[item.rubric_id], images, regions, format)
-        image = images[item.image - 1] if 1 <= item.image <= len(images) else None
-        if finding.fingerprint not in seen and not _repeat(finding, image, engine_findings):
+        finding = _finding(item, rubric[item.rubric_id], images, regions, format)
+        if finding.fingerprint not in seen and not _repeats(finding, engine_findings, images):
             findings.append(finding)
             seen.add(finding.fingerprint)
     return findings
