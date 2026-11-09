@@ -12,7 +12,7 @@ from docla.checks.catalogue import all_rules, document_rules
 from docla.doctypes import Doctype
 from docla.loop.heal_log import HealLog
 from docla.loop.look import Look, LookContext, PageCritic, look
-from docla.loop.micro import BestOfN, LoopContext, SectionWriter, phi, write_section
+from docla.loop.micro import BestOfN, JobLike, LoopContext, SectionState, SectionWriter, phi, write_section
 from docla.loop.router import deterministic_fix, route
 from docla.model import Document, Finding, Patch, PatchOp, Rule, Section
 from docla.render.compose import Composition, assemble, component_for, compose, font_paths
@@ -137,10 +137,12 @@ class _CurrentWriter:
         self.section = section
         self.writer = writer
 
-    async def draft(self, job):
+    async def draft(self, job: JobLike) -> Section:
         return self.section
 
-    async def repair(self, job, state, history, *, strategy=None):
+    async def repair(
+        self, job: JobLike, state: SectionState, history: list[SectionState], *, strategy: str | None = None
+    ) -> Patch:
         return await self.writer.repair(job, state, history, strategy=strategy)
 
 
@@ -168,6 +170,7 @@ def _write_back(original: Document, doc: Document, ctx: MacroContext) -> Documen
     for before, after in zip(original.sections, doc.sections, strict=True):
         if before == after:
             continue
+        assert after.id is not None
         fields = after.model_dump(include=set(TEXT_FIELDS), mode="json")
         if before.component != after.component or before.because != after.because:
             fields.update(component=after.component, because=after.because)
