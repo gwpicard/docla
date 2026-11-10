@@ -30,6 +30,7 @@ def create_app(project: Path, token: str, *, agents: Agents | None = None) -> Fa
     app.state.theme = neutral_theme()
     app.state.agents = agents
     app.state.docs = DocumentService(app.state.project, app.state.bus)
+    app.state.preview_locks = {}
     app.state.keepalive = 15.0
     app.add_middleware(SecurityMiddleware, token=token)
     app.include_router(events_router)
