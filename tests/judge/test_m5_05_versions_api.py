@@ -44,13 +44,16 @@ def client(tmp_path):
 def versions(tmp_path, client):
     if client is None:
         return None
-    source = tmp_path / "deck.md"
-    source.write_text("working document", encoding="utf-8")
-    (tmp_path / "empty.md").write_text("working document", encoding="utf-8")
+    from docla.source.serialiser import serialise
+
     doc = Document(front={"doctype": "pitch-deck"}, format="slides", sections=[
         Section(id="aaaa1", intent="statement", title="First slide"),
         Section(id="aaaa2", intent="statement", title="Second slide"),
     ])
+    # Real working files: the document API (M5.03) resolves documents by parsing them.
+    source = tmp_path / "deck.md"
+    source.write_text(serialise(doc), encoding="utf-8")
+    (tmp_path / "empty.md").write_text(serialise(doc), encoding="utf-8")
     theme = neutral_theme()
     comp = compose(doc)
     root = tmp_path / "build"
