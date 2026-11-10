@@ -90,4 +90,8 @@ def theme_test(theme: Theme, out: Path) -> list[str]:
     """Return the results of the theme suite in execution order."""
     rules = _rules(theme)
     chooser_line, chooser = _chooser(theme)
-    return [rules, chooser_line, _doctypes(chooser), _fixtures(theme, out), _gold(theme, out)]
+    doctypes = _doctypes(chooser)
+    fixtures = _fixtures(theme, out)
+    gold = _gold(theme, out) if rules == "ok rules" else "fail gold: rules did not load"
+    lines = [rules, chooser_line, doctypes, fixtures, gold]
+    return [" ".join(line.split()) if line.startswith("fail ") else line for line in lines]

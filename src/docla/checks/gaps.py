@@ -17,7 +17,7 @@ def _strings(value: Any) -> Iterator[str]:
     elif isinstance(value, dict):
         for nested in value.values():
             yield from _strings(nested)
-    elif isinstance(value, list):
+    elif isinstance(value, (list, tuple)):
         for nested in value:
             yield from _strings(nested)
 

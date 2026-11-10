@@ -34,6 +34,7 @@ def _labels(ctx: CheckContext, rule: Rule, labels: list[ElementMark], marks: lis
                     region=_box(label),
                     message=f"chart label {index} is away from its mark",
                     measured={"label": index, "off_pt": round(hypot(dx, dy), 1)},
+                    key=f"label:{index}",
                 )
             )
     return findings
@@ -75,6 +76,7 @@ def _lengths(ctx: CheckContext, rule: Rule, marks: list[ElementMark], data: dict
                     region=_box(mark),
                     message=f"chart mark {index} length does not match its value",
                     measured={"mark": index, "value": value, "length_pt": length, "expected_pt": expected},
+                    key=f"mark:{index}",
                 )
             )
     return findings

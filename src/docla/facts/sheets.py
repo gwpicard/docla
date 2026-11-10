@@ -63,11 +63,12 @@ def _sheet(pngs: list[Path], labels: list[str], out: Path, font: Path | None, sp
             factor = min(tile_width / image.width, tile_height / image.height)
             size = (max(1, int(image.width * factor)), max(1, int(image.height * factor)))
             image = image.resize(size, Image.Resampling.LANCZOS)
-            sheet.paste(image, (x + (tile_width - size[0]) // 2, y + (tile_height - size[1]) // 2))
+            inset = (tile_width - size[0]) // 2
+            sheet.paste(image, (x + inset, y + (tile_height - size[1]) // 2))
         if label:
             strip = Image.new("RGB", (tile_width, _LABEL_HEIGHT), "white")
             mask = Image.new("1", strip.size)
-            ImageDraw.Draw(mask).text((0, 2), label, font=label_font, fill=1)
+            ImageDraw.Draw(mask).text((inset, 2), label, font=label_font, fill=1)
             strip.paste("#1A1A1A", mask=mask)
             sheet.paste(strip, (x, y + tile_height))
     sheet.save(out, format="PNG")

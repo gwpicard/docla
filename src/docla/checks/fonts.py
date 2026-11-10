@@ -34,6 +34,7 @@ def _finding(ctx: CheckContext, rule: Rule, word: PlacedWord, family: str, allow
         region=Box(x=box.x0, y=box.y0, w=box.x1 - box.x0, h=box.y1 - box.y0),
         message=f"font {word.font} is not among the allowed families: {', '.join(allowed)}",
         measured={"font": family, "allowed": allowed},
+        key=family,
     )
 
 
