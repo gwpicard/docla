@@ -13,6 +13,7 @@ from docla.server.events import router as events_router
 from docla.server.jobs import JobRunner
 from docla.server.jobs import router as jobs_router
 from docla.server.security import SecurityMiddleware
+from docla.server.versions import router as versions_router
 from docla.source.patches import PatchRejected
 from docla.theme import neutral_theme
 from docla.write import Agents
@@ -34,6 +35,7 @@ def create_app(project: Path, token: str, *, agents: Agents | None = None) -> Fa
     app.include_router(events_router)
     app.include_router(docs_router)
     app.include_router(jobs_router)
+    app.include_router(versions_router)
     app.add_exception_handler(UnknownDocument, unknown_document)
     app.add_exception_handler(PatchRejected, patch_rejected)
 
