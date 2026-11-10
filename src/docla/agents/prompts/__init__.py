@@ -7,6 +7,7 @@ from docla.theme import Theme
 from docla.theme.voice import load_voice
 
 ROLES: tuple[str, ...] = ("gatherer", "planner", "writer.draft", "writer.repair")
+M4_ROLES: tuple[str, ...] = ("summariser",)
 
 
 def voice_block(theme: Theme) -> str:
@@ -25,7 +26,7 @@ def voice_block(theme: Theme) -> str:
 
 def system_blocks(role: str, theme: Theme | None = None, brief: str | None = None) -> list[dict[str, Any]]:
     """Build the stable system blocks for one role."""
-    if role not in ROLES:
+    if role not in ROLES + M4_ROLES:
         raise ValueError(f"Unknown role: {role}")
     resources = files(__package__)
     texts = [resources.joinpath("header.txt").read_text(encoding="utf-8")]

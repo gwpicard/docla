@@ -24,6 +24,12 @@ class CheckContext:
     composition: Composition | None = None
     final: bool = False
     assets: list[Path] | None = None
+    pages_png: list[Path] = field(default_factory=list)
+
+    def page_png(self, n: int) -> Path:
+        if n < 1 or n > len(self.pages_png):
+            raise IndexError(f"no image for page {n}")
+        return self.pages_png[n - 1]
 
 
 class Check(Protocol):
@@ -124,7 +130,9 @@ def _check_for(rule: Rule) -> Check:
 
 
 def _tiers_to_run(ctx: CheckContext) -> tuple[Tier, ...]:
-    return TIERS if ctx.facts is not None else ("source",)
+    if ctx.facts is None:
+        return ("source",)
+    return tuple(tier for tier in TIERS if tier != "pixel" or ctx.pages_png)
 
 
 def _in_scope(finding: Finding, rule: Rule, ctx: CheckContext) -> bool:

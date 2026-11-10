@@ -1,0 +1,353 @@
+{
+  "$defs": {
+    "Chosen": {
+      "additionalProperties": false,
+      "properties": {
+        "because": {
+          "title": "Because",
+          "type": "string"
+        },
+        "chosen": {
+          "title": "Chosen",
+          "type": "string"
+        },
+        "field": {
+          "title": "Field",
+          "type": "string"
+        },
+        "instead_of": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "title": "Instead Of"
+        },
+        "section": {
+          "title": "Section",
+          "type": "string"
+        }
+      },
+      "required": [
+        "section",
+        "field",
+        "chosen",
+        "instead_of",
+        "because"
+      ],
+      "title": "Chosen",
+      "type": "object"
+    },
+    "Cost": {
+      "additionalProperties": false,
+      "properties": {
+        "by_role": {
+          "additionalProperties": {
+            "type": "number"
+          },
+          "title": "By Role",
+          "type": "object"
+        },
+        "usd": {
+          "default": 0.0,
+          "title": "Usd",
+          "type": "number"
+        }
+      },
+      "title": "Cost",
+      "type": "object"
+    },
+    "FindingCounts": {
+      "additionalProperties": false,
+      "properties": {
+        "error": {
+          "title": "Error",
+          "type": "integer"
+        },
+        "info": {
+          "title": "Info",
+          "type": "integer"
+        },
+        "warning": {
+          "title": "Warning",
+          "type": "integer"
+        }
+      },
+      "required": [
+        "error",
+        "warning",
+        "info"
+      ],
+      "title": "FindingCounts",
+      "type": "object"
+    },
+    "Gap": {
+      "additionalProperties": false,
+      "properties": {
+        "section": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "title": "Section"
+        },
+        "text": {
+          "title": "Text",
+          "type": "string"
+        }
+      },
+      "required": [
+        "section",
+        "text"
+      ],
+      "title": "Gap",
+      "type": "object"
+    },
+    "LookRecord": {
+      "additionalProperties": false,
+      "properties": {
+        "clean": {
+          "title": "Clean",
+          "type": "boolean"
+        },
+        "could_not": {
+          "items": {
+            "type": "string"
+          },
+          "title": "Could Not",
+          "type": "array"
+        },
+        "method": {
+          "default": "marks",
+          "title": "Method",
+          "type": "string"
+        },
+        "pages": {
+          "title": "Pages",
+          "type": "integer"
+        },
+        "tiers": {
+          "additionalProperties": {
+            "type": "string"
+          },
+          "title": "Tiers",
+          "type": "object"
+        }
+      },
+      "required": [
+        "pages",
+        "clean"
+      ],
+      "title": "LookRecord",
+      "type": "object"
+    },
+    "Residual": {
+      "additionalProperties": false,
+      "properties": {
+        "finding": {
+          "title": "Finding",
+          "type": "string"
+        },
+        "reason": {
+          "title": "Reason",
+          "type": "string"
+        }
+      },
+      "required": [
+        "finding",
+        "reason"
+      ],
+      "title": "Residual",
+      "type": "object"
+    },
+    "ThemeRef": {
+      "additionalProperties": false,
+      "properties": {
+        "name": {
+          "title": "Name",
+          "type": "string"
+        },
+        "version": {
+          "title": "Version",
+          "type": "string"
+        }
+      },
+      "required": [
+        "name",
+        "version"
+      ],
+      "title": "ThemeRef",
+      "type": "object"
+    }
+  },
+  "additionalProperties": false,
+  "properties": {
+    "chosen": {
+      "items": {
+        "$ref": "#/$defs/Chosen"
+      },
+      "title": "Chosen",
+      "type": "array"
+    },
+    "cost": {
+      "$ref": "#/$defs/Cost"
+    },
+    "doc_rev": {
+      "title": "Doc Rev",
+      "type": "integer"
+    },
+    "doctype": {
+      "anyOf": [
+        {
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "title": "Doctype"
+    },
+    "draft": {
+      "title": "Draft",
+      "type": "boolean"
+    },
+    "engine": {
+      "title": "Engine",
+      "type": "string"
+    },
+    "final": {
+      "title": "Final",
+      "type": "boolean"
+    },
+    "findings": {
+      "$ref": "#/$defs/FindingCounts"
+    },
+    "forced_reason": {
+      "anyOf": [
+        {
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Forced Reason"
+    },
+    "format": {
+      "enum": [
+        "slides",
+        "doc"
+      ],
+      "title": "Format",
+      "type": "string"
+    },
+    "gaps": {
+      "items": {
+        "$ref": "#/$defs/Gap"
+      },
+      "title": "Gaps",
+      "type": "array"
+    },
+    "look": {
+      "anyOf": [
+        {
+          "$ref": "#/$defs/LookRecord"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null
+    },
+    "outputs": {
+      "items": {
+        "type": "string"
+      },
+      "title": "Outputs",
+      "type": "array"
+    },
+    "pdf_sha256": {
+      "title": "Pdf Sha256",
+      "type": "string"
+    },
+    "residual": {
+      "items": {
+        "$ref": "#/$defs/Residual"
+      },
+      "title": "Residual",
+      "type": "array"
+    },
+    "sections": {
+      "title": "Sections",
+      "type": "integer"
+    },
+    "sent_to": {
+      "items": {
+        "type": "string"
+      },
+      "title": "Sent To",
+      "type": "array"
+    },
+    "state": {
+      "default": "draft",
+      "enum": [
+        "draft",
+        "ready",
+        "sent"
+      ],
+      "title": "State",
+      "type": "string"
+    },
+    "theme": {
+      "anyOf": [
+        {
+          "$ref": "#/$defs/ThemeRef"
+        },
+        {
+          "type": "null"
+        }
+      ]
+    },
+    "typst": {
+      "title": "Typst",
+      "type": "string"
+    },
+    "version": {
+      "title": "Version",
+      "type": "integer"
+    },
+    "written": {
+      "title": "Written",
+      "type": "string"
+    }
+  },
+  "required": [
+    "version",
+    "written",
+    "draft",
+    "final",
+    "doc_rev",
+    "theme",
+    "typst",
+    "engine",
+    "doctype",
+    "format",
+    "sections",
+    "outputs",
+    "pdf_sha256",
+    "gaps",
+    "chosen",
+    "findings",
+    "cost"
+  ],
+  "title": "Manifest",
+  "type": "object"
+}
