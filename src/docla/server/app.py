@@ -1,6 +1,9 @@
 """Application and entry point for the local visualiser."""
 
+import asyncio
 import secrets
+from collections.abc import AsyncIterator
+from contextlib import asynccontextmanager, suppress
 from pathlib import Path
 
 import uvicorn
@@ -14,6 +17,7 @@ from docla.server.jobs import JobRunner
 from docla.server.jobs import router as jobs_router
 from docla.server.security import SecurityMiddleware
 from docla.server.versions import router as versions_router
+from docla.server.watch import FileWatcher
 from docla.source.patches import PatchRejected
 from docla.theme import neutral_theme
 from docla.write import Agents
@@ -22,7 +26,17 @@ TOKEN_HEADER = "X-Docla-Token"
 
 
 def create_app(project: Path, token: str, *, agents: Agents | None = None) -> FastAPI:
-    app = FastAPI(docs_url=None, redoc_url=None, openapi_url=None)
+    @asynccontextmanager
+    async def lifespan(app: FastAPI) -> AsyncIterator[None]:
+        task = asyncio.create_task(app.state.watcher.run())
+        try:
+            yield
+        finally:
+            task.cancel()
+            with suppress(asyncio.CancelledError):
+                await task
+
+    app = FastAPI(docs_url=None, redoc_url=None, openapi_url=None, lifespan=lifespan)
     app.state.project = project.resolve()
     app.state.token = token
     app.state.bus = EventBus()
@@ -30,6 +44,7 @@ def create_app(project: Path, token: str, *, agents: Agents | None = None) -> Fa
     app.state.theme = neutral_theme()
     app.state.agents = agents
     app.state.docs = DocumentService(app.state.project, app.state.bus)
+    app.state.watcher = FileWatcher(app.state.docs)
     app.state.preview_locks = {}
     app.state.keepalive = 15.0
     app.add_middleware(SecurityMiddleware, token=token)

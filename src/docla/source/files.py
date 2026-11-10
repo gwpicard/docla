@@ -64,3 +64,27 @@ def apply_to_file(path: Path, patch: Patch, oplog: Path, ids: IdStore, fact_guar
     _write_atomic(path, serialise(result))
     _append_log(oplog, path, patch, result.rev, stamped)
     return result
+
+
+def apply_to_document(path: Path, before: Document, patch: Patch, oplog: Path, ids: IdStore) -> Document:
+    """Apply a patch to the last good document and persist it."""
+    patch = patch.model_copy(deep=True)
+    replacements: dict[str, str] = {}
+    existing = {s.id for s in before.sections if s.id is not None}
+    for op in patch.ops:
+        if op.after_id in replacements:
+            op.after_id = replacements[op.after_id]
+        if op.section_id in replacements:
+            op.section_id = replacements[op.section_id]
+        if op.op == "insert_after" and op.value is not None and op.value.id is None:
+            new_id = ids.allocate(existing=existing)
+            existing.add(new_id)
+            replacements[op.section_id] = new_id
+            op.section_id = new_id
+            op.value.id = new_id
+    base = before.model_copy(update={"rev": current_rev(oplog)})
+    result = apply_patch(base, patch)
+    ids.save()
+    _write_atomic(path, serialise(result))
+    _append_log(oplog, path, patch, result.rev, base)
+    return result
