@@ -14,7 +14,7 @@ from docla.render.compose import component_for
 from docla.server.events import EventBus
 from docla.server.preview import preview
 from docla.source import parse
-from docla.source.files import apply_to_file, current_rev
+from docla.source.files import UNPARSEABLE_RULES, apply_to_file, current_rev
 from docla.source.ids import IdStore
 from docla.source.patches import TEXT_FIELDS, PatchRejected
 
@@ -39,6 +39,8 @@ class DocumentService:
         self.ids = IdStore(project / ".docla" / "ids.json")
         self.lock = asyncio.Lock()
         self.last_good: dict[str, Document] = {}
+        self.last_bytes: dict[str, bytes] = {}
+        self.last_rev: dict[str, int] = {}
 
     def path(self, name: str) -> Path:
         if not re.fullmatch(r"[A-Za-z0-9][A-Za-z0-9_-]*", name) or name not in document_names(self.project):
@@ -46,14 +48,22 @@ class DocumentService:
         return self.project / f"{name}.md"
 
     def load(self, name: str) -> Document:
-        doc = parse(self.path(name).read_text(encoding="utf-8"))[0]
+        data = self.path(name).read_bytes()
+        doc, findings = parse(data.decode("utf-8"))
+        if any(f.rule_id in UNPARSEABLE_RULES for f in findings) and name in self.last_good:
+            return self.last_good[name]
         doc = doc.model_copy(update={"rev": current_rev(self.oplog)})
-        self.last_good[name] = doc
+        self.record(name, data, doc)
         return doc
+
+    def record(self, name: str, data: bytes, doc: Document) -> None:
+        self.last_good[name] = doc
+        self.last_bytes[name] = data
+        self.last_rev[name] = current_rev(self.oplog)
 
     def _apply(self, name: str, patch: Patch) -> Document:
         result = apply_to_file(self.path(name), patch, self.oplog, self.ids)
-        self.last_good[name] = result
+        self.record(name, self.path(name).read_bytes(), result)
         self.bus.publish("doc.changed", {"doc": name, "rev": result.rev, "by": "human"})
         return result
 
@@ -114,7 +124,12 @@ def get_document(doc: str, request: Request) -> dict[str, Any]:
         }
         for index, s in enumerate(document.sections)
     ]
-    return {"document": document.model_dump(mode="json"), "rev": document.rev, "outline": outline}
+    return {
+        "document": document.model_dump(mode="json"),
+        "sections": document.model_dump(mode="json")["sections"],
+        "rev": document.rev,
+        "outline": outline,
+    }
 
 
 @router.patch("/api/docs/{doc}/sections/{section_id}")
