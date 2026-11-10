@@ -143,3 +143,26 @@ def test_D5_contact_labels_align_with_mixed_page_widths(tmp_path):
     assert label_xs
     assert all(any(left <= x <= right for left, right in spans) for x in label_xs)
     assert any(spans[1][0] <= x <= spans[1][1] for x in label_xs)
+
+
+def test_D6_frozen_judges_pass():
+    import subprocess
+    import sys
+
+    root = Path(__file__).resolve().parents[2]
+    files = [
+        "test_b3_02_dsl.py",
+        "test_b3_04_title_label.py",
+        "test_b3_08_gap_present.py",
+        "test_b3_16_figure_source.py",
+        "test_b3_19_theme_test.py",
+        "test_m4_03_sheets.py",
+    ]
+    result = subprocess.run(
+        [sys.executable, "-m", "pytest", "-q", *[str(root / "tests" / "judge" / f) for f in files]],
+        cwd=root,
+        capture_output=True,
+        text=True,
+        check=False,
+    )
+    assert result.returncode == 0, result.stdout + result.stderr
