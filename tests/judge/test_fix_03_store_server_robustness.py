@@ -60,10 +60,14 @@ def test_D1_atomic_claim_preserves_other_build(deck, monkeypatch):
             original(path, *args, **kwargs)
         return original(path, *args, **kwargs)
 
+    raised = False
     with monkeypatch.context() as context:
         context.setattr(os, "mkdir", competing)
-        with pytest.raises(store.VersionImmutable):
+        try:
             _write(deck)
+        except store.VersionImmutable:
+            raised = True
+    assert raised, "a build that loses the race for vN must raise VersionImmutable"
     assert [p.name for p in root.iterdir()] == ["v1"]
     assert list((root / "v1").iterdir()) == []
 
