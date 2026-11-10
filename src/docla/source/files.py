@@ -6,7 +6,7 @@ from pathlib import Path
 from docla.model import Document, Patch
 from docla.source.ids import IdStore, stamp
 from docla.source.parser import parse
-from docla.source.patches import FactGuard, PatchRejected, apply_patch
+from docla.source.patches import FactGuard, PatchRejected, apply_patch, inverse_ops
 from docla.source.serialiser import serialise
 
 UNPARSEABLE_RULES = ("source.parse-error", "source.appearance-in-source")
@@ -30,7 +30,8 @@ def _write_atomic(path: Path, text: str) -> None:
         raise
 
 
-def _append_log(oplog: Path, path: Path, patch: Patch, rev: int) -> None:
+def _append_log(oplog: Path, path: Path, patch: Patch, rev: int, before: Document) -> None:
+    inverse = inverse_ops(before, patch)
     entry = {
         "rev": rev,
         "author": patch.author,
@@ -38,6 +39,7 @@ def _append_log(oplog: Path, path: Path, patch: Patch, rev: int) -> None:
         "finding_ids": patch.finding_ids,
         "ops": [op.model_dump(mode="json") for op in patch.ops],
         "file": path.name,
+        "inverse": [op.model_dump(mode="json") for op in inverse] if inverse is not None else None,
     }
     oplog.parent.mkdir(parents=True, exist_ok=True)
     with oplog.open("a", encoding="utf-8", newline="\n") as handle:
@@ -60,5 +62,5 @@ def apply_to_file(path: Path, patch: Patch, oplog: Path, ids: IdStore, fact_guar
     result = apply_patch(stamped, patch, fact_guard)
     ids.save()
     _write_atomic(path, serialise(result))
-    _append_log(oplog, path, patch, result.rev)
+    _append_log(oplog, path, patch, result.rev, stamped)
     return result
