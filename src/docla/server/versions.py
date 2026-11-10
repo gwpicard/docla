@@ -34,7 +34,7 @@ def finding_views(findings: list[Finding], rules: list[Rule]) -> list[dict[str, 
 
 
 def _root(request: Request, doc: str) -> Path:
-    source = request.app.state.docs.path(doc)
+    source: Path = request.app.state.docs.path(doc)
     return source.parent / f"{source.stem}.versions"
 
 
