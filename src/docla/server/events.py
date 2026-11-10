@@ -71,6 +71,4 @@ async def _stream(request: Request) -> AsyncIterator[str]:
 
 @router.get("/api/events")
 async def events(request: Request) -> StreamingResponse:
-    return StreamingResponse(
-        _stream(request), media_type="text/event-stream", headers={"Cache-Control": "no-cache"}
-    )
+    return StreamingResponse(_stream(request), media_type="text/event-stream", headers={"Cache-Control": "no-cache"})

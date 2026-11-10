@@ -6,7 +6,8 @@ from pathlib import Path
 import uvicorn
 from fastapi import FastAPI
 
-from docla.server.events import EventBus, router as events_router
+from docla.server.events import EventBus
+from docla.server.events import router as events_router
 from docla.server.security import SecurityMiddleware
 
 TOKEN_HEADER = "X-Docla-Token"
