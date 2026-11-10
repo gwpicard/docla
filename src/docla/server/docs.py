@@ -132,11 +132,12 @@ async def delete_section(doc: str, section_id: str, request: Request) -> dict[st
     return {"rev": await request.app.state.docs.delete(doc, section_id)}
 
 
-async def unknown_document(request: Request, exc: UnknownDocument) -> JSONResponse:
+async def unknown_document(request: Request, exc: Exception) -> JSONResponse:
     return JSONResponse(status_code=404, content={"detail": "Unknown document"})
 
 
-async def patch_rejected(request: Request, exc: PatchRejected) -> JSONResponse:
+async def patch_rejected(request: Request, exc: Exception) -> JSONResponse:
+    assert isinstance(exc, PatchRejected)
     if exc.code == "stale-base-rev":
         doc = request.app.state.docs.load(request.path_params["doc"])
         return JSONResponse(
