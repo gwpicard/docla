@@ -259,6 +259,9 @@ def _build_parser() -> argparse.ArgumentParser:
     subparsers.add_parser("doctor", help="report what is installed and what is missing")
     init = subparsers.add_parser("init", help="initialise a project")
     init.add_argument("directory", type=Path, help="project folder")
+    serve = subparsers.add_parser("serve", help="serve a project locally")
+    serve.add_argument("directory", type=Path, help="project folder")
+    serve.add_argument("--port", type=int, default=8765)
     _add_file_command(subparsers, "build", "render a working file to PDF")
     _add_file_command(subparsers, "check", "render a working file and report what the M1 rules find")
     _add_file_command(subparsers, "write", "prepare and draft a working file")
@@ -317,6 +320,13 @@ def main(argv: list[str] | None = None) -> int:
         return _doctor()
     if args.command == "init":
         return _init(args.directory)
+    if args.command == "serve":
+        if not args.directory.is_dir():
+            print(f"Not a project folder: {args.directory}", file=sys.stderr)
+            return 2
+        from docla.server.app import serve
+
+        return serve(args.directory, args.port)
     if args.command == "ready":
         return _ready(args)
     if args.command == "write":
