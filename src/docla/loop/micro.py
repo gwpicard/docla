@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import asyncio
+import copy
 import hashlib
 from collections.abc import Awaitable, Callable
 from dataclasses import dataclass, field
@@ -50,6 +51,9 @@ class SectionState:
     text_hash: str
     attempt: int
     action: str
+
+    def model_copy(self, *, deep: bool = False) -> SectionState:
+        return copy.deepcopy(self) if deep else copy.copy(self)
 
 
 BestOfN = Callable[..., Awaitable[SectionState | None]]
