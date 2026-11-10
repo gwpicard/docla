@@ -12,6 +12,7 @@ from pydantic import BaseModel
 from docla.model import Document, Patch, PatchOp, Section
 from docla.render.compose import component_for
 from docla.server.events import EventBus
+from docla.server.preview import preview
 from docla.source import parse
 from docla.source.files import apply_to_file, current_rev
 from docla.source.ids import IdStore
@@ -118,7 +119,9 @@ def get_document(doc: str, request: Request) -> dict[str, Any]:
 
 @router.patch("/api/docs/{doc}/sections/{section_id}")
 async def edit_document(doc: str, section_id: str, body: EditBody, request: Request) -> dict[str, int]:
-    return {"rev": await request.app.state.docs.edit(doc, section_id, body.base_rev, body.fields)}
+    rev = await request.app.state.docs.edit(doc, section_id, body.base_rev, body.fields)
+    asyncio.create_task(preview(request.app.state, doc, section_id, rev))
+    return {"rev": rev}
 
 
 @router.post("/api/docs/{doc}/sections")
