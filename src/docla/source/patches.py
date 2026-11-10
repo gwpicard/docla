@@ -190,3 +190,40 @@ def inverse_ops(before: Document, patch: Patch) -> list[PatchOp] | None:
         inverse = undo + inverse
         sections = _apply_op(before, sections, op, None, patch.author)
     return inverse
+
+
+def diff_ops(before: Document, after: Document) -> list[PatchOp]:
+    """Describe section changes and ordering in terms of patch operations."""
+    old = {s.id: s for s in before.sections if s.id is not None}
+    ops: list[PatchOp] = []
+    for section in after.sections:
+        if section.id in old and section.id is not None:
+            prior = old[section.id].model_dump()
+            fields = {k: v for k, v in section.model_dump().items() if v != prior[k]}
+            if fields:
+                ops.append(PatchOp(op="set_fields", section_id=section.id, fields=fields))
+    order = [s.id for s in before.sections]
+    desired: list[str | None] = []
+    for index, section in enumerate(after.sections):
+        key = section.id if section.id is not None else f"__new_{index}"
+        desired.append(key)
+        if section.id is None or section.id not in old:
+            anchor = desired[-2] if len(desired) > 1 else order[0]
+            ops.append(PatchOp(op="insert_after", section_id=key, after_id=anchor, value=section))
+            order.insert(order.index(anchor) + 1, key)
+    for section in before.sections:
+        if section.id not in desired:
+            assert section.id is not None
+            ops.append(PatchOp(op="delete_section", section_id=section.id))
+            order.remove(section.id)
+    for index in range(len(desired)):
+        while order[index] != desired[index]:
+            if index == 0:
+                moving, anchor = order[0], desired[0]
+            else:
+                moving, anchor = desired[index], desired[index - 1]
+            assert moving is not None
+            ops.append(PatchOp(op="move_section", section_id=moving, after_id=anchor))
+            order.remove(moving)
+            order.insert(order.index(anchor) + 1, moving)
+    return ops
