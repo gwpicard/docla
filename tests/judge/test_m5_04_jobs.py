@@ -66,6 +66,9 @@ def _app(path, writer):
     create_app = _interface(server, 'create_app')
     (path / 'deck.md').write_text(serialise(parse(SLIDES)[0]), encoding='utf-8')
     agents = Agents(gather=lambda *a: None, outline=lambda *a: None, writer=writer)
+    import inspect
+
+    assert "agents" in inspect.signature(create_app).parameters, "create_app must accept agents="
     return create_app(path, 'test-token', agents=agents)
 
 
