@@ -138,19 +138,24 @@ def test_D4_add_and_delete_sections(session):
     assert client.delete("/api/docs/deck/sections/zzzzz").status_code == 404
 
 
+def _doc_changed(app):
+    # Later pieces publish other event types (M5.06 section.state); D5 pins only doc.changed.
+    return [event for event in app.state.bus.recent() if event["type"] == "doc.changed"]
+
+
 def test_D5_success_and_refusal_events(session):
     assert session is not None, "docla.server.app.create_app must exist"
     client, app, _, _ = session
-    assert app.state.bus.recent() == []
+    assert _doc_changed(app) == []
     responses = [_edit(client), client.post("/api/docs/deck/sections", json={"after_id": "aaaa1", "intent": "quote"}), client.delete("/api/docs/deck/sections/aaaa2")]
     assert [r.status_code for r in responses] == [200, 200, 200]
     assert [r.json()["rev"] for r in responses] == [1, 2, 3]
     expected = [{"type": "doc.changed", "data": {"doc": "deck", "rev": n, "by": "human"}} for n in (1, 2, 3)]
-    assert app.state.bus.recent() == expected
+    assert _doc_changed(app) == expected
     assert _edit(client, 0).status_code == 409
     assert _edit(client, 3, fields={"owner": "ai"}).status_code == 422
     assert client.delete("/api/docs/deck/sections/zzzzz").status_code == 404
-    assert app.state.bus.recent() == expected
+    assert _doc_changed(app) == expected
 
 
 @pytest.mark.parametrize("operation", ["edit", "add", "delete_second", "delete_first"])
