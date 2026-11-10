@@ -74,8 +74,12 @@ def fingerprint(
     role: str | None,
     region: Box | None,
     page_size: tuple[float, float] | None,
+    key: str | None = None,
 ) -> str:
-    return _sha1(f"{rule_id}|{section_id}|{role}|{_cell(region, page_size)}")
+    value = f"{rule_id}|{section_id}|{role}|{_cell(region, page_size)}"
+    if key is not None:
+        value += f"|{key}"
+    return _sha1(value)
 
 
 def _page_size(ctx: CheckContext, page: int | None) -> tuple[float, float] | None:
@@ -97,8 +101,9 @@ def make_finding(
     region: Box | None = None,
     measured: dict[str, Any] | None = None,
     severity: Severity | None = None,
+    key: str | None = None,
 ) -> Finding:
-    fp = fingerprint(rule.id, section_id, role, region, _page_size(ctx, page))
+    fp = fingerprint(rule.id, section_id, role, region, _page_size(ctx, page), key=key)
     return Finding(
         id=_sha1(f"{rule.id}|{section_id}|{fp}")[:12],
         rule_id=rule.id,
