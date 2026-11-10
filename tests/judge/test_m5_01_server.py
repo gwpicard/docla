@@ -56,6 +56,7 @@ def _check(response, status):
     assert "access-control-allow-origin" not in response.headers
     if status == 403:
         assert isinstance(response.json()["detail"], str)
+    return response.status_code
 
 
 def test_D1_projects_are_sorted_working_files(project):
@@ -68,26 +69,26 @@ def test_D1_projects_are_sorted_working_files(project):
 def test_D2_host_is_checked_before_token(project):
     client = _client(project)
     for host in ("evil.example", "127.0.0.1.evil.example:8765", "0.0.0.0:8765"):
-        _check(client.get("/api/projects", headers={"Host": host, "X-Docla-Token": "t0ken"}), 403)
-    _check(client.get("/api/projects", headers={"Host": "evil.example"}), 403)
-    _check(client.get("/api/projects", headers={"Host": "localhost:8765", "X-Docla-Token": "t0ken"}), 200)
+        assert _check(client.get("/api/projects", headers={"Host": host, "X-Docla-Token": "t0ken"}), 403) == 403
+    assert _check(client.get("/api/projects", headers={"Host": "evil.example"}), 403) == 403
+    assert _check(client.get("/api/projects", headers={"Host": "localhost:8765", "X-Docla-Token": "t0ken"}), 200) == 200
 
 
 def test_D3_origin_must_match_host(project):
     client = _client(project)
     headers = {"Host": "127.0.0.1:8765", "X-Docla-Token": "t0ken"}
     for origin in ("http://localhost:3000", "http://127.0.0.1:9999", "https://127.0.0.1:8765", "null"):
-        _check(client.get("/api/projects", headers={**headers, "Origin": origin}), 403)
-    _check(client.get("/api/projects", headers={**headers, "Origin": "http://127.0.0.1:8765"}), 200)
-    _check(client.get("/api/projects", headers=headers), 200)
+        assert _check(client.get("/api/projects", headers={**headers, "Origin": origin}), 403) == 403
+    assert _check(client.get("/api/projects", headers={**headers, "Origin": "http://127.0.0.1:8765"}), 200) == 200
+    assert _check(client.get("/api/projects", headers=headers), 200) == 200
 
 
 def test_D4_token_and_generated_pages(project):
     client = _client(project)
-    _check(client.get("/api/projects"), 401)
-    _check(client.get("/api/projects", headers={"X-Docla-Token": "wrong"}), 401)
-    _check(client.get("/docs"), 404)
-    _check(client.get("/openapi.json"), 404)
+    assert _check(client.get("/api/projects"), 401) == 401
+    assert _check(client.get("/api/projects", headers={"X-Docla-Token": "wrong"}), 401) == 401
+    assert _check(client.get("/docs"), 404) == 404
+    assert _check(client.get("/openapi.json"), 404) == 404
 
 
 def test_D5_cli_launches_loopback_with_unique_fragment_tokens(project, monkeypatch, capsys):
