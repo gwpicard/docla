@@ -14,7 +14,11 @@ def _texts(section: Section, field: str) -> list[str]:
     if field == "paragraphs":
         return section.paragraphs
     if field == "items":
-        return [text for item in section.items for text in ([item.head] if item.head else []) + [item.body] + item.sub]
+        return [
+            text
+            for item in section.items
+            for text in ([item.head] if item.head is not None else []) + [item.body] + item.sub
+        ]
     raise ValueError(f"unknown text field {field!r}")
 
 

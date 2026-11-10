@@ -23,6 +23,16 @@ def _figure(source: ElementMark, figures: list[ElementMark]) -> ElementMark | No
     ]
     if containing:
         return containing[0]
+    overlapping = [
+        mark
+        for mark in candidates
+        if mark.x < source.x + source.w
+        and source.x < mark.x + mark.w
+        and mark.y < source.y + source.h
+        and source.y < mark.y + mark.h
+    ]
+    if overlapping:
+        return overlapping[0]
     above = [mark for mark in candidates if mark.y <= source.y]
     return max(above, key=lambda mark: mark.y + mark.h, default=None)
 
