@@ -177,17 +177,15 @@ def inverse_ops(before: Document, patch: Patch) -> list[PatchOp] | None:
             undo = [PatchOp(op="delete_section", section_id=op.value.id)]
         elif op.op == "delete_section":
             index = _index(sections, op.section_id)
-            if len(sections) == 1:
-                undo = [PatchOp(op="insert_after", section_id=op.section_id, after_id=None, value=sections[index])]
-                inverse = undo + inverse
-                sections = _apply_op(before, sections, op, None, patch.author)
-                continue
             old = sections[index]
-            neighbour = sections[index - 1] if index else sections[1]
-            undo = [PatchOp(op="insert_after", section_id=op.section_id, after_id=neighbour.id, value=old)]
-            if index == 0:
-                assert neighbour.id is not None
-                undo.append(PatchOp(op="move_section", section_id=neighbour.id, after_id=old.id))
+            if len(sections) == 1:
+                undo = [PatchOp(op="insert_after", section_id=op.section_id, after_id=None, value=old)]
+            else:
+                neighbour = sections[index - 1] if index else sections[1]
+                undo = [PatchOp(op="insert_after", section_id=op.section_id, after_id=neighbour.id, value=old)]
+                if index == 0:
+                    assert neighbour.id is not None
+                    undo.append(PatchOp(op="move_section", section_id=neighbour.id, after_id=old.id))
         else:
             return None
         inverse = undo + inverse
