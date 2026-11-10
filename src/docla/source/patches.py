@@ -135,7 +135,7 @@ def _check_fact(
 
 
 def _insert_after(doc: Document, sections: list[Section], op: PatchOp, fact_guard: FactGuard | None) -> list[Section]:
-    index = _index(sections, op.after_id)
+    index = _index(sections, op.after_id) if op.after_id is not None else -1
     if op.value is None:
         raise PatchRejected("invalid-section", "insert_after needs a value")
     if op.value.id is not None and any(s.id == op.value.id for s in sections):
@@ -178,7 +178,10 @@ def inverse_ops(before: Document, patch: Patch) -> list[PatchOp] | None:
         elif op.op == "delete_section":
             index = _index(sections, op.section_id)
             if len(sections) == 1:
-                return None
+                undo = [PatchOp(op="insert_after", section_id=op.section_id, after_id=None, value=sections[index])]
+                inverse = undo + inverse
+                sections = _apply_op(before, sections, op, None, patch.author)
+                continue
             old = sections[index]
             neighbour = sections[index - 1] if index else sections[1]
             undo = [PatchOp(op="insert_after", section_id=op.section_id, after_id=neighbour.id, value=old)]

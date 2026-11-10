@@ -67,13 +67,16 @@ def _image(path: Path, request: Request) -> Response:
 
 @router.get("/api/docs/{doc}/versions")
 def versions(doc: str, request: Request) -> dict[str, Any]:
-    root = _root(request, doc)
+    project: Path = request.app.state.project
+    if not re.fullmatch(r"[A-Za-z0-9][A-Za-z0-9_-]*", doc) or not (project / f"{doc}.md").is_file():
+        raise HTTPException(status_code=404)
+    root = project / f"{doc}.versions"
     if not root.is_dir():
         return {"versions": []}
     paths = [
         (int(match.group(1)), path)
         for path in root.iterdir()
-        if path.is_dir() and (match := re.fullmatch(r"v(\d+)", path.name))
+        if path.is_dir() and (match := re.fullmatch(r"v(\d+)", path.name)) and (path / "manifest.json").is_file()
     ]
     return {"versions": [_manifest(path) for _, path in sorted(paths)]}
 

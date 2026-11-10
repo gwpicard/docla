@@ -72,13 +72,13 @@ def _render(state: State, doc: Document, section_id: str) -> dict[str, Any]:
     }
 
 
-async def preview(state: State, name: str, section_id: str, rev: int) -> None:
+async def preview(state: State, name: str, section_id: str, rev: int, doc: Document | None = None) -> None:
     locks: dict[str, asyncio.Lock] = state.preview_locks
     async with locks.setdefault(name, asyncio.Lock()):
         data = {"doc": name, "id": section_id, "rev": rev}
         state.bus.publish("section.state", {**data, "state": "working"})
         try:
-            result = await asyncio.to_thread(_render, state, state.docs.load(name), section_id)
+            result = await asyncio.to_thread(_render, state, doc if doc is not None else state.docs.load(name), section_id)
         except (ComposeError, TypstError) as exc:
             state.bus.publish("section.state", {**data, "state": "error", "message": str(exc)})
             return
