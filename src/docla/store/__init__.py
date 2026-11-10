@@ -241,8 +241,13 @@ def write_version(
     numbers = [int(m.group(1)) for p in root.iterdir() if p.is_dir() and (m := re.fullmatch(r"v(\d+)", p.name))]
     number = max(numbers, default=0) + 1
     target = root / f"v{number}"
-    temporary = Path(tempfile.mkdtemp(prefix=".version-", dir=root))
     try:
+        target.mkdir()
+    except FileExistsError as error:
+        raise VersionImmutable(f"Version already exists: {target}") from error
+    temporary = None
+    try:
+        temporary = Path(tempfile.mkdtemp(prefix=".version-", dir=root))
         manifest = _manifest(number, doc_path, doc, pdf, findings, theme, final, look, residual, cost, now)
         shutil.copyfile(pdf, temporary / f"{doc_path.stem}.pdf")
         (temporary / "composition.json").write_text(comp.model_dump_json(indent=2), encoding="utf-8")
@@ -260,11 +265,12 @@ def write_version(
             shutil.copyfile(heal, temporary / "heal.jsonl")
             if (heal.parent / "heal").is_dir():
                 shutil.copytree(heal.parent / "heal", temporary / "heal")
-        if target.exists():
-            raise VersionImmutable(f"Version already exists: {target}")
         os.rename(temporary, target)
+    except BaseException:
+        shutil.rmtree(target)
+        raise
     finally:
-        if temporary.exists():
+        if temporary is not None and temporary.exists():
             shutil.rmtree(temporary)
     return Version(number=number, path=target, manifest=manifest)
 

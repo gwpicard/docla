@@ -135,7 +135,8 @@ def get_document(doc: str, request: Request) -> dict[str, Any]:
 @router.patch("/api/docs/{doc}/sections/{section_id}")
 async def edit_document(doc: str, section_id: str, body: EditBody, request: Request) -> dict[str, int]:
     rev = await request.app.state.docs.edit(doc, section_id, body.base_rev, body.fields)
-    asyncio.create_task(preview(request.app.state, doc, section_id, rev))
+    document = request.app.state.docs.last_good[doc]
+    asyncio.create_task(preview(request.app.state, doc, section_id, rev, document))
     return {"rev": rev}
 
 
