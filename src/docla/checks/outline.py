@@ -38,6 +38,7 @@ class OutlineConforms:
                 section_id=_section_id(ctx, doctype, gap),
                 role=gap.section,
                 measured={"kind": gap.kind, "section": gap.section},
+                key=gap.kind,
             )
             for gap in conformance(ctx.doc, doctype)
         ]
