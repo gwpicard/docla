@@ -26,7 +26,7 @@ def apply_patch(doc: Document, patch: Patch, fact_guard: FactGuard | None = None
         raise PatchRejected("stale-base-rev", f"patch is based on rev {patch.base_rev}, document is at rev {doc.rev}")
     sections = [s.model_copy(deep=True) for s in doc.sections]
     for op in patch.ops:
-        sections = _apply_op(doc, sections, op, fact_guard)
+        sections = _apply_op(doc, sections, op, fact_guard, patch.author)
     return doc.model_copy(update={"sections": sections, "rev": doc.rev + 1}, deep=True)
 
 
@@ -37,7 +37,9 @@ def _index(sections: list[Section], section_id: str | None) -> int:
     raise PatchRejected("unknown-section", f"no section with id {section_id!r}")
 
 
-def _apply_op(doc: Document, sections: list[Section], op: PatchOp, fact_guard: FactGuard | None) -> list[Section]:
+def _apply_op(
+    doc: Document, sections: list[Section], op: PatchOp, fact_guard: FactGuard | None, author: str
+) -> list[Section]:
     if op.op == "insert_after":
         return _insert_after(doc, sections, op, fact_guard)
     index = _index(sections, op.section_id)
@@ -48,7 +50,7 @@ def _apply_op(doc: Document, sections: list[Section], op: PatchOp, fact_guard: F
     if op.op == "move_section":
         return _move(sections, index, op)
     new = _edited_section(old, op)
-    _check_ownership(old, new)
+    _check_ownership(old, new, author)
     _check_identity(old, new)
     _check_fact(doc, sections, index, new, fact_guard)
     _check_appearance(op)
@@ -81,10 +83,10 @@ def _changed(old: Section, new: dict[str, Any] | Section, names: tuple[str, ...]
     return [n for n in names if n in new_data and new_data[n] != old_data[n]]
 
 
-def _check_ownership(old: Section, new: dict[str, Any] | Section) -> None:
+def _check_ownership(old: Section, new: dict[str, Any] | Section, author: str) -> None:
     if old.lock == "all" and _changed(old, new, ("intent", "component")):
         raise PatchRejected("lock-all", f"section {old.id} is locked")
-    if (old.owner == "human" or old.lock in ("text", "all")) and _changed(old, new, TEXT_FIELDS):
+    if author != "human" and (old.owner == "human" or old.lock in ("text", "all")) and _changed(old, new, TEXT_FIELDS):
         raise PatchRejected("owner-locked", f"text of section {old.id} is owned by a human or locked")
 
 
@@ -155,3 +157,36 @@ def _move(sections: list[Section], index: int, op: PatchOp) -> list[Section]:
     rest = sections[:index] + sections[index + 1 :]
     position = _index(rest, op.after_id)
     return rest[: position + 1] + [moved] + rest[position + 1 :]
+
+
+def inverse_ops(before: Document, patch: Patch) -> list[PatchOp] | None:
+    """Build inverse operations in reverse order against each intermediate state."""
+    sections = [s.model_copy(deep=True) for s in before.sections]
+    inverse: list[PatchOp] = []
+    for op in patch.ops:
+        if op.op == "set_fields":
+            old = sections[_index(sections, op.section_id)]
+            undo = [
+                PatchOp(
+                    op="set_fields",
+                    section_id=op.section_id,
+                    fields={key: old.model_dump()[key] for key in (op.fields or {})},
+                )
+            ]
+        elif op.op == "insert_after" and op.value is not None and op.value.id is not None:
+            undo = [PatchOp(op="delete_section", section_id=op.value.id)]
+        elif op.op == "delete_section":
+            index = _index(sections, op.section_id)
+            if len(sections) == 1:
+                return None
+            old = sections[index]
+            neighbour = sections[index - 1] if index else sections[1]
+            undo = [PatchOp(op="insert_after", section_id=op.section_id, after_id=neighbour.id, value=old)]
+            if index == 0:
+                assert neighbour.id is not None
+                undo.append(PatchOp(op="move_section", section_id=neighbour.id, after_id=old.id))
+        else:
+            return None
+        inverse = undo + inverse
+        sections = _apply_op(before, sections, op, None, patch.author)
+    return inverse
