@@ -78,7 +78,8 @@ async def preview(state: State, name: str, section_id: str, rev: int, doc: Docum
         data = {"doc": name, "id": section_id, "rev": rev}
         state.bus.publish("section.state", {**data, "state": "working"})
         try:
-            result = await asyncio.to_thread(_render, state, doc if doc is not None else state.docs.load(name), section_id)
+            document = doc if doc is not None else state.docs.load(name)
+            result = await asyncio.to_thread(_render, state, document, section_id)
         except (ComposeError, TypstError) as exc:
             state.bus.publish("section.state", {**data, "state": "error", "message": str(exc)})
             return
