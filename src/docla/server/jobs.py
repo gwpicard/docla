@@ -4,7 +4,7 @@ import asyncio
 import json
 from collections.abc import Awaitable, Callable
 from pathlib import Path
-from typing import Any, Literal
+from typing import Any, Literal, cast
 from uuid import uuid4
 
 from fastapi import APIRouter, HTTPException, Request
@@ -59,7 +59,11 @@ class JobRunner:
 
         async def run() -> None:
             try:
-                job.result = await asyncio.to_thread(asyncio.run, work(progress))
+
+                async def execute() -> dict[str, Any]:
+                    return await work(progress)
+
+                job.result = await asyncio.to_thread(asyncio.run, execute())
                 job.status = "finished"
             except Exception as error:
                 job.error = str(error)
@@ -86,7 +90,7 @@ def _agents(app: Any) -> write.Agents:
             scheduler=Scheduler(config.loop.max_parallel_sections),
         )
         app.state.agents = write.claude_agents(claude, app.state.theme, config=config)
-    return app.state.agents
+    return cast(write.Agents, app.state.agents)
 
 
 def _facts(project: Path, doc: str) -> list[Fact]:
@@ -202,7 +206,7 @@ async def redraft(doc: str, section_id: str, body: RedraftBody, request: Request
                 format=snapshot.format,
                 section_id=section_id,
                 message=body.ask,
-                remedy=Remedy(class_="redraft", hint=body.ask),
+                remedy=Remedy.model_validate({"class": "redraft", "hint": body.ask}),
                 fingerprint=f"human.ask:{section_id}",
             )
         )
