@@ -21,8 +21,16 @@ def run_git(repo: Path, *args: str) -> str:
         GIT_MERGE_AUTOEDIT="no",
     )
     command = [
-        "git", "-c", "user.name=docla", "-c", "user.email=docla@localhost",
-        "-c", "commit.gpgsign=false", "-c", f"core.hooksPath={repo / '.git' / 'no-hooks'}", *args,
+        "git",
+        "-c",
+        "user.name=docla",
+        "-c",
+        "user.email=docla@localhost",
+        "-c",
+        "commit.gpgsign=false",
+        "-c",
+        f"core.hooksPath={repo / '.git' / 'no-hooks'}",
+        *args,
     ]
     try:
         return subprocess.run(command, cwd=repo, env=env, text=True, capture_output=True, check=True).stdout
