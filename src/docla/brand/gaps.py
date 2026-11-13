@@ -114,7 +114,7 @@ def gap_questions(gaps: list[Gap], identities: list[Identity]) -> list[BrandQues
         for gap in gaps
     ]
     if identities:
-        source = QuestionSource(file=identities[0].file)
+        missing_source = QuestionSource(file=identities[0].file)
         for field in ("version", "date"):
             if not any(getattr(identity, field) for identity in identities):
                 questions.append(
@@ -123,7 +123,7 @@ def gap_questions(gaps: list[Gap], identities: list[Identity]) -> list[BrandQues
                         kind="identity",
                         blocking=False,
                         text=f"What is the guidelines' {field}?",
-                        source=source,
+                        source=missing_source,
                     )
                 )
     identity = next((i for i in identities if i.version or i.date), None)
