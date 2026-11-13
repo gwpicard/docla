@@ -2,7 +2,7 @@
 
 import re
 from collections.abc import Mapping
-from decimal import ROUND_HALF_UP, Decimal
+from decimal import ROUND_HALF_UP, Decimal, localcontext
 from typing import Any, Literal
 
 from pydantic import BaseModel
@@ -45,7 +45,10 @@ class ChartSpec(BaseModel):
 
 
 def format_value(value: float, decimals: int, unit: str | None) -> str:
-    rounded = Decimal(str(value)).quantize(Decimal(1).scaleb(-decimals), rounding=ROUND_HALF_UP)
+    exact = Decimal(str(value))
+    with localcontext() as context:
+        context.prec = max(28, len(exact.as_tuple().digits) + exact.adjusted() + decimals + 2)
+        rounded = exact.quantize(Decimal(1).scaleb(-decimals), rounding=ROUND_HALF_UP)
     number = f"{rounded:,.{decimals}f}"
     symbols = {"GBP": "£", "USD": "$", "EUR": "€"}
     if unit in symbols:
