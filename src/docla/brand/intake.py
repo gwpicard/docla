@@ -94,7 +94,7 @@ def _office(path: Path, kind: FileType) -> tuple[int | None, Format | None, str 
                 return int(pages) if pages is not None else None, fmt, None
             except KeyError:
                 return None, fmt, None
-    except (OSError, ValueError, zipfile.BadZipFile, ElementTree.ParseError):
+    except (OSError, ValueError, RuntimeError, NotImplementedError, zipfile.BadZipFile, ElementTree.ParseError):
         return None, fmt, "Could not read this file as an Office archive"
 
 
