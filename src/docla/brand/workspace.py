@@ -4,6 +4,8 @@ import re
 import shutil
 from pathlib import Path
 
+import yaml  # type: ignore[import-untyped]
+
 from docla.brand.git import init_repo, run_git
 
 BRANDS_DIR = ".brand"
@@ -37,7 +39,8 @@ def _populate(path: Path, slug: str) -> None:
         directory = path / folder
         directory.mkdir(parents=True)
         (directory / ".gitkeep").touch()
-    (path / "theme/theme.yaml").write_text(f"name: {slug}\nversion: 0.1.0\nformats: [slides, doc]\n")
+    info = {"name": slug, "version": "0.1.0", "formats": ["slides", "doc"]}
+    (path / "theme/theme.yaml").write_text(yaml.safe_dump(info, sort_keys=False, default_flow_style=None))
     (path / ".gitignore").write_text("reports/*/.docla/\n")
 
 
