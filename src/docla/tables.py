@@ -175,11 +175,13 @@ def table_facts(path: Path, source_key: str, *, typed: bool = False) -> list[Fac
         text = f"{prefix}: {cell.value.text}" if prefix else cell.value.text
         fact = Fact(text=text, source_key=source_key, locator=cell.locator)
         if typed:
-            fact = fact.model_copy(update={
-                "kind": cell.value.kind,
-                "value": cell.value.number,
-                "unit": "%" if cell.value.kind == "percent" else cell.value.currency,
-            })
+            fact = fact.model_copy(
+                update={
+                    "kind": cell.value.kind,
+                    "value": cell.value.number,
+                    "unit": "%" if cell.value.kind == "percent" else cell.value.currency,
+                }
+            )
         facts.append(fact)
     return facts
 
@@ -190,8 +192,10 @@ def typed_table_facts(facts: list[Fact], project: Path) -> list[Fact]:
     if not source_dir.exists():
         return facts
     sources = sorted(
-        path for path in source_dir.iterdir()
-        if path.is_file() and not path.name.startswith(".")
+        path
+        for path in source_dir.iterdir()
+        if path.is_file()
+        and not path.name.startswith(".")
         and path.suffix.lower() in {".pdf", ".txt", ".md", ".vtt", ".xlsx", ".csv"}
     )
     typed = {
@@ -202,6 +206,7 @@ def typed_table_facts(facts: list[Fact], project: Path) -> list[Fact]:
     }
     return [
         fact.model_copy(update={"kind": match.kind, "value": match.value, "unit": match.unit})
-        if (match := typed.get((fact.source_key, fact.locator, fact.text))) else fact
+        if (match := typed.get((fact.source_key, fact.locator, fact.text)))
+        else fact
         for fact in facts
     ]
