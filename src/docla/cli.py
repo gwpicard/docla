@@ -317,7 +317,12 @@ def _run_file_command(args: argparse.Namespace) -> int:
 
 
 def main(argv: list[str] | None = None) -> int:
-    args = _build_parser().parse_args(argv)
+    try:
+        args = _build_parser().parse_args(argv)
+    except SystemExit as error:
+        if error.code == 2 and (argv if argv is not None else sys.argv[1:])[:2] == ["brand", "init"]:
+            return 2
+        raise
     if args.command == "brand":
         return run_brand(args)
     if args.command == "doctor":
