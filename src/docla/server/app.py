@@ -16,6 +16,7 @@ from docla.server.events import router as events_router
 from docla.server.jobs import JobRunner
 from docla.server.jobs import router as jobs_router
 from docla.server.security import SecurityMiddleware
+from docla.server.themes import brands_root
 from docla.server.versions import router as versions_router
 from docla.server.watch import FileWatcher
 from docla.source.patches import PatchRejected
@@ -25,7 +26,9 @@ from docla.write import Agents
 TOKEN_HEADER = "X-Docla-Token"
 
 
-def create_app(project: Path, token: str, *, agents: Agents | None = None) -> FastAPI:
+def create_app(
+    project: Path, token: str, *, agents: Agents | None = None, brands: Path | None = None
+) -> FastAPI:
     @asynccontextmanager
     async def lifespan(app: FastAPI) -> AsyncIterator[None]:
         task = asyncio.create_task(app.state.watcher.run())
@@ -42,6 +45,8 @@ def create_app(project: Path, token: str, *, agents: Agents | None = None) -> Fa
     app.state.bus = EventBus()
     app.state.jobs = JobRunner(app.state.bus)
     app.state.theme = neutral_theme()
+    app.state.brands = (brands or brands_root(project)).resolve()
+    app.state.agents_by_theme = {}
     app.state.agents = agents
     app.state.docs = DocumentService(app.state.project, app.state.bus)
     app.state.watcher = FileWatcher(app.state.docs)
