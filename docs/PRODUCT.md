@@ -102,17 +102,29 @@ Either way the type arrives as a brand change with a record (section 3).
 1. **Request.** The person picks the brand, drops in data (spreadsheets, PDFs, notes) and writes what they need, for
    example "a sales report for last quarter for the board, focusing on the initiatives and profitability". A document
    type may be chosen or left for docla to infer.
-2. **Intake interview.** docla first shows a read-back of what it already understood from the request, the data and the
-   type. It then asks in rounds of two to four numbered questions, each with a recommended answer drawn from the data
-   and worded so that "yes" accepts it. Facts are docla's job: it never asks what the data or the type can answer, and
-   shows each inference with its evidence for confirmation instead. Judgements are the person's: who reads it and what
-   they must decide, the key message, the ask, which findings are the story and why they happened, what must not be
-   said, and tone. Every question can be skipped. There are at most three rounds; anything still open becomes a flagged
-   assumption in the outline. The result is a **brief** that records, for each field, whether it was confirmed,
-   inferred, defaulted or skipped.
-3. **Outline.** docla proposes an outline from the brief with its uncertainties resolved. The person comments on it;
-   docla answers questions and proposes changes, which the person accepts or rejects. Drafting starts when the person
-   says so.
+2. **Intake questions.** docla first shows a read-back of what it already understood from the request, the data and
+   the type, each item with its source, for the person to confirm or correct. It then asks in rounds of two to four
+   numbered questions, each with a recommended answer drawn from the data and worded so that "yes" accepts it. Every
+   question can be skipped, and there are at most three rounds.
+
+   The questions are only about **building the document**, never about strategy or narrative:
+   - **scope**: the period, the entities or regions, which files are the source of truth;
+   - **coverage**: which topics to include and in what order, and anything to leave out;
+   - **definitions**: which measure to use where the data allows several (for example which margin), and which
+     comparison (budget, previous period);
+   - **conflicts**: where two files or the data and the type disagree, which one wins;
+   - **form**: deck or document, about how long, appendix or not;
+   - **required elements**: what the brand or the document type requires and the files do not give (author, date).
+
+   docla does not ask the person what the reader should take away, what the story is, what the key message or the ask
+   is, or what tone to use. It proposes those itself, from the data and the type, in the outline, where the person
+   steers them by commenting. Facts are docla's job: it never asks what the data or the type can answer. The result is
+   a **brief** that records, for each field, whether it was confirmed, inferred, defaulted or skipped.
+3. **Outline.** docla proposes an outline from the brief. The person comments, on the whole outline or on one part,
+   in plain words ("lead with the pricing reset", "drop the regional slide", "this part is too long"), and docla
+   regenerates the outline from the comments, the way a conversation with Claude updates its answer. There is nothing
+   to accept or reject piece by piece, and nothing to drag or edit: what the person does not comment on stays as it
+   is. Each regeneration is kept, so the person can go back. Drafting starts when the person says so.
 4. **Generation.** docla drafts, renders, checks against the brand's rules and fixes, then shows the result.
 5. **Working on the rendered report: the core of the product.** The browser shows the report exactly as the output
    will be (the rendered PDF pages, not an approximation). The person:
@@ -122,8 +134,8 @@ Either way the type arrives as a brand change with a record (section 3).
 6. **Apply.** When the person applies their changes, docla:
    1. keeps every direct edit as the person's own; regeneration never rewrites it;
    2. reads each comment as a question, a change or a note on wording;
-   3. asks its clarifying questions in one round, in the intake format ("Add a chart for the margin drop?", "Cut slides
-      7 and 8?");
+   3. asks clarifying questions only when a comment is ambiguous, in one round in the intake format ("Add a chart for
+      the margin drop?", "Cut slides 7 and 8?");
    4. regenerates, checks and fixes, and shows the new version with what changed.
 7. **Export.** The output is a PDF. Every export is an immutable version.
 

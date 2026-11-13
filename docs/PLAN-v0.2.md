@@ -102,10 +102,10 @@ and the correction loop (B.12, B.23) as the core of setup.
 |---|---|---|---|
 | D.01 | Brief model: audience and decision, key message, ask, scope, findings, metrics, comparisons, exclusions, tone, length, required elements, and per-field provenance (confirmed, inferred, defaulted, skipped) | `model/` | none |
 | D.02 | Data profiler: inferred brief fields with evidence from facts and the doctype | A.02, D.01 | D.01, A.01 |
-| D.03 | Interview engine: read-back, rounds of 2 to 4 questions from the frontier, recommended answers, skip, three-round ceiling; Claude role `interviewer`, cassette-tested | `agents/` | D.02 |
+| D.03 | Intake engine: read-back with sources, rounds of 2 to 4 questions from the frontier with recommended answers, skip, three-round ceiling; questions only about building the document (scope, coverage, definitions, conflicts, form, required elements), never strategy or narrative (`PRODUCT.md` section 5); Claude role `interviewer`, cassette-tested | `agents/` | D.02 |
 | D.04 | Intake routes: start, answer a round, get the brief; state stored in the report | `server/` | D.03 |
 | D.05 | Planner from the brief: outline with every section tied to brief fields and facts | `agents/planner.py` | D.01 |
-| D.06 | Outline feedback: a comment on the outline gives an answer or a proposed change to accept or reject | D.05 | D.05 |
+| D.06 | Outline comments: comments on the whole outline or on one part regenerate the outline; no per-change accept or reject; each regeneration kept for going back | D.05 | D.05 |
 | D.07 | Draft over HTTP: the server runs what `docla write --approve` does, with progress events | `write.py`, `server/jobs.py` | D.05 |
 | D.08 | Report creation route: new report in a brand, upload data files, request text | `server/` | B.01 |
 
@@ -123,7 +123,7 @@ Engine pieces (E.02 to E.06) are Python; the rest are web. The web pieces replac
 | E.06 | Developer mode data: findings and repair history routes stay; flagged as developer views | `server/` | none |
 | E.07 | App shell: brands, reports, new report (upload and request) | E.01 | E.01, D.08 |
 | E.08 | Intake screen: read-back, question rounds, brief | E.07 | E.07, D.04 |
-| E.09 | Outline screen with comments and proposals | E.08 | E.08, D.06 |
+| E.09 | Outline screen: comments on the whole outline or a part, regenerate, earlier outlines | E.08 | E.08, D.06 |
 | E.10 | Report view: rendered pages, slide list, select an element (from field marks) | E.07 | E.07, E.02 |
 | E.11 | Edit in place: an editable overlay on the selected element, debounced save, fresh page within about 1 to 2 s | E.10 | E.10 |
 | E.12 | Comments on an element, a slide or the report | E.10 | E.11, E.03 |
