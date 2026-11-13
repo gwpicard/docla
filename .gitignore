@@ -10,3 +10,6 @@ node_modules/
 
 # pytest temporary folders a builder may create inside the work tree
 pytest-of-*/
+
+# Brand workspaces: real brand material, local only (docs/PRODUCT.md section 3)
+.brand/

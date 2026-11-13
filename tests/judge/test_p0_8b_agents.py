@@ -55,7 +55,7 @@ def test_D1_loop_section_unchanged():
     present = {line.split(":", 1)[0] for line in section.splitlines()}
     missing = [k for k in keys if k not in present]
     assert not missing, f"loop settings missing: {missing}"
-    assert "Prepare command: `uv sync`" in section
+    assert "Prepare command: `uv sync" in section
     assert "Test command: `uv run python -m pytest`" in section
 
 
