@@ -1,4 +1,4 @@
-"""Intake brief models, storage and schema export."""
+"""The intake brief and its storage beside a working file."""
 
 import argparse
 import datetime
@@ -14,9 +14,21 @@ from docla.model.source import Format
 
 FieldStatus = Literal["confirmed", "inferred", "defaulted", "skipped"]
 BriefField = Literal[
-    "doctype", "audience", "key_message", "ask", "scope", "topics", "metrics",
-    "comparisons", "findings", "sensitivities", "exclusions", "tone", "length",
-    "required_elements", "open_risks",
+    "doctype",
+    "audience",
+    "key_message",
+    "ask",
+    "scope",
+    "topics",
+    "metrics",
+    "comparisons",
+    "findings",
+    "sensitivities",
+    "exclusions",
+    "tone",
+    "length",
+    "required_elements",
+    "open_risks",
 ]
 BRIEF_FIELDS: tuple[str, ...] = get_args(BriefField)
 BRIEF_SUFFIX = ".brief.json"
@@ -33,7 +45,7 @@ class FieldProvenance(BriefModel):
     person: str | None = None
 
     @model_validator(mode="after")
-    def check_evidence(self) -> "FieldProvenance":
+    def require_inference_evidence(self) -> "FieldProvenance":
         if self.status == "inferred" and not self.evidence:
             raise ValueError("Inferred fields require evidence")
         return self
@@ -133,15 +145,15 @@ class Brief(BriefModel):
     def status(self, field: str) -> FieldStatus | None:
         if field not in BRIEF_FIELDS:
             raise ValueError(f"Unknown brief field: {field}")
-        provenance = self.provenance.get(cast(BriefField, field))
-        return provenance.status if provenance else None
+        entry = self.provenance.get(cast(BriefField, field))
+        return entry.status if entry is not None else None
 
     def length_unit(self) -> Literal["slides", "pages"]:
         return "slides" if self.format == "slides" else "pages"
 
 
 class BriefError(Exception):
-    """A stored brief is invalid."""
+    """An invalid stored brief."""
 
 
 def brief_path(working_file: Path) -> Path:
@@ -162,15 +174,15 @@ def load_brief(working_file: Path) -> Brief | None:
 
 def save_brief(working_file: Path, brief: Brief) -> Path:
     path = brief_path(working_file)
-    temp_path: Path | None = None
+    temporary: Path | None = None
     try:
-        with tempfile.NamedTemporaryFile(dir=path.parent, delete=False) as temp:
-            temp_path = Path(temp.name)
-            temp.write((brief.model_dump_json(indent=2) + "\n").encode("utf-8"))
-        os.replace(temp_path, path)
+        with tempfile.NamedTemporaryFile(dir=path.parent, delete=False) as stream:
+            temporary = Path(stream.name)
+            stream.write((brief.model_dump_json(indent=2) + "\n").encode("utf-8"))
+        os.replace(temporary, path)
     finally:
-        if temp_path is not None:
-            temp_path.unlink(missing_ok=True)
+        if temporary is not None:
+            temporary.unlink(missing_ok=True)
     return path
 
 

@@ -2242,6 +2242,7 @@ my-project/
   deck.md                      # working file
   deck.pdf                     # latest build, copied beside the working file
   deck.brief.json              # the brief from the intake interview (D.01)
+  deck.brief.json              # the brief from the intake interview (D.01)
   deck.versions/
     v1/ ... vN/
       deck.pdf
