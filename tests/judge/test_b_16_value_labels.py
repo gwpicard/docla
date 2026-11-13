@@ -103,6 +103,15 @@ def _labels():
     return labels
 
 
+
+def _refused(call):
+    """Return the ThemeError call() raises; an assertion failure when it raises none."""
+    try:
+        call()
+    except ThemeError as error:
+        return error
+    raise AssertionError("expected ThemeError, none was raised")
+
 def test_D1_token_labels_and_raw_paths(tmp_path):
     api = _labels()
     root, _ = _fixture(tmp_path)
@@ -154,10 +163,9 @@ def test_D2_invalid_token_provenance_is_refused(tmp_path, case, named):
         (root / "provenance.yaml").unlink()
     else:
         _write(root / "provenance.yaml", data)
-    with pytest.raises(ThemeError) as caught:
-        load_theme(root)
+    caught = _refused(lambda: load_theme(root))
     if named:
-        assert named in str(caught.value)
+        assert named in str(caught)
 
 
 @pytest.mark.parametrize(
@@ -200,9 +208,8 @@ def test_D3_rule_label_policy(tmp_path, source, label, strength, status, valid):
         assert hasattr(rules[0].provenance, "label"), "rule provenance must expose label"
         assert (rules[0].provenance.label, rules[0].strength, rules[0].status) == ("measured", strength, status)
     else:
-        with pytest.raises(ThemeError) as caught:
-            load_theme_rules(theme)
-        assert str(caught.value).startswith(relative)
+        caught = _refused(lambda: load_theme_rules(theme))
+        assert str(caught).startswith(relative)
 
 
 def test_D4_rubric_item_requires_provenance(tmp_path):
@@ -210,10 +217,9 @@ def test_D4_rubric_item_requires_provenance(tmp_path):
     item_id = next(iter(data["rubric"]))
     del data["rubric"][item_id]
     _write(root / "provenance.yaml", data)
-    with pytest.raises(ThemeError) as caught:
-        load_rubric(load_theme(root))
-    assert str(caught.value).startswith("rubric/visual.yaml:")
-    assert item_id in str(caught.value)
+    caught = _refused(lambda: load_rubric(load_theme(root)))
+    assert str(caught).startswith("rubric/visual.yaml:")
+    assert item_id in str(caught)
 
 
 def test_D5_unlabelled_themes_and_rules(tmp_path):
@@ -227,9 +233,8 @@ def test_D5_unlabelled_themes_and_rules(tmp_path):
     theme = load_theme(root)
     assert len(load_theme_rules(theme)) == 1
     _write(root / relative, _rule({"file": "materials/examples/a.pdf", "role": "examples"}, label="answered"))
-    with pytest.raises(ThemeError) as caught:
-        load_theme_rules(theme)
-    assert str(caught.value).startswith(relative)
+    caught = _refused(lambda: load_theme_rules(theme))
+    assert str(caught).startswith(relative)
 
 
 def test_D6_rule_schema_and_export(tmp_path):
