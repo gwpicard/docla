@@ -57,7 +57,7 @@ class Manifest(BaseModel):
 
 
 def material_files(brand: Path) -> list[Path]:
-    paths = []
+    paths: list[Path] = []
     for root, dirs, files in os.walk(brand / "materials"):
         dirs[:] = [name for name in dirs if not name.startswith(".")]
         paths.extend(Path(root) / name for name in files if not name.startswith("."))
