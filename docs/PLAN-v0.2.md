@@ -83,7 +83,7 @@ and the correction loop (B.12, B.23) as the core of setup.
 | B.19 | Vector measurement: rules, strokes and fills from PDF vector data; the unit grid per format, width and height kept separate | B.04, `facts/pdf.py` | B.04 |
 | B.20 | Examples to roles: the person maps example slides and pages to component roles; each mapping cited | B.04, B.05 | B.05 |
 | B.21 | Departures register: values that depart from the brand's sources, with reason; recorded only on the person's approval | B.02 | B.02 |
-| B.22 | Signature graphic (waiting on the owner's answer): traced from the brand's examples into data, drawn by a generic generator, validated against the traced set | B.19, `render/library/` | B.19 |
+| B.22 | Signature graphic (one per brand in this version): traced from the brand's examples into data, drawn by a generic generator, validated against the traced set | B.19, `render/library/` | B.19 |
 | B.23 | Correction data: each difference the person confirms becomes a brand change with before and after renders; routes for the side-by-side and the differences list | B.12, B.02 | B.12 |
 
 ### C. Document types (5)
