@@ -1,4 +1,5 @@
 # Intent: Give facts stable identities and resolve report numbers to their supporting facts.
+import inspect
 import asyncio
 import hashlib
 import importlib
@@ -59,7 +60,8 @@ def workbook(tmp_path):
 def table_facts(tmp_path):
     need(tables, "table_facts")
     need(gatherer, "with_fact_ids")
-    return gatherer.with_fact_ids(tables.table_facts(workbook(tmp_path), "S1"))
+    assert "typed" in inspect.signature(tables.table_facts).parameters, "docla.tables.table_facts must accept typed="
+    return gatherer.with_fact_ids(tables.table_facts(workbook(tmp_path), "S1", typed=True))
 
 
 def section(body, note=None):
@@ -99,7 +101,8 @@ def test_D1_fact_defaults_round_trip_and_gather(tmp_path):
 
 def test_D2_table_cells_become_typed_facts(tmp_path):
     need(tables, "table_facts")
-    facts = tables.table_facts(workbook(tmp_path), "S1")
+    assert "typed" in inspect.signature(tables.table_facts).parameters, "docla.tables.table_facts must accept typed="
+    facts = tables.table_facts(workbook(tmp_path), "S1", typed=True)
     assert all(hasattr(f, "kind") and hasattr(f, "id") for f in facts), "typed Fact fields must exist"
     assert [(f.locator, f.kind, f.value, f.unit, f.id) for f in facts] == [
         ("Sales!B2", "currency", Decimal("1234500"), "GBP", None),
