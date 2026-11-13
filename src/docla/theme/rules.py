@@ -8,6 +8,7 @@ from docla.checks.catalogue import all_rules
 from docla.checks.engine import CHECKS
 from docla.model import Rule
 from docla.theme import Theme, ThemeError
+from docla.theme.labels import check_rule_label
 
 
 def _check_kind(check: dict[str, Any]) -> None:
@@ -24,10 +25,11 @@ def _check_kind(check: dict[str, Any]) -> None:
             _check_kind(sub)
 
 
-def _read_rule(path: Path, root: Path, origin: str, seen: set[str]) -> Rule:
+def _read_rule(path: Path, root: Path, origin: str, seen: set[str], *, labelled: bool) -> Rule:
     try:
         data = yaml.safe_load(path.read_text(encoding="utf-8"))
         rule = Rule.model_validate(data)
+        check_rule_label(rule, labelled=labelled)
         provenance = rule.provenance
         if not any((provenance.source, provenance.created, provenance.by)):
             raise ValueError("provenance must identify a source, date or author")
@@ -47,7 +49,7 @@ def load_theme_rules(theme: Theme) -> list[Rule]:
     rules: list[Rule] = []
     for folder, origin in (("ingested", "ingested"), ("authored", "manual"), ("learned", "feedback")):
         for path in sorted((theme.root / "rules" / folder).glob("*.yaml")):
-            rule = _read_rule(path, theme.root, origin, seen)
+            rule = _read_rule(path, theme.root, origin, seen, labelled=theme.info.labelled)
             seen.add(rule.id)
             rules.append(rule)
     return rules

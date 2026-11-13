@@ -67,10 +67,23 @@ def _facts(source: Extracted, response: dict[str, Any], offset: int) -> Iterator
                 yield Fact(text=text, source_key=source.key, locator=_locator(source, citation, offset))
 
 
+def _append_unique(facts: list[Fact], seen: set[tuple[str, str, str | None]], incoming: Iterator[Fact]) -> None:
+    for fact in incoming:
+        key = (fact.text, fact.source_key, fact.locator)
+        if key not in seen:
+            seen.add(key)
+            facts.append(fact)
+
+
 async def gather(claude: Claude, extracted: list[Extracted]) -> list[Fact]:
     facts: list[Fact] = []
     seen: set[tuple[str, str, str | None]] = set()
     for source in extracted:
+        if source.kind == "table":
+            from docla.tables import table_facts
+
+            _append_unique(facts, seen, iter(table_facts(source.source, source.key)))
+            continue
         if not source.text:
             continue
         for offset, data in _chunks(source):
@@ -88,9 +101,5 @@ async def gather(claude: Claude, extracted: list[Extracted]) -> list[Fact]:
                 },
             ]
             response = await claude.cite("gatherer", system=system_blocks("gatherer"), content=content)
-            for fact in _facts(source, response, offset):
-                key = (fact.text, fact.source_key, fact.locator)
-                if key not in seen:
-                    seen.add(key)
-                    facts.append(fact)
+            _append_unique(facts, seen, _facts(source, response, offset))
     return facts
