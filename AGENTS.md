@@ -38,7 +38,7 @@ Commands:
 ## The loop
 This project uses AI Loop Kit. Pieces are GitHub issues with one `state:` label.
 Only the gate (gate.py) changes a state label. The person merges every pull request into main.
-Prepare command: `uv sync && (test ! -f web/package-lock.json || npm ci --prefix web)`
+Prepare command: `uv sync && (test ! -f web/package.json || (test -f web/package-lock.json && npm ci --prefix web) || npm install --prefix web)`
 Test command: `uv run python -m pytest`
 Agent: codex
 Agent model: gpt-6.1-terra
