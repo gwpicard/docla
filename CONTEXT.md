@@ -27,3 +27,19 @@ This file holds the project vocabulary: each thing has one word, used identicall
 | **Learning** | A durable change to the theme produced from feedback or from repair history. |
 | **Probation** | The period a new learning is advisory before it can block. |
 | **Version** | An immutable build: outputs, build record, manifest, screenshots. |
+
+## Interface words
+
+The terms above are the words of the code and the docs. The interface follows the `docla-vision` prototype
+(`docs/PRODUCT.md` section 8), which uses these words for the person:
+
+- **Report** (interface) is a **Document** (code). Its format is shown as **Deck** (`slides`) or **Document** (`doc`).
+- **Part** (on the outline) is a **Section**. After drafting it is a **slide** or a **page**.
+- **Section** (on the outline) is a group of sections that share a heading, not a code **Section**.
+- **Brand** is a **Theme**. **Document type** is a **Doctype**.
+- **Needs you** lists what only the person can settle; a **Finding** never reaches the person under that name.
+- **Comment** is **Feedback**. **History** lists named moments built from versions and patches.
+- **Brief** is the result of the intake interview: each field with whether it was confirmed, inferred, defaulted or
+  skipped.
+- Code words that the interface never shows: lock, proposal, regenerate, rebuild, stale, intent, chooser, lint, rule id,
+  check code, version number.
