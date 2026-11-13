@@ -11,6 +11,7 @@ SCHEMA_MODELS: list[type[BaseModel]] = [Document, Finding, Patch, Rule]
 
 def export_schemas(directory: Path) -> list[Path]:
     """Write one JSON Schema file per exported model and return the sorted paths."""
+    directory.mkdir(parents=True, exist_ok=True)
     paths: list[Path] = []
     for model in SCHEMA_MODELS:
         path = directory / f"{model.__name__}.schema.json"
