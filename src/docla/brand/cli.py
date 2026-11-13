@@ -6,8 +6,10 @@ from pathlib import Path
 from typing import Any
 
 from docla.brand.changes import Evidence, begin_change, change_log, record_change
+from docla.brand.fonts import check_fonts, font_paths, install_fonts, write_report
 from docla.brand.git import GitError
 from docla.brand.intake import material_files, take_in
+from docla.brand.questions import add_questions, open_questions
 from docla.brand.workspace import MATERIAL_CLASSES, BrandError, brand_path, default_root, init_brand
 
 
@@ -23,6 +25,33 @@ def add_brand_commands(subparsers: Any) -> None:
     intake = commands.add_parser("intake", help="record brand materials")
     intake.add_argument("slug")
     intake.add_argument("--root", type=Path, default=default_root())
+    fonts = commands.add_parser("fonts", help="check brand fonts")
+    fonts.add_argument("slug")
+    fonts.add_argument("--root", type=Path, default=default_root())
+
+
+def _fonts(brand: Path) -> int:
+    if not font_paths(brand):
+        print("no font files")
+        return 2
+    begin_change(brand, "fonts")
+    report = check_fonts(brand)
+    install_fonts(brand, report)
+    write_report(brand, report)
+    add_questions(brand, report.questions)
+    record_change(
+        brand,
+        what="Check the brand's fonts",
+        why="Fonts are checked before anything is learnt",
+        evidence=[Evidence(file=f"materials/fonts/{f.file}", note=f.status) for f in report.files],
+        before=[],
+        after=[],
+        formats=["slides", "doc"],
+    )
+    for font in report.files:
+        print(f"{font.file}  {font.family} {font.weight}  {font.embedding}  {font.status}")
+    print(f"{len(open_questions(brand))} open questions")
+    return 0
 
 
 def _intake(brand: Path) -> int:
@@ -52,6 +81,8 @@ def run_brand(args: argparse.Namespace) -> int:
             print(init_brand(args.slug, args.root))
         elif args.brand_command == "intake":
             return _intake(brand_path(args.slug, args.root))
+        elif args.brand_command == "fonts":
+            return _fonts(brand_path(args.slug, args.root))
         else:
             records = change_log(brand_path(args.slug, args.root))
             for record in records:
