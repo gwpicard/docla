@@ -55,9 +55,12 @@ def _client(app):
 
 
 def _patch(client, doc, section, fields):
-    response = client.patch(f"/api/docs/{doc}/sections/{section}", json={"base_rev": 0, "fields": fields})
+    current = client.get(f"/api/docs/{doc}")
+    assert current.status_code == 200, current.text
+    base = current.json()["rev"]
+    response = client.patch(f"/api/docs/{doc}/sections/{section}", json={"base_rev": base, "fields": fields})
     assert response.status_code == 200, response.text
-    assert response.json()["rev"] == 1
+    assert response.json()["rev"] == base + 1
     return response.json()["rev"]
 
 
@@ -71,7 +74,7 @@ def _final(bus, doc, section, rev):
                     and data.get("state") in ("clean", "findings", "error")):
                 return data
         time.sleep(0.02)
-    pytest.fail(f"Timed out waiting for preview: {list(bus.recent())!r}")
+    raise AssertionError(f"Timed out waiting for preview: {list(bus.recent())!r}")
 
 
 def test_D1_document_theme_resolves_neutral_brand_and_errors(tmp_path):
