@@ -173,5 +173,14 @@ def table_facts(path: Path, source_key: str) -> list[Fact]:
     for cell in read_cells(path):
         prefix = ", ".join(part for part in (cell.label, cell.header) if part is not None)
         text = f"{prefix}: {cell.value.text}" if prefix else cell.value.text
-        facts.append(Fact(text=text, source_key=source_key, locator=cell.locator))
+        facts.append(
+            Fact(
+                text=text,
+                source_key=source_key,
+                locator=cell.locator,
+                kind=cell.value.kind,
+                value=cell.value.number,
+                unit="%" if cell.value.kind == "percent" else cell.value.currency,
+            )
+        )
     return facts

@@ -11,7 +11,7 @@ from fastapi import APIRouter, HTTPException, Request
 from pydantic import BaseModel, TypeAdapter, field_validator
 
 import docla.write as write
-from docla.agents.gatherer import Fact
+from docla.agents.gatherer import Fact, with_fact_ids
 from docla.agents.ledger import Ledger
 from docla.agents.scheduler import Scheduler
 from docla.checks.catalogue import all_rules
@@ -99,7 +99,7 @@ def _agents(app: Any, theme: Theme) -> write.Agents:
 
 def _facts(project: Path, doc: str) -> list[Fact]:
     path = project / ".docla" / "write" / doc / "facts.json"
-    return TypeAdapter(list[Fact]).validate_json(path.read_text()) if path.exists() else []
+    return with_fact_ids(TypeAdapter(list[Fact]).validate_json(path.read_text())) if path.exists() else []
 
 
 def _stale(oplog: Path, rev: int) -> bool:
@@ -191,7 +191,7 @@ async def redraft(doc: str, section_id: str, body: RedraftBody, request: Request
         theme = document_theme(app.state, snapshot)
         facts = _facts(app.state.project, doc)
         writer = _agents(app, theme).writer(facts, snapshot)
-        guard = FactGuard(_evidence(snapshot, facts), {s.key for s in snapshot.sources})
+        guard = FactGuard(_evidence(snapshot, facts), {s.key for s in snapshot.sources}, facts=facts)
         workdir = app.state.project / ".docla" / "render" / "jobs" / job_id
         ctx = LoopContext(
             snapshot,

@@ -15,7 +15,7 @@ class Extracted(BaseModel):
     source: Path
     path: Path
     text: str
-    pages: int | None
+    pages: int | None = None
 
 
 def _pdf(source: Path) -> tuple[str, int]:
