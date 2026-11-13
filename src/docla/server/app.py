@@ -26,9 +26,7 @@ from docla.write import Agents
 TOKEN_HEADER = "X-Docla-Token"
 
 
-def create_app(
-    project: Path, token: str, *, agents: Agents | None = None, brands: Path | None = None
-) -> FastAPI:
+def create_app(project: Path, token: str, *, agents: Agents | None = None, brands: Path | None = None) -> FastAPI:
     @asynccontextmanager
     async def lifespan(app: FastAPI) -> AsyncIterator[None]:
         task = asyncio.create_task(app.state.watcher.run())

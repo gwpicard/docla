@@ -1,6 +1,7 @@
 """Resolve the theme for a working document."""
 
 from pathlib import Path
+from typing import cast
 
 from starlette.datastructures import State
 
@@ -17,7 +18,7 @@ def brands_root(project: Path) -> Path:
 def document_theme(state: State, doc: Document) -> Theme:
     value = doc.front.get("theme")
     if value is None or value == "" or value == "neutral":
-        return state.theme
+        return cast(Theme, state.theme)
     if not isinstance(value, str) or not SLUG.fullmatch(value):
         raise ThemeError(f"Invalid theme: {value!r}")
     folder = state.brands / value / "theme"
