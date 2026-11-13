@@ -71,6 +71,15 @@ async def gather(claude: Claude, extracted: list[Extracted]) -> list[Fact]:
     facts: list[Fact] = []
     seen: set[tuple[str, str, str | None]] = set()
     for source in extracted:
+        if source.kind == "table":
+            from docla.tables import table_facts
+
+            for fact in table_facts(source.source, source.key):
+                key = (fact.text, fact.source_key, fact.locator)
+                if key not in seen:
+                    seen.add(key)
+                    facts.append(fact)
+            continue
         if not source.text:
             continue
         for offset, data in _chunks(source):

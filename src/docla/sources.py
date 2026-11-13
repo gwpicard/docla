@@ -11,7 +11,7 @@ from pydantic import BaseModel
 class Extracted(BaseModel):
     key: str
     name: str
-    kind: Literal["pdf", "text", "vtt"]
+    kind: Literal["pdf", "text", "vtt", "table"]
     source: Path
     path: Path
     text: str
@@ -61,19 +61,26 @@ def extract(project: Path) -> list[Extracted]:
     sources = sorted(
         path
         for path in source_dir.iterdir()
-        if path.is_file() and not path.name.startswith(".") and path.suffix.lower() in {".pdf", ".txt", ".md", ".vtt"}
+        if path.is_file()
+        and not path.name.startswith(".")
+        and path.suffix.lower() in {".pdf", ".txt", ".md", ".vtt", ".xlsx", ".csv"}
     )
     results = []
     for number, source in enumerate(sources, 1):
         suffix = source.suffix.lower()
         pages = None
-        kind: Literal["pdf", "text", "vtt"]
+        kind: Literal["pdf", "text", "vtt", "table"]
         if suffix == ".pdf":
             kind = "pdf"
             content, pages = _pdf(source)
         elif suffix == ".vtt":
             kind = "vtt"
             content = _vtt(source)
+        elif suffix in {".xlsx", ".csv"}:
+            from docla.tables import table_facts
+
+            kind = "table"
+            content = "\n".join(f"[{fact.locator}] {fact.text}" for fact in table_facts(source, f"S{number}"))
         else:
             kind = "text"
             content = source.read_text(encoding="utf-8")
