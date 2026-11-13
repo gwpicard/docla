@@ -188,19 +188,11 @@ def table_facts(path: Path, source_key: str, *, typed: bool = False) -> list[Fac
 
 def typed_table_facts(facts: list[Fact], project: Path) -> list[Fact]:
     """Enrich existing table facts using the project's source ordering."""
-    source_dir = project / "sources"
-    if not source_dir.exists():
-        return facts
-    sources = sorted(
-        path
-        for path in source_dir.iterdir()
-        if path.is_file()
-        and not path.name.startswith(".")
-        and path.suffix.lower() in {".pdf", ".txt", ".md", ".vtt", ".xlsx", ".csv"}
-    )
+    from docla.sources import source_files
+
     typed = {
         (fact.source_key, fact.locator, fact.text): fact
-        for number, path in enumerate(sources, 1)
+        for number, path in enumerate(source_files(project), 1)
         if path.suffix.lower() in {".xlsx", ".csv"}
         for fact in table_facts(path, f"S{number}", typed=True)
     }

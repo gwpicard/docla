@@ -54,17 +54,21 @@ def _vtt(source: Path) -> str:
     return "\n".join(cue for block in blocks if (cue := _cue(block)) is not None)
 
 
-def extract(project: Path) -> list[Extracted]:
+def source_files(project: Path) -> list[Path]:
     source_dir = project / "sources"
     if not source_dir.exists():
         return []
-    sources = sorted(
+    return sorted(
         path
         for path in source_dir.iterdir()
         if path.is_file()
         and not path.name.startswith(".")
         and path.suffix.lower() in {".pdf", ".txt", ".md", ".vtt", ".xlsx", ".csv"}
     )
+
+
+def extract(project: Path) -> list[Extracted]:
+    sources = source_files(project)
     results = []
     for number, source in enumerate(sources, 1):
         suffix = source.suffix.lower()
