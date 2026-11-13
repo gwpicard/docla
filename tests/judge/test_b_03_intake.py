@@ -74,6 +74,13 @@ def _require_intake():
     assert hasattr(intake, "MaterialEntry"), "docla.brand.intake.MaterialEntry must exist"
 
 
+
+def _main(args):
+    try:
+        return cli.main(args)
+    except SystemExit as exc:
+        return exc.code
+
 def test_D1_manifest_lists_materials_with_metadata(tmp_path):
     _require_intake()
     brand = _brand(tmp_path / ".brand")
@@ -147,7 +154,7 @@ def test_D4_cli_records_intake_and_refuses_unknown_or_empty_brand(tmp_path, caps
     root = tmp_path / ".brand"
     brand = _brand(root)
     _materials(brand)
-    assert cli.main(["brand", "intake", "acme", "--root", str(root)]) == 0
+    assert _main(["brand", "intake", "acme", "--root", str(root)]) == 0
     output = capsys.readouterr().out
     assert "7 files" in output
     for role in ("examples", "fonts", "guidelines", "logos", "notes", "templates"):
@@ -161,8 +168,8 @@ def test_D4_cli_records_intake_and_refuses_unknown_or_empty_brand(tmp_path, caps
     assert len(records) == 1
     assert records[0].what == "Take in materials"
     assert {"theme/ingest/manifest.json", "materials/guidelines/book.pdf"} <= set(records[0].files)
-    assert cli.main(["brand", "intake", "unknown", "--root", str(root)]) == 2
+    assert _main(["brand", "intake", "unknown", "--root", str(root)]) == 2
     workspace.init_brand("empty", root)
-    assert cli.main(["brand", "intake", "empty", "--root", str(root)]) == 2
+    assert _main(["brand", "intake", "empty", "--root", str(root)]) == 2
     assert "no materials" in capsys.readouterr().out.lower()
     assert changes.change_log(root / "empty") == []
