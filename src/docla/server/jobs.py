@@ -98,8 +98,10 @@ def _agents(app: Any, theme: Theme) -> write.Agents:
 
 
 def _facts(project: Path, doc: str) -> list[Fact]:
+    from docla.tables import typed_table_facts
+
     path = project / ".docla" / "write" / doc / "facts.json"
-    return with_fact_ids(TypeAdapter(list[Fact]).validate_json(path.read_text())) if path.exists() else []
+    return with_fact_ids(typed_table_facts(TypeAdapter(list[Fact]).validate_json(path.read_text()), project)) if path.exists() else []
 
 
 def _stale(oplog: Path, rev: int) -> bool:

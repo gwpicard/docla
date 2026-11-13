@@ -181,10 +181,12 @@ def claude_agents(claude: Any, theme: Any, *, config: ProjectConfig | None = Non
 
 
 async def _facts(project: Any, run_dir: Any, agents: Any) -> Any:
+    from docla.tables import typed_table_facts
+
     path = run_dir / "facts.json"
     if path.exists():
-        return with_fact_ids(TypeAdapter(list[Fact]).validate_json(path.read_text()))
-    facts = with_fact_ids(await agents.gather(extract(project)))
+        return with_fact_ids(typed_table_facts(TypeAdapter(list[Fact]).validate_json(path.read_text()), project))
+    facts = with_fact_ids(typed_table_facts(await agents.gather(extract(project)), project))
     run_dir.mkdir(parents=True, exist_ok=True)
     path.write_bytes(TypeAdapter(list[Fact]).dump_json(facts, indent=2))
     return facts
@@ -199,8 +201,10 @@ def _outline_output(file: Any, doc: Any, questions: Any = ()) -> None:
 
 
 async def _make_outline(file: Any, doc: Any, agents: Any, run_dir: Any, ids: Any) -> None:
+    from docla.tables import typed_table_facts
+
     extracted = extract(file.parent)
-    facts = with_fact_ids(await agents.gather(extracted))
+    facts = with_fact_ids(typed_table_facts(await agents.gather(extracted), file.parent))
     run_dir.mkdir(parents=True, exist_ok=True)
     (run_dir / "facts.json").write_bytes(TypeAdapter(list[Fact]).dump_json(facts, indent=2))
     front = {**doc.front, "format": doc.format}
