@@ -115,6 +115,11 @@ def _series(
     ]
 
 
+def _decimal_places(value: float) -> int:
+    exponent = Decimal(str(value)).normalize().as_tuple().exponent
+    return max(0, -exponent) if isinstance(exponent, int) else 0
+
+
 def resolve_chart(data: Mapping[str, Any] | None) -> ChartSpec:
     data = data or {}
     categories = [str(category) for category in data.get("categories", [])]
@@ -144,7 +149,7 @@ def resolve_chart(data: Mapping[str, Any] | None) -> ChartSpec:
         chart_type = "unsupported"
         reason = f"requested type {requested} cannot be drawn"
     values = [value for row in rows for value in row]
-    decimals = min(MAX_DECIMALS, max(max(0, -Decimal(str(value)).normalize().as_tuple().exponent) for value in values))
+    decimals = min(MAX_DECIMALS, max(_decimal_places(value) for value in values))
     scale = ChartScale(min=0, max=max(1.0, *values), decimals=decimals)
     return ChartSpec(
         type=chart_type,
