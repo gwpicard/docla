@@ -9,8 +9,9 @@ engine works; where the two disagree, this file wins and `DESIGN.md` is updated 
 docla does two things.
 
 1. **Learn a brand (setup).** A person drops in everything the brand has: brand books, templates, past decks and reports,
-   logos, fonts, and notes on anything specific. docla turns that into the brand's ground rules: tokens, writing rules,
-   checks, required elements and document types. Those rules then run on every generation, and docla fixes what fails
+   logos, fonts, and notes on anything specific. docla turns that into a first draft of the brand's ground rules: tokens,
+   writing rules, checks, required elements and document types. The person then corrects the draft against the brand's
+   own pages until docla's output and the brand's examples match. Those rules then run on every generation, and docla fixes what fails
    before it shows anything to the person.
 2. **Make reports.** For a brand that is set up, a person asks for a report, answers docla's questions, agrees an
    outline, and then works on the rendered report directly in the browser until it is right.
@@ -24,7 +25,13 @@ version. Nothing here may make it harder to add later: new records that hold a p
 reports in the brand, logos, fonts with their licences, and free-text notes ("every report names its author",
 "never use the word synergy").
 
-**What docla produces**, each item citing where it came from (file, page and quote, or "measured over N examples"):
+**Fonts come first.** The person supplies the brand's font files with their licences. docla checks each file's family
+and weight from its name table against what the brand names, records the licence, and never falls back to another
+typeface silently: a missing font is a question, not a substitution.
+
+**What docla produces.** Each item cites where it came from (file, page and quote, or "measured over N examples") and is
+labelled **Measured** (read from a template's or PDF's vector or XML data), **Derived** (calculated from measured
+values), **Inferred** (judged by docla) or **Answered** (by the person):
 
 - **Tokens**: colours, fonts, type scale, margins, grid. Measured from the PDFs and templates where possible, never
   guessed from convention.
@@ -33,6 +40,25 @@ reports in the brand, logos, fonts with their licences, and free-text notes ("ev
 - **Document types**: from the brand's own examples (see section 4).
 - **Questions**: every conflict, gap or doubt in the materials becomes a question for the person, shown with the page
   it came from. The person's answer becomes the rule.
+- **What the brand does not provide**: for example no Word template, no font licence, no chart rules. Each item is a
+  question or a recorded decision, so nobody derives it again.
+
+**Rules, not samples.** docla separates what the brand states from what its pages merely illustrate (a page of photos
+shows what kind of photo to use, not how to crop it). A statement taken only from an illustration is marked
+illustrative and becomes a rule only if the person agrees. Before anything else, docla checks the guidelines' version and
+date and asks whether older materials use a previous identity.
+
+**The correction loop is the core of setup.** Extraction gets colours and fonts right and misses proportion, spacing and
+the brand's signature graphics; the precision comes from correcting. docla renders a specimen next to the brand's own
+page (from the brand book's layout pages and the example reports) and lists what differs: margins, spacing, hierarchy,
+colour, graphics. The person confirms, rejects or explains each difference. A confirmed correction becomes a brand change
+with a record (section 3), and the specimen is rendered again. Setup is finished when the person accepts the
+side-by-side. Example slides and pages are mapped to component roles (cover, agenda, break, key figures, flow) early,
+and each component's look cites the examples it came from.
+
+**Measured values and departures.** A value measured from a template the brand supplied can make a hard rule; a value
+measured only from example reports makes a proposed rule. The brand's own sources win by default: a value that departs
+from them is recorded in a departures register, with its reason, only when the person approves it.
 
 The pipeline is `DESIGN.md` section 7 (stages S0 to S8), built in the order of `PLAN-v0.2.md`.
 
@@ -42,7 +68,8 @@ add a generic component (or a parameter) to docla, not a brand-specific one.
 
 **Brand overview.** A page that shows the brand as docla understood it: tokens as swatches, every component rendered in
 the brand, and the rules grouped by area with their source quote and whether they were extracted, measured, answered
-by the person or learned later. Updating rules, syncing them to a backlog and learning from use are later work.
+by the person or learned later, with each value's label (Measured, Derived, Inferred, Answered) and any departure.
+Updating rules, syncing them to a backlog and learning from use are later work.
 
 ## 3. Where brands live, and how the engine changes
 
