@@ -49,7 +49,7 @@ def factory():
 
 
 def document(format="slides", title="Outlook to 2031"):
-    return Document(front={"title": title}, format=format, sources=[Source(key="S1", text="sales.xlsx")])
+    return Document(front={"title": title}, format=format, sections=[], sources=[Source(key="S1", text="sales.xlsx")])
 
 
 def section(body, title="North by 2031"):
