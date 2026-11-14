@@ -101,7 +101,22 @@ def _fixture(tmp_path):
     (theme / "theme.yaml").write_text(yaml.safe_dump(info, sort_keys=False))
     inferred = {"label": "inferred", "source": {"note": "docla neutral value"}}
     labels = {
-        "tokens": {key: inferred for key in ("colour", "type", "pages", "spacing", "imagery")},
+        "tokens": {
+            key: inferred
+            for key in (
+                "colour.roles",
+                "colour.chart",
+                "colour.usage",
+                "colour.contrast_min",
+                "type.families",
+                "type.scale",
+                "pages.slides",
+                "pages.doc",
+                "spacing.unit",
+                "spacing.scale",
+                "imagery.min_dpi",
+            )
+        },
         "rubric": {item.id: inferred for item in load_rubric(neutral_theme()).items},
     }
     (theme / "provenance.yaml").write_text(yaml.safe_dump(labels, sort_keys=False))
