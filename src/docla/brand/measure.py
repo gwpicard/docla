@@ -12,7 +12,7 @@ from docla.brand.pages import load_pages
 from docla.brand.segment import TOPICS, load_topics, topic_groups
 from docla.brand.workspace import BrandError
 from docla.checks.bounds import CAP_HEIGHT
-from docla.facts.models import FactBox, PageFacts, Word
+from docla.facts.models import PageFacts, Word
 from docla.facts.pdf import PdfFacts, PdfPlumberFacts
 from docla.model.source import Format
 
@@ -101,8 +101,7 @@ def _font(words: list[Word], size: float) -> tuple[str | None, int]:
 
 def measure_page(page: PageFacts) -> PageMeasure | None:
     boxes = [w.box.model_copy(update={"y0": w.baseline - CAP_HEIGHT * w.size, "y1": w.baseline}) for w in page.words]
-    for item in [*page.shapes, *page.images]:
-        box: FactBox = item.box
+    for box in [*(shape.box for shape in page.shapes), *(image.box for image in page.images)]:
         if (box.x1 - box.x0) * (box.y1 - box.y0) < 0.9 * page.width * page.height:
             boxes.append(box)
     if not boxes:
