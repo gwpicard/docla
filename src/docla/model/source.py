@@ -51,5 +51,5 @@ class Document(BaseModel):
     format: Format
     context: str = ""
     sources: list[Source] = Field(default_factory=list)
-    sections: list[Section] = Field(default_factory=list)
+    sections: list[Section]
     rev: int = 0
