@@ -61,7 +61,7 @@ def _set(data: dict[str, Any], path: str, value: Any) -> None:
 
 def _neutral() -> dict[str, Any]:
     theme = neutral_theme()
-    raw = yaml.safe_load((theme.root / "tokens.yaml").read_text())
+    raw: dict[str, Any] = yaml.safe_load((theme.root / "tokens.yaml").read_text())
     for fmt in ("slides", "doc"):
         page = theme.tokens.pages[fmt]
         raw["pages"][fmt] = {"width": page.width, "height": page.height, "margin": page.margin.model_dump()}
@@ -195,17 +195,17 @@ def synthesise_tokens(brand: Path) -> TokenSynthesis:
     drop_open_questions(brand, ["token." + p for p in MUST_COME_FROM_BRAND if entries[p]["label"] != "inferred"])
     info = yaml.safe_load(info_file.read_text())
     info["labelled"] = True
-    files = (token_file, prov_file, info_file)
-    previous = [p.read_bytes() if p.exists() else None for p in files]
+    output_files = (token_file, prov_file, info_file)
+    previous = [p.read_bytes() if p.exists() else None for p in output_files]
     provenance = {"tokens": dict(sorted(entries.items()))}
     if "rubric" in old_prov:
         provenance["rubric"] = old_prov["rubric"]
-    for path, value in zip(files, (data, provenance, info), strict=True):
+    for path, value in zip(output_files, (data, provenance, info), strict=True):
         path.write_text(yaml.safe_dump(value, sort_keys=False, allow_unicode=True))
     try:
         load_theme(theme)
     except ThemeError:
-        for path, content in zip(files, previous, strict=True):
+        for path, content in zip(output_files, previous, strict=True):
             if content is None:
                 path.unlink(missing_ok=True)
             else:

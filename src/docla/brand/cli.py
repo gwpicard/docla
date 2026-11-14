@@ -94,7 +94,7 @@ def _synthesise(brand: Path) -> int:
     reconciliation = load_reconciliation(brand)
     begin_change(brand, "synthesise")
     result = synthesise_tokens(brand)
-    evidence = {}
+    evidence: dict[tuple[str, int | None], Evidence] = {}
     for item in reconciliation.values:
         source = item.provenance.source
         for file in ([source.file] if source.file else []) + source.files:
