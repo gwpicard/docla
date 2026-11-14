@@ -1,4 +1,4 @@
-from collections.abc import Callable
+from collections.abc import Callable, Collection, Mapping
 from typing import Any
 
 from pydantic import ValidationError
@@ -20,13 +20,19 @@ class PatchRejected(Exception):
 FactGuard = Callable[[Document, Section], bool]
 
 
-def apply_patch(doc: Document, patch: Patch, fact_guard: FactGuard | None = None) -> Document:
+def apply_patch(
+    doc: Document,
+    patch: Patch,
+    fact_guard: FactGuard | None = None,
+    *,
+    kept: Mapping[str, Collection[str]] | None = None,
+) -> Document:
     """Return a copy of `doc` with every op applied and `rev` increased by one, or raise PatchRejected."""
     if patch.base_rev != doc.rev:
         raise PatchRejected("stale-base-rev", f"patch is based on rev {patch.base_rev}, document is at rev {doc.rev}")
     sections = [s.model_copy(deep=True) for s in doc.sections]
     for op in patch.ops:
-        sections = _apply_op(doc, sections, op, fact_guard, patch.author)
+        sections = _apply_op(doc, sections, op, fact_guard, patch.author, kept)
     return doc.model_copy(update={"sections": sections, "rev": doc.rev + 1}, deep=True)
 
 
@@ -38,7 +44,12 @@ def _index(sections: list[Section], section_id: str | None) -> int:
 
 
 def _apply_op(
-    doc: Document, sections: list[Section], op: PatchOp, fact_guard: FactGuard | None, author: str
+    doc: Document,
+    sections: list[Section],
+    op: PatchOp,
+    fact_guard: FactGuard | None,
+    author: str,
+    kept: Mapping[str, Collection[str]] | None = None,
 ) -> list[Section]:
     if op.op == "insert_after":
         return _insert_after(doc, sections, op, fact_guard)
@@ -50,7 +61,9 @@ def _apply_op(
     if op.op == "move_section":
         return _move(sections, index, op)
     new = _edited_section(old, op)
-    _check_ownership(old, new, author)
+    _check_ownership(old, new, author, kept)
+    if kept is not None and author != "human" and old.owner == "human":
+        new = {**_as_dict(new), "owner": "human"}
     _check_identity(old, new)
     _check_fact(doc, sections, index, new, fact_guard)
     _check_appearance(op)
@@ -83,10 +96,21 @@ def _changed(old: Section, new: dict[str, Any] | Section, names: tuple[str, ...]
     return [n for n in names if n in new_data and new_data[n] != old_data[n]]
 
 
-def _check_ownership(old: Section, new: dict[str, Any] | Section, author: str) -> None:
+def _check_ownership(
+    old: Section,
+    new: dict[str, Any] | Section,
+    author: str,
+    kept: Mapping[str, Collection[str]] | None = None,
+) -> None:
     if old.lock == "all" and _changed(old, new, ("intent", "component")):
         raise PatchRejected("lock-all", f"section {old.id} is locked")
-    if author != "human" and (old.owner == "human" or old.lock in ("text", "all")) and _changed(old, new, TEXT_FIELDS):
+    changed = _changed(old, new, TEXT_FIELDS)
+    if author != "human" and old.owner == "human" and old.lock is None and kept is not None:
+        protected = [field for field in changed if field in kept.get(old.id or "", ())]
+        if protected:
+            raise PatchRejected("owner-locked", f"field {protected[0]} of section {old.id} is owned by a human")
+        return
+    if author != "human" and (old.owner == "human" or old.lock in ("text", "all")) and changed:
         raise PatchRejected("owner-locked", f"text of section {old.id} is owned by a human or locked")
 
 
@@ -159,7 +183,9 @@ def _move(sections: list[Section], index: int, op: PatchOp) -> list[Section]:
     return rest[: position + 1] + [moved] + rest[position + 1 :]
 
 
-def inverse_ops(before: Document, patch: Patch) -> list[PatchOp] | None:
+def inverse_ops(
+    before: Document, patch: Patch, *, kept: Mapping[str, Collection[str]] | None = None
+) -> list[PatchOp] | None:
     """Build inverse operations in reverse order against each intermediate state."""
     sections = [s.model_copy(deep=True) for s in before.sections]
     inverse: list[PatchOp] = []
@@ -189,7 +215,7 @@ def inverse_ops(before: Document, patch: Patch) -> list[PatchOp] | None:
         else:
             return None
         inverse = undo + inverse
-        sections = _apply_op(before, sections, op, None, patch.author)
+        sections = _apply_op(before, sections, op, None, patch.author, kept)
     return inverse
 
 

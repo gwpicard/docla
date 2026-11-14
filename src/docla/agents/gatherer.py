@@ -1,9 +1,11 @@
 """Gather facts from source spans cited by Claude."""
 
 import base64
+import hashlib
 import re
-from collections.abc import Iterator
-from typing import Any
+from collections.abc import Iterator, Sequence
+from decimal import Decimal
+from typing import Any, Literal
 
 from pydantic import BaseModel
 
@@ -19,6 +21,19 @@ class Fact(BaseModel):
     text: str
     source_key: str
     locator: str | None = None
+    id: str | None = None
+    kind: Literal["number", "percent", "currency", "date", "text"] = "text"
+    value: Decimal | None = None
+    unit: str | None = None
+
+
+def fact_id(fact: Fact) -> str:
+    content = f"{fact.source_key}\x1f{fact.locator or ''}\x1f{fact.text}"
+    return "F" + hashlib.sha256(content.encode("utf-8")).hexdigest()[:10]
+
+
+def with_fact_ids(facts: Sequence[Fact]) -> list[Fact]:
+    return [fact.model_copy(update={"id": fact.id if fact.id is not None else fact_id(fact)}) for fact in facts]
 
 
 def _chunks(source: Extracted) -> Iterator[tuple[int, dict[str, Any]]]:
@@ -67,10 +82,23 @@ def _facts(source: Extracted, response: dict[str, Any], offset: int) -> Iterator
                 yield Fact(text=text, source_key=source.key, locator=_locator(source, citation, offset))
 
 
+def _append_unique(facts: list[Fact], seen: set[tuple[str, str, str | None]], incoming: Iterator[Fact]) -> None:
+    for fact in incoming:
+        key = (fact.text, fact.source_key, fact.locator)
+        if key not in seen:
+            seen.add(key)
+            facts.append(fact)
+
+
 async def gather(claude: Claude, extracted: list[Extracted]) -> list[Fact]:
     facts: list[Fact] = []
     seen: set[tuple[str, str, str | None]] = set()
     for source in extracted:
+        if source.kind == "table":
+            from docla.tables import table_facts
+
+            _append_unique(facts, seen, iter(table_facts(source.source, source.key)))
+            continue
         if not source.text:
             continue
         for offset, data in _chunks(source):
@@ -88,9 +116,5 @@ async def gather(claude: Claude, extracted: list[Extracted]) -> list[Fact]:
                 },
             ]
             response = await claude.cite("gatherer", system=system_blocks("gatherer"), content=content)
-            for fact in _facts(source, response, offset):
-                key = (fact.text, fact.source_key, fact.locator)
-                if key not in seen:
-                    seen.add(key)
-                    facts.append(fact)
+            _append_unique(facts, seen, _facts(source, response, offset))
     return facts

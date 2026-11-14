@@ -11,6 +11,8 @@ from typing import Any, NamedTuple
 from pydantic import TypeAdapter
 
 from docla import __version__
+from docla.agents.gatherer import Fact
+from docla.brand.cli import add_brand_commands, run_brand
 from docla.checks.catalogue import all_rules, document_rules
 from docla.checks.engine import CheckContext, run_checks
 from docla.config import default_config_text
@@ -208,12 +210,17 @@ def _check(file: Path, out: Path, theme: Theme, *, final: bool = False, outline:
     except ThemeError as error:
         raise _BuildFailed(str(error)) from error
     assets = [file.parent / "assets", theme.root / "assets"]
+    facts_path = file.parent / ".docla" / "write" / file.stem / "facts.json"
+    source_facts = TypeAdapter(list[Fact]).validate_json(facts_path.read_bytes()) if facts_path.exists() else None
     try:
         comp = compose(doc, assets=assets)
     except ComposeError:
         # Without layout facts the engine runs only the source tier.
         return _report(
-            file, out, parsed + run_checks(rules, CheckContext(doc, theme=theme, final=final, assets=assets))
+            file,
+            out,
+            parsed
+            + run_checks(rules, CheckContext(doc, theme=theme, final=final, assets=assets, source_facts=source_facts)),
         )
     built = _draw(file, out, doc, parsed, comp, theme)
     facts = layout_facts(built.pdf, built.main, built.render, font_paths=font_paths(built.render))
@@ -227,6 +234,7 @@ def _check(file: Path, out: Path, theme: Theme, *, final: bool = False, outline:
         final=final,
         assets=assets,
         pages_png=pages_png,
+        source_facts=source_facts,
     )
     return _report(file, out, built.findings + run_checks(rules, ctx))
 
@@ -256,6 +264,7 @@ def _build_parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(prog="docla")
     parser.add_argument("--version", action="version", version=f"docla {__version__}")
     subparsers = parser.add_subparsers(dest="command", required=True)
+    add_brand_commands(subparsers)
     subparsers.add_parser("doctor", help="report what is installed and what is missing")
     init = subparsers.add_parser("init", help="initialise a project")
     init.add_argument("directory", type=Path, help="project folder")
@@ -315,7 +324,14 @@ def _run_file_command(args: argparse.Namespace) -> int:
 
 
 def main(argv: list[str] | None = None) -> int:
-    args = _build_parser().parse_args(argv)
+    try:
+        args = _build_parser().parse_args(argv)
+    except SystemExit as error:
+        if error.code == 2 and (argv if argv is not None else sys.argv[1:])[:2] == ["brand", "init"]:
+            return 2
+        raise
+    if args.command == "brand":
+        return run_brand(args)
     if args.command == "doctor":
         return _doctor()
     if args.command == "init":

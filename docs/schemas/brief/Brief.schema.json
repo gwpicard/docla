@@ -1,0 +1,694 @@
+{
+  "$defs": {
+    "Ask": {
+      "additionalProperties": false,
+      "properties": {
+        "kind": {
+          "enum": [
+            "decide",
+            "inform",
+            "reassure"
+          ],
+          "title": "Kind",
+          "type": "string"
+        },
+        "text": {
+          "default": "",
+          "title": "Text",
+          "type": "string"
+        }
+      },
+      "required": [
+        "kind"
+      ],
+      "title": "Ask",
+      "type": "object"
+    },
+    "Audience": {
+      "additionalProperties": false,
+      "properties": {
+        "decision": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Decision"
+        },
+        "prior_knowledge": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Prior Knowledge"
+        },
+        "who": {
+          "title": "Who",
+          "type": "string"
+        }
+      },
+      "required": [
+        "who"
+      ],
+      "title": "Audience",
+      "type": "object"
+    },
+    "BriefFinding": {
+      "additionalProperties": false,
+      "properties": {
+        "claim": {
+          "title": "Claim",
+          "type": "string"
+        },
+        "evidence": {
+          "items": {
+            "type": "string"
+          },
+          "title": "Evidence",
+          "type": "array"
+        },
+        "explanation": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Explanation"
+        },
+        "importance": {
+          "default": "support",
+          "enum": [
+            "lead",
+            "support",
+            "appendix"
+          ],
+          "title": "Importance",
+          "type": "string"
+        }
+      },
+      "required": [
+        "claim"
+      ],
+      "title": "BriefFinding",
+      "type": "object"
+    },
+    "BriefScope": {
+      "additionalProperties": false,
+      "properties": {
+        "currency": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Currency"
+        },
+        "data_exclusions": {
+          "items": {
+            "type": "string"
+          },
+          "title": "Data Exclusions",
+          "type": "array"
+        },
+        "entities": {
+          "items": {
+            "type": "string"
+          },
+          "title": "Entities",
+          "type": "array"
+        },
+        "period": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Period"
+        }
+      },
+      "title": "BriefScope",
+      "type": "object"
+    },
+    "Comparisons": {
+      "additionalProperties": false,
+      "properties": {
+        "primary": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Primary"
+        },
+        "secondary": {
+          "items": {
+            "type": "string"
+          },
+          "title": "Secondary",
+          "type": "array"
+        }
+      },
+      "title": "Comparisons",
+      "type": "object"
+    },
+    "FieldProvenance": {
+      "additionalProperties": false,
+      "properties": {
+        "evidence": {
+          "items": {
+            "type": "string"
+          },
+          "title": "Evidence",
+          "type": "array"
+        },
+        "note": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Note"
+        },
+        "person": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Person"
+        },
+        "status": {
+          "enum": [
+            "confirmed",
+            "inferred",
+            "defaulted",
+            "skipped"
+          ],
+          "title": "Status",
+          "type": "string"
+        }
+      },
+      "required": [
+        "status"
+      ],
+      "title": "FieldProvenance",
+      "type": "object"
+    },
+    "Length": {
+      "additionalProperties": false,
+      "properties": {
+        "appendix": {
+          "anyOf": [
+            {
+              "type": "boolean"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Appendix"
+        },
+        "count": {
+          "anyOf": [
+            {
+              "minimum": 1,
+              "type": "integer"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Count"
+        },
+        "deadline": {
+          "anyOf": [
+            {
+              "format": "date",
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Deadline"
+        },
+        "delivery": {
+          "anyOf": [
+            {
+              "enum": [
+                "pre-read",
+                "presented"
+              ],
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Delivery"
+        },
+        "figures": {
+          "anyOf": [
+            {
+              "enum": [
+                "figures",
+                "tables",
+                "mixed"
+              ],
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Figures"
+        }
+      },
+      "title": "Length",
+      "type": "object"
+    },
+    "Metric": {
+      "additionalProperties": false,
+      "properties": {
+        "caveats": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Caveats"
+        },
+        "definition": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Definition"
+        },
+        "name": {
+          "title": "Name",
+          "type": "string"
+        },
+        "sources": {
+          "items": {
+            "type": "string"
+          },
+          "title": "Sources",
+          "type": "array"
+        }
+      },
+      "required": [
+        "name"
+      ],
+      "title": "Metric",
+      "type": "object"
+    },
+    "RequiredElement": {
+      "additionalProperties": false,
+      "properties": {
+        "element": {
+          "title": "Element",
+          "type": "string"
+        },
+        "source": {
+          "title": "Source",
+          "type": "string"
+        }
+      },
+      "required": [
+        "element",
+        "source"
+      ],
+      "title": "RequiredElement",
+      "type": "object"
+    },
+    "Sensitivity": {
+      "additionalProperties": false,
+      "properties": {
+        "item": {
+          "title": "Item",
+          "type": "string"
+        },
+        "presentation": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Presentation"
+        },
+        "why": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Why"
+        }
+      },
+      "required": [
+        "item"
+      ],
+      "title": "Sensitivity",
+      "type": "object"
+    },
+    "Tone": {
+      "additionalProperties": false,
+      "properties": {
+        "detail": {
+          "anyOf": [
+            {
+              "enum": [
+                "summary",
+                "standard",
+                "detailed"
+              ],
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Detail"
+        },
+        "person": {
+          "anyOf": [
+            {
+              "enum": [
+                "first",
+                "institutional"
+              ],
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Person"
+        },
+        "register": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Register"
+        }
+      },
+      "title": "Tone",
+      "type": "object"
+    },
+    "Topic": {
+      "additionalProperties": false,
+      "properties": {
+        "data_ref": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Data Ref"
+        },
+        "include": {
+          "default": true,
+          "title": "Include",
+          "type": "boolean"
+        },
+        "name": {
+          "title": "Name",
+          "type": "string"
+        },
+        "order": {
+          "anyOf": [
+            {
+              "type": "integer"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Order"
+        },
+        "role": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Role"
+        }
+      },
+      "required": [
+        "name"
+      ],
+      "title": "Topic",
+      "type": "object"
+    }
+  },
+  "additionalProperties": false,
+  "properties": {
+    "ask": {
+      "anyOf": [
+        {
+          "$ref": "#/$defs/Ask"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null
+    },
+    "audience": {
+      "anyOf": [
+        {
+          "$ref": "#/$defs/Audience"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null
+    },
+    "comparisons": {
+      "anyOf": [
+        {
+          "$ref": "#/$defs/Comparisons"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null
+    },
+    "doctype": {
+      "anyOf": [
+        {
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Doctype"
+    },
+    "exclusions": {
+      "items": {
+        "type": "string"
+      },
+      "title": "Exclusions",
+      "type": "array"
+    },
+    "findings": {
+      "items": {
+        "$ref": "#/$defs/BriefFinding"
+      },
+      "title": "Findings",
+      "type": "array"
+    },
+    "format": {
+      "enum": [
+        "slides",
+        "doc"
+      ],
+      "title": "Format",
+      "type": "string"
+    },
+    "key_message": {
+      "anyOf": [
+        {
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Key Message"
+    },
+    "length": {
+      "$ref": "#/$defs/Length"
+    },
+    "metrics": {
+      "items": {
+        "$ref": "#/$defs/Metric"
+      },
+      "title": "Metrics",
+      "type": "array"
+    },
+    "open_risks": {
+      "items": {
+        "type": "string"
+      },
+      "title": "Open Risks",
+      "type": "array"
+    },
+    "provenance": {
+      "additionalProperties": {
+        "$ref": "#/$defs/FieldProvenance"
+      },
+      "propertyNames": {
+        "enum": [
+          "doctype",
+          "audience",
+          "key_message",
+          "ask",
+          "scope",
+          "topics",
+          "metrics",
+          "comparisons",
+          "findings",
+          "sensitivities",
+          "exclusions",
+          "tone",
+          "length",
+          "required_elements",
+          "open_risks"
+        ]
+      },
+      "title": "Provenance",
+      "type": "object"
+    },
+    "request": {
+      "default": "",
+      "title": "Request",
+      "type": "string"
+    },
+    "required_elements": {
+      "items": {
+        "$ref": "#/$defs/RequiredElement"
+      },
+      "title": "Required Elements",
+      "type": "array"
+    },
+    "schema_version": {
+      "const": 1,
+      "default": 1,
+      "title": "Schema Version",
+      "type": "integer"
+    },
+    "scope": {
+      "$ref": "#/$defs/BriefScope"
+    },
+    "sensitivities": {
+      "items": {
+        "$ref": "#/$defs/Sensitivity"
+      },
+      "title": "Sensitivities",
+      "type": "array"
+    },
+    "tone": {
+      "anyOf": [
+        {
+          "$ref": "#/$defs/Tone"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null
+    },
+    "topics": {
+      "items": {
+        "$ref": "#/$defs/Topic"
+      },
+      "title": "Topics",
+      "type": "array"
+    }
+  },
+  "required": [
+    "format"
+  ],
+  "title": "Brief",
+  "type": "object"
+}

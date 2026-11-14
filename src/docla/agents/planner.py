@@ -56,7 +56,7 @@ def _prompt(facts: list[Fact], doctype: Doctype, allowed: list[str]) -> str:
     lines.append("Facts:")
     for index, fact in enumerate(facts, 1):
         source = f"{fact.source_key} {fact.locator}" if fact.locator is not None else fact.source_key
-        lines.append(f"F{index} [{source}] {fact.text}")
+        lines.append(f"{fact.id if fact.id is not None else f'F{index}'} [{source}] {fact.text}")
     lines.append(
         "Ask at most two questions, only for what the material does not answer. "
         "Set gap on any line that needs a missing fact."

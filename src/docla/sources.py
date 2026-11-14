@@ -11,11 +11,11 @@ from pydantic import BaseModel
 class Extracted(BaseModel):
     key: str
     name: str
-    kind: Literal["pdf", "text", "vtt"]
+    kind: Literal["pdf", "text", "vtt", "table"]
     source: Path
     path: Path
     text: str
-    pages: int | None
+    pages: int | None = None
 
 
 def _pdf(source: Path) -> tuple[str, int]:
@@ -54,26 +54,37 @@ def _vtt(source: Path) -> str:
     return "\n".join(cue for block in blocks if (cue := _cue(block)) is not None)
 
 
-def extract(project: Path) -> list[Extracted]:
+def source_files(project: Path) -> list[Path]:
     source_dir = project / "sources"
     if not source_dir.exists():
         return []
-    sources = sorted(
+    return sorted(
         path
         for path in source_dir.iterdir()
-        if path.is_file() and not path.name.startswith(".") and path.suffix.lower() in {".pdf", ".txt", ".md", ".vtt"}
+        if path.is_file()
+        and not path.name.startswith(".")
+        and path.suffix.lower() in {".pdf", ".txt", ".md", ".vtt", ".xlsx", ".csv"}
     )
+
+
+def extract(project: Path) -> list[Extracted]:
+    sources = source_files(project)
     results = []
     for number, source in enumerate(sources, 1):
         suffix = source.suffix.lower()
         pages = None
-        kind: Literal["pdf", "text", "vtt"]
+        kind: Literal["pdf", "text", "vtt", "table"]
         if suffix == ".pdf":
             kind = "pdf"
             content, pages = _pdf(source)
         elif suffix == ".vtt":
             kind = "vtt"
             content = _vtt(source)
+        elif suffix in {".xlsx", ".csv"}:
+            from docla.tables import table_facts
+
+            kind = "table"
+            content = "\n".join(f"[{fact.locator}] {fact.text}" for fact in table_facts(source, f"S{number}"))
         else:
             kind = "text"
             content = source.read_text(encoding="utf-8")

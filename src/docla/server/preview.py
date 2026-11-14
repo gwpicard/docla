@@ -17,8 +17,10 @@ from docla.render.compose import ComposeError, assemble, compose, font_paths
 from docla.render.kit import read_tokens
 from docla.render.swatch import swatch
 from docla.render.typst import TypstError, compile_pdf
+from docla.server.themes import document_theme
 from docla.server.versions import finding_views
 from docla.store import page_index
+from docla.theme import ThemeError
 from docla.theme.rules import load_theme_rules
 
 
@@ -27,7 +29,7 @@ def flow_sensitive(doc: Document, section: Section) -> bool:
 
 
 def _render(state: State, doc: Document, section_id: str) -> dict[str, Any]:
-    theme = state.theme
+    theme = document_theme(state, doc)
     project: Path = state.project
     assets = [project / "assets", theme.root / "assets"]
     rules = all_rules() + load_theme_rules(theme)
@@ -80,7 +82,7 @@ async def preview(state: State, name: str, section_id: str, rev: int, doc: Docum
         try:
             document = doc if doc is not None else state.docs.load(name)
             result = await asyncio.to_thread(_render, state, document, section_id)
-        except (ComposeError, TypstError) as exc:
+        except (ComposeError, TypstError, ThemeError) as exc:
             state.bus.publish("section.state", {**data, "state": "error", "message": str(exc)})
             return
         state.bus.publish("section.state", {**data, **result})
