@@ -127,8 +127,8 @@ class Doctype(BaseModel):
         if self.twin == self.name:
             raise ValueError("twin must differ from name")
         if self.default_length is not None:
-            bounds = self.length.get(length_unit(self.format))
-            if bounds is None or not bounds[0] <= self.default_length <= bounds[1]:
+            default_bounds = self.length.get(length_unit(self.format))
+            if default_bounds is None or not default_bounds[0] <= self.default_length <= default_bounds[1]:
                 raise ValueError("default length must be within the format length range")
         return self
 
