@@ -50,11 +50,11 @@ def test_D1_brand_model_and_unchanged_defaults():
         "diagnose": "claude-opus-5-5",
         "triage": "claude-haiku-4-5",
     }
-    assert agents.brand_models(config)["brand.synthesise"] == "claude-opus-5-5"
+    assert agents.brand_models(config).get("brand.synthesise") == "claude-opus-5-5"
     assert (
-        agents.brand_models(ProjectConfig(models={"critic": "critic-model", "brand.synthesise": "custom"}))[
+        agents.brand_models(ProjectConfig(models={"critic": "critic-model", "brand.synthesise": "custom"})).get(
             "brand.synthesise"
-        ]
+        )
         == "custom"
     )
 
