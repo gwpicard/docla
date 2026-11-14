@@ -52,10 +52,17 @@ class VerifiedSource(ClaimSource):
     found: Literal["text", "visual"]
 
 
-class Claim(ExtractedClaim):
+class Claim(BaseModel):
     id: str
     topic: Topic
+    kind: ClaimKind
+    statement: str
+    values: list[ClaimValue]
+    strength: Literal["hard", "soft"]
+    formats: list[Format]
     sources: list[VerifiedSource]
+    confidence: float
+    check_hint: str | None = None
 
 
 class DroppedClaim(BaseModel):
@@ -73,7 +80,7 @@ class ClaimSet(BaseModel):
 
 def normalise(text: str) -> str:
     text = unicodedata.normalize("NFKC", text)
-    replacements = {
+    replacements: dict[int, str | int | None] = {
         **dict.fromkeys(range(0x2018, 0x201C), "'"),
         **dict.fromkeys(range(0x201C, 0x2020), '"'),
         **dict.fromkeys(range(0x2010, 0x2016), "-"),
@@ -110,6 +117,7 @@ def verify(claim: ExtractedClaim, sent: dict[tuple[str, int], PageEntry]) -> tup
         if page is None:
             return [], "page not sent"
         quote = normalise(source.quote)
+        found: Literal["text", "visual"]
         if quote and quote in normalise(page.text):
             found = "text"
         elif source.visual:
