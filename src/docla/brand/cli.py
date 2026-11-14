@@ -70,9 +70,47 @@ def add_brand_commands(subparsers: Any) -> None:
     templates = commands.add_parser("templates", help="read PowerPoint templates")
     templates.add_argument("slug")
     templates.add_argument("--root", type=Path, default=default_root())
+    reconcile_parser = commands.add_parser("reconcile", help="reconcile brand sources")
+    reconcile_parser.add_argument("slug")
+    reconcile_parser.add_argument("--root", type=Path, default=default_root())
     measure = commands.add_parser("measure", help="measure brand pages")
     measure.add_argument("slug")
     measure.add_argument("--root", type=Path, default=default_root())
+
+
+def _reconcile(brand: Path) -> int:
+    from docla.brand.measure import MEASURE
+    from docla.brand.reconcile import TEMPLATES, reconcile
+    from docla.brand.tokenmap import TOKEN_CLAIMS
+
+    if not any((brand / path).exists() for path in (MEASURE, TEMPLATES, TOKEN_CLAIMS)):
+        raise BrandError("Run docla brand tie, docla brand templates or docla brand measure first")
+    begin_change(brand, "reconcile")
+    result = reconcile(brand)
+    evidence = [
+        Evidence(
+            file=i.candidates[0].source.file or "theme/ingest/measure.json",
+            page=i.candidates[0].source.page,
+            quote=i.candidates[0].source.quote,
+        )
+        for i in result.values
+        if i.status == "conflict"
+    ]
+    record_change(
+        brand,
+        what="Reconcile the brand's sources",
+        why="Agreements settle values; conflicts become questions",
+        evidence=evidence or [Evidence(file="theme/ingest/reconcile.json")],
+        before=[],
+        after=[],
+        formats=["slides", "doc"],
+    )
+    counts = Counter(i.status for i in result.values)
+    for status in ("agreed", "single", "conflict", "proposed"):
+        print(f"{status}: {counts[status]}")
+    print(f"{len(result.proposed_rules)} proposed rules")
+    print(f"{len(open_questions(brand))} open questions")
+    return 0
 
 
 def _measure(brand: Path) -> int:
@@ -361,6 +399,8 @@ def run_brand(args: argparse.Namespace) -> int:
             return _templates(brand_path(args.slug, args.root))
         elif args.brand_command == "set":
             return _set(brand_path(args.slug, args.root), args)
+        elif args.brand_command == "reconcile":
+            return _reconcile(brand_path(args.slug, args.root))
         elif args.brand_command == "measure":
             return _measure(brand_path(args.slug, args.root))
         else:
