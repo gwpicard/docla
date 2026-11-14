@@ -79,7 +79,7 @@ def _fonts(facts: PageFacts) -> list[FontUse]:
 
 
 def _colours(facts: PageFacts) -> list[ColourUse]:
-    counts: Counter[tuple[str, str]] = Counter()
+    counts: Counter[tuple[Literal["text", "fill", "stroke"], str]] = Counter()
     counts.update(("text", word.colour) for word in facts.words if word.colour is not None)
     for shape in facts.shapes:
         if shape.fill is not None:
