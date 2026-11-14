@@ -4,6 +4,7 @@ import re
 from collections.abc import Collection, Sequence
 from decimal import Decimal, InvalidOperation, localcontext
 
+from docla.agents.gatherer import Fact
 from docla.checks.engine import CheckContext, make_finding
 from docla.model import Document, Finding, Provenance, Remedy, Rule, Section
 
@@ -43,7 +44,27 @@ def fact_tokens(section: Section) -> set[str]:
     return set().union(*(support_tokens(value) for value in _fields(section)))
 
 
-def _calculation(line: str, allowed: set[str]) -> str | None:
+def fact_number_tokens(fact: Fact) -> set[str]:
+    tokens = {token for token in support_tokens(fact.text) if NUMBER.fullmatch(token)}
+    if fact.value is not None:
+        value = format(fact.value, "f")
+        if "." in value:
+            value = value.rstrip("0").rstrip(".")
+        tokens.add(value)
+        if fact.kind == "percent":
+            tokens.add(value + "%")
+    return tokens
+
+
+def resolve_numbers(section: Section, facts: Sequence[Fact]) -> dict[str, list[str]]:
+    return {
+        token: sorted(fact.id for fact in facts if fact.id is not None and token in fact_number_tokens(fact))
+        for token in fact_tokens(section)
+        if NUMBER.fullmatch(token)
+    }
+
+
+def _calculation(line: str, allowed: set[str]) -> tuple[str, list[str]] | None:
     match = CALC.fullmatch(line)
     if not match:
         return None
@@ -72,25 +93,50 @@ def _calculation(line: str, allowed: set[str]) -> str | None:
                     value *= 100
             places = len(result.rstrip("%").partition(".")[2])
             if value.quantize(Decimal(1).scaleb(-places)) == expected:
-                return result
+                return result, operands
     except (InvalidOperation, ZeroDivisionError):
         pass
     return None
 
 
 class FactGuard:
-    def __init__(self, evidence: Sequence[str], citation_keys: Collection[str] | None = None):
+    def __init__(
+        self,
+        evidence: Sequence[str],
+        citation_keys: Collection[str] | None = None,
+        *,
+        facts: Sequence[Fact] = (),
+        numbers_from_facts: bool = False,
+    ):
         self.allowed = set().union(*(support_tokens(text) for text in evidence))
+        for fact in facts:
+            self.allowed.update(support_tokens(fact.text), fact_number_tokens(fact))
+        self.facts = facts
+        self.numbers_from_facts = numbers_from_facts
         self.citation_keys = citation_keys
         self.unsupported: list[str] = []
+        self.resolved: dict[str, list[str]] = {}
 
     def __call__(self, doc: Document, section: Section) -> bool:
-        derived = {
-            result
+        calculations = [
+            calculation
             for line in (section.note or "").splitlines()
-            if (result := _calculation(line, self.allowed)) is not None
-        }
+            if (calculation := _calculation(line, self.allowed)) is not None
+        ]
+        derived = {result for result, _ in calculations}
+        self.resolved = resolve_numbers(section, self.facts)
+        for result, operands in calculations:
+            if result in self.resolved and not self.resolved[result]:
+                self.resolved[result] = sorted(
+                    {
+                        fact.id
+                        for fact in self.facts
+                        if fact.id is not None and any(operand in fact_number_tokens(fact) for operand in operands)
+                    }
+                )
         unsupported = fact_tokens(section) - self.allowed - derived
+        if self.numbers_from_facts:
+            unsupported.update(token for token, ids in self.resolved.items() if not ids)
         if self.citation_keys is not None:
             unsupported.update(
                 f"cite:{citation.key}"

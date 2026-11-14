@@ -15,7 +15,7 @@ from pydantic import TypeAdapter
 from docla.agents.cassette import Cassette, Transport
 from docla.agents.client import AnthropicTransport, CassetteTransport, Claude
 from docla.agents.critic import CriticImage, calibrate, corroborate
-from docla.agents.gatherer import Fact, gather
+from docla.agents.gatherer import Fact, gather, with_fact_ids
 from docla.agents.ledger import BudgetExceeded
 from docla.agents.planner import outline_to_document, plan
 from docla.agents.prompts import ROLES
@@ -181,10 +181,12 @@ def claude_agents(claude: Any, theme: Any, *, config: ProjectConfig | None = Non
 
 
 async def _facts(project: Any, run_dir: Any, agents: Any) -> Any:
+    from docla.tables import typed_table_facts
+
     path = run_dir / "facts.json"
     if path.exists():
-        return TypeAdapter(list[Fact]).validate_json(path.read_text())
-    facts = await agents.gather(extract(project))
+        return with_fact_ids(typed_table_facts(TypeAdapter(list[Fact]).validate_json(path.read_text()), project))
+    facts = with_fact_ids(typed_table_facts(await agents.gather(extract(project)), project))
     run_dir.mkdir(parents=True, exist_ok=True)
     path.write_bytes(TypeAdapter(list[Fact]).dump_json(facts, indent=2))
     return facts
@@ -199,8 +201,10 @@ def _outline_output(file: Any, doc: Any, questions: Any = ()) -> None:
 
 
 async def _make_outline(file: Any, doc: Any, agents: Any, run_dir: Any, ids: Any) -> None:
+    from docla.tables import typed_table_facts
+
     extracted = extract(file.parent)
-    facts = await agents.gather(extracted)
+    facts = with_fact_ids(typed_table_facts(await agents.gather(extracted), file.parent))
     run_dir.mkdir(parents=True, exist_ok=True)
     (run_dir / "facts.json").write_bytes(TypeAdapter(list[Fact]).dump_json(facts, indent=2))
     front = {**doc.front, "format": doc.format}
@@ -265,7 +269,8 @@ async def run_write(
             run_dir,
             agents.writer(facts, doc),
             assets=assets,
-            fact_guard=FactGuard(evidence, {s.key for s in doc.sources}),
+            fact_guard=FactGuard(evidence, {s.key for s in doc.sources}, facts=facts),
+            source_facts=facts,
             micro_attempts=config.loop.micro_attempts,
             best_of_n=partial(best_of_n, n=config.loop.best_of_n),
             heal_log=HealLog(run_dir),
