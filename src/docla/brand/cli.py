@@ -3,7 +3,9 @@
 import argparse
 import asyncio
 import re
+import shutil
 import sys
+import tempfile
 from collections import Counter
 from pathlib import Path
 from typing import Any
@@ -76,6 +78,42 @@ def add_brand_commands(subparsers: Any) -> None:
     measure = commands.add_parser("measure", help="measure brand pages")
     measure.add_argument("slug")
     measure.add_argument("--root", type=Path, default=default_root())
+    synthesise = commands.add_parser("synthesise", help="synthesise brand tokens")
+    synthesise.add_argument("slug")
+    synthesise.add_argument("--root", type=Path, default=default_root())
+
+
+def _synthesise(brand: Path) -> int:
+    from docla.brand.reconcile import load_reconciliation
+    from docla.brand.synth_tokens import synthesise_tokens
+
+    with tempfile.TemporaryDirectory() as directory:
+        temporary = Path(directory)
+        shutil.copytree(brand / "theme", temporary / "theme")
+        synthesise_tokens(temporary)
+    reconciliation = load_reconciliation(brand)
+    begin_change(brand, "synthesise")
+    result = synthesise_tokens(brand)
+    evidence: dict[tuple[str, int | None], Evidence] = {}
+    for item in reconciliation.values:
+        source = item.provenance.source
+        for file in ([source.file] if source.file else []) + source.files:
+            evidence.setdefault((file, source.page), Evidence(file=file, page=source.page, quote=source.quote))
+    record_change(
+        brand,
+        what="Synthesise the brand theme",
+        why="Tokens come from the reconciled sources, each with its label",
+        evidence=list(evidence.values()),
+        before=[],
+        after=[],
+        formats=["slides", "doc"],
+    )
+    for label, count in result.labels.items():
+        print(f"{label}: {count}")
+    for path in result.inferred:
+        print(path)
+    print(f"{len(open_questions(brand))} open questions")
+    return 0
 
 
 def _reconcile(brand: Path) -> int:
@@ -403,6 +441,8 @@ def run_brand(args: argparse.Namespace) -> int:
             return _reconcile(brand_path(args.slug, args.root))
         elif args.brand_command == "measure":
             return _measure(brand_path(args.slug, args.root))
+        elif args.brand_command == "synthesise":
+            return _synthesise(brand_path(args.slug, args.root))
         else:
             records = change_log(brand_path(args.slug, args.root))
             for record in records:
