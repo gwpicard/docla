@@ -31,9 +31,16 @@ def _write_atomic(path: Path, text: str) -> None:
         raise
 
 
-def _append_log(oplog: Path, path: Path, patch: Patch, rev: int, before: Document, *, field_edit: bool = False) -> None:
-    inverse_patch = patch.model_copy(update={"author": "human"}) if field_edit else patch
-    inverse = inverse_ops(before, inverse_patch)
+def _append_log(
+    oplog: Path,
+    path: Path,
+    patch: Patch,
+    rev: int,
+    before: Document,
+    *,
+    kept: Mapping[str, Collection[str]] | None = None,
+) -> None:
+    inverse = inverse_ops(before, patch, kept=kept)
     entry = {
         "rev": rev,
         "author": patch.author,
@@ -72,7 +79,7 @@ def apply_to_file(
     result = apply_patch(stamped, patch, fact_guard, kept=kept)
     ids.save()
     _write_atomic(path, serialise(result))
-    _append_log(oplog, path, patch, result.rev, stamped, field_edit=kept is not None)
+    _append_log(oplog, path, patch, result.rev, stamped, kept=kept)
     return result
 
 

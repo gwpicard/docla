@@ -183,7 +183,9 @@ def _move(sections: list[Section], index: int, op: PatchOp) -> list[Section]:
     return rest[: position + 1] + [moved] + rest[position + 1 :]
 
 
-def inverse_ops(before: Document, patch: Patch) -> list[PatchOp] | None:
+def inverse_ops(
+    before: Document, patch: Patch, *, kept: Mapping[str, Collection[str]] | None = None
+) -> list[PatchOp] | None:
     """Build inverse operations in reverse order against each intermediate state."""
     sections = [s.model_copy(deep=True) for s in before.sections]
     inverse: list[PatchOp] = []
@@ -213,7 +215,7 @@ def inverse_ops(before: Document, patch: Patch) -> list[PatchOp] | None:
         else:
             return None
         inverse = undo + inverse
-        sections = _apply_op(before, sections, op, None, patch.author)
+        sections = _apply_op(before, sections, op, None, patch.author, kept)
     return inverse
 
 
