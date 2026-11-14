@@ -66,18 +66,36 @@ def _brand(tmp_path):
     theme = brand / "theme"
     shutil.rmtree(theme)
     shutil.copytree(Path(docla.__file__).resolve().parent / "themes/neutral", theme)
+    info = yaml.safe_load((theme / "theme.yaml").read_text())
+    info["labelled"] = True
+    (theme / "theme.yaml").write_text(yaml.safe_dump(info, sort_keys=False))
+    inferred = {"label": "inferred", "source": {"note": "Judged from the brand"}}
     provenance = {
         "tokens": {
-            "colour": {"label": "inferred"},
-            "type": {"label": "inferred"},
+            "colour.roles": inferred,
+            "colour.chart": inferred,
+            "colour.usage": inferred,
+            "colour.contrast_min": inferred,
+            "type.families": inferred,
+            "type.scale": inferred,
+            "pages.slides": {"label": "answered", "source": {"question": "q-1"}},
             "pages.doc": {
                 "label": "measured",
-                "source": {"file": "materials/guidelines/book.pdf", "page": 33, "quote": "Margins are 20 mm"},
+                "source": {
+                    "file": "materials/guidelines/book.pdf",
+                    "role": "guidelines",
+                    "page": 33,
+                    "quote": "Margins are 20 mm",
+                },
             },
-            "pages.slides": {"label": "answered", "source": {"question": "q-1"}},
-            "spacing": {"label": "inferred"},
-            "imagery": {"label": "inferred"},
-        }
+            "spacing.unit": inferred,
+            "spacing.scale": inferred,
+            "imagery.min_dpi": inferred,
+        },
+        "rubric": {
+            item["id"]: inferred
+            for item in yaml.safe_load((theme / "rubric/visual.yaml").read_text())["items"]
+        },
     }
     (theme / "provenance.yaml").write_text(yaml.safe_dump(provenance, sort_keys=False))
     source = {
