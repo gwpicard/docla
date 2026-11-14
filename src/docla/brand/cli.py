@@ -14,10 +14,12 @@ from docla.brand.fonts import check_fonts, font_paths, install_fonts, write_repo
 from docla.brand.gaps import check_gaps
 from docla.brand.git import GitError, run_git
 from docla.brand.intake import MANIFEST, material_files, take_in
+from docla.brand.measure import _collect, measure_brand
 from docla.brand.pages import load_manifest, parse_pdfs
 from docla.brand.questions import add_questions, open_questions
 from docla.brand.segment import load_topics, segment_needed, segment_pages, topic_groups
 from docla.brand.workspace import MATERIAL_CLASSES, BrandError, brand_path, default_root, init_brand
+from docla.facts.pdf import PdfPlumberFacts
 
 
 def add_brand_commands(subparsers: Any) -> None:
@@ -50,6 +52,36 @@ def add_brand_commands(subparsers: Any) -> None:
     templates = commands.add_parser("templates", help="read PowerPoint templates")
     templates.add_argument("slug")
     templates.add_argument("--root", type=Path, default=default_root())
+    measure = commands.add_parser("measure", help="measure brand pages")
+    measure.add_argument("slug")
+    measure.add_argument("--root", type=Path, default=default_root())
+
+
+def _measure(brand: Path) -> int:
+    if not _collect(brand, None, PdfPlumberFacts()).sets:
+        print("no pages measured")
+        return 2
+    begin_change(brand, "measure")
+    result = measure_brand(brand)
+    counts = Counter(page.file for item in result.sets for page in item.pages)
+    record_change(
+        brand,
+        what="Measure the brand's pages",
+        why="Measured values are compared with what the guidelines state",
+        evidence=[Evidence(file=file, note=f"{count} pages measured") for file, count in counts.items()],
+        before=[],
+        after=[],
+        formats=sorted({item.format for item in result.sets}),
+    )
+    for item in result.sets:
+        margins = "/".join(f"{item.margin[side].value:g}" for side in ("top", "right", "bottom", "left"))
+        print(
+            f"{item.kind}  {item.format}  {len(item.pages)} pages  margins {margins} pt"
+            f"  body {item.body_size.value:g} pt"
+        )
+    for page in result.skipped:
+        print(f"{page.file}  page {page.page}  skipped: {page.reason}")
+    return 0
 
 
 def _extract(brand: Path) -> int:
@@ -241,6 +273,8 @@ def run_brand(args: argparse.Namespace) -> int:
             return _gaps(brand_path(args.slug, args.root))
         elif args.brand_command == "templates":
             return _templates(brand_path(args.slug, args.root))
+        elif args.brand_command == "measure":
+            return _measure(brand_path(args.slug, args.root))
         else:
             records = change_log(brand_path(args.slug, args.root))
             for record in records:
