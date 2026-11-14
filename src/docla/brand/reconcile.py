@@ -167,6 +167,7 @@ def _measure_candidates(item: MeasureSet, scale: float, existing: set[str]) -> l
 def _agrees(path: str, winner: Candidate, other: Candidate) -> bool:
     a, b = winner.value, other.value
     if path.startswith("type.families."):
+
         def normal(x: float | int | str) -> str:
             return re.sub(r"[^a-z0-9]", "", str(x).lower())
 
@@ -191,7 +192,10 @@ def _evidence(brand: Path, candidates: list[Candidate]) -> list[QuestionSource]:
         for file in [c.source.file] if c.source.file else c.source.files:
             result.append(
                 QuestionSource(
-                    file=file, page=c.source.page, quote=c.source.quote, crop=crops.get((file, c.source.page))
+                    file=file,
+                    page=c.source.page,
+                    quote=c.source.quote,
+                    crop=crops.get((file, c.source.page)) if c.source.page is not None else None,
                 )
             )
     return result
@@ -203,7 +207,7 @@ def _label(path: str, c: Candidate) -> str:
         if (path.startswith("pages.") and not path.endswith(".columns")) or path.endswith((".size", ".min_size"))
         else ""
     )
-    details = c.origin
+    details: str = c.origin
     if c.source.page is not None:
         details += f", page {c.source.page}"
     if c.source.note and c.source.note.startswith("measured over "):
@@ -261,7 +265,7 @@ def _rules(item: MeasureSet) -> list[ProposedRule]:
     if item.kind != "examples" or len(titles) < 3:
         return []
     n = max(len(t.split()) for t in titles)
-    common = {"format": item.format, "files": sorted({t.file for t in item.titles}), "titles": titles}
+    files = sorted({t.file for t in item.titles})
     result = [
         ProposedRule(
             id=f"brand.{item.format}.title-words",
@@ -272,7 +276,9 @@ def _rules(item: MeasureSet) -> list[ProposedRule]:
                 "regex": rf"^\s*\S+(?:\s+\S+){{0,{n - 1}}}\s*$",
                 "must_match": True,
             },
-            **common,
+            format=item.format,
+            files=files,
+            titles=titles,
         )
     ]
     if all(not t.rstrip().endswith(".") for t in titles):
@@ -281,7 +287,9 @@ def _rules(item: MeasureSet) -> list[ProposedRule]:
                 id=f"brand.{item.format}.title-no-full-stop",
                 title="Titles have no full stop",
                 check={"kind": "text-pattern", "field": "title", "regex": r"\.\s*$", "must_match": False},
-                **common,
+                format=item.format,
+                files=files,
+                titles=titles,
             )
         )
     return result
@@ -323,11 +331,11 @@ def reconcile(brand: Path) -> Reconciliation:
         )
         for path, candidate in _measure_candidates(item, scale, existing):
             add(path, candidate)
-    values = []
+    values: list[Settled] = []
     questions: list[BrandQuestion] = []
     for path, candidates in sorted(grouped.items()):
         winner = candidates[0]
-        status = (
+        status: Literal["agreed", "single", "conflict", "proposed"] = (
             ("proposed" if winner.origin == "examples" else "single")
             if len(candidates) == 1
             else ("agreed" if all(_agrees(path, winner, c) for c in candidates[1:]) else "conflict")
@@ -338,7 +346,7 @@ def reconcile(brand: Path) -> Reconciliation:
             for b in candidates
             if a.origin == "guidelines" and b.origin == "template"
         )
-        item = Settled(
+        settled = Settled(
             path=path,
             format=path_format(path),
             status=status,
@@ -348,26 +356,26 @@ def reconcile(brand: Path) -> Reconciliation:
             drift=drift,
         )
         if status in ("conflict", "proposed"):
-            question = _value_question(brand, item)
-            item.question = question.id
+            question = _value_question(brand, settled)
+            settled.question = question.id
             questions.append(question)
-        values.append(item)
+        values.append(settled)
     if (brand / CLAIMS).exists():
-        for claim in load_claims(brand).claims:
-            if claim.kind == "ambiguity":
+        for ambiguity in load_claims(brand).claims:
+            if ambiguity.kind == "ambiguity":
                 candidates = [
                     Candidate(
-                        value=claim.statement,
+                        value=ambiguity.statement,
                         origin="guidelines",
                         source=ValueSource(file=s.file, page=s.page, quote=s.quote, role="guidelines"),
                     )
-                    for s in claim.sources
+                    for s in ambiguity.sources
                 ]
                 questions.append(
                     BrandQuestion(
-                        id=f"ambiguity.{claim.id}",
+                        id=f"ambiguity.{ambiguity.id}",
                         kind="conflict",
-                        text=claim.statement,
+                        text=ambiguity.statement,
                         blocking=True,
                         evidence=_evidence(brand, candidates),
                     )
@@ -394,9 +402,9 @@ def reconcile(brand: Path) -> Reconciliation:
         )
     add_questions(brand, questions)
     result = Reconciliation(values=values, proposed_rules=rules, questions=[q.id for q in questions])
-    path = brand / RECONCILE
-    path.parent.mkdir(parents=True, exist_ok=True)
-    path.write_text(result.model_dump_json(indent=2) + "\n", encoding="utf-8")
+    output = brand / RECONCILE
+    output.parent.mkdir(parents=True, exist_ok=True)
+    output.write_text(result.model_dump_json(indent=2) + "\n", encoding="utf-8")
     return result
 
 

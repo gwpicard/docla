@@ -79,7 +79,9 @@ def add_brand_commands(subparsers: Any) -> None:
 
 
 def _reconcile(brand: Path) -> int:
-    from docla.brand.reconcile import MEASURE, TEMPLATES, TOKEN_CLAIMS, reconcile
+    from docla.brand.measure import MEASURE
+    from docla.brand.reconcile import TEMPLATES, reconcile
+    from docla.brand.tokenmap import TOKEN_CLAIMS
 
     if not any((brand / path).exists() for path in (MEASURE, TEMPLATES, TOKEN_CLAIMS)):
         raise BrandError("Run docla brand tie, docla brand templates or docla brand measure first")
