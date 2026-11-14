@@ -2,14 +2,18 @@
 
 import argparse
 import asyncio
+import re
 import sys
 from collections import Counter
 from pathlib import Path
 from typing import Any
 
+import yaml  # type: ignore[import-untyped]
+
 from docla.brand import agents
 from docla.brand.changes import Evidence, begin_change, change_log, record_change
 from docla.brand.claims import extract_claims
+from docla.brand.departures import _proposal, set_token
 from docla.brand.fonts import check_fonts, font_paths, install_fonts, write_report
 from docla.brand.gaps import check_gaps
 from docla.brand.git import GitError, run_git
@@ -20,11 +24,20 @@ from docla.brand.questions import add_questions, open_questions
 from docla.brand.segment import load_topics, segment_needed, segment_pages, topic_groups
 from docla.brand.workspace import MATERIAL_CLASSES, BrandError, brand_path, default_root, init_brand
 from docla.facts.pdf import PdfPlumberFacts
+from docla.theme import ThemeError
+from docla.theme.labels import ValueProvenance, ValueSource
 
 
 def add_brand_commands(subparsers: Any) -> None:
     brand = subparsers.add_parser("brand", help="work with brands")
     commands = brand.add_subparsers(dest="brand_command", required=True)
+    set_parser = commands.add_parser("set", help="change a theme token")
+    set_parser.add_argument("slug")
+    set_parser.add_argument("path")
+    set_parser.add_argument("value")
+    set_parser.add_argument("--reason", required=True)
+    set_parser.add_argument("--approve", action="store_true")
+    set_parser.add_argument("--root", type=Path, default=default_root())
     init = commands.add_parser("init", help="initialise a brand")
     init.add_argument("slug")
     init.add_argument("--root", type=Path, default=default_root())
@@ -255,6 +268,44 @@ def _intake(brand: Path) -> int:
     return 0
 
 
+def _set(brand: Path, args: argparse.Namespace) -> int:
+    value = yaml.safe_load(args.value)
+    proposal = _proposal(brand, args.path, value, args.reason)
+    if proposal and not args.approve:
+        source = proposal.source.source
+        print(f"{proposal.path}: {proposal.source_value} -> {proposal.value}")
+        print(f"Source: {source.file or ', '.join(source.files)} page {source.page}")
+        print("not recorded: departs from the brand's sources; add --approve to record it")
+        return 2
+    if proposal and not args.reason.strip():
+        raise BrandError(f"A reason is required for departure: {args.path}")
+    begin_change(brand, "set-" + re.sub(r"[^a-z0-9]+", "-", args.path.lower()).strip("-")[:36])
+    departure = set_token(
+        brand,
+        args.path,
+        value,
+        provenance=ValueProvenance(label="answered", source=ValueSource(question="cli", note=args.reason)),
+        reason=args.reason,
+        person="owner",
+        approved=args.approve,
+    )
+    evidence = [Evidence(file="theme/tokens.yaml", note=args.path)]
+    if departure:
+        source = departure.source.source
+        files = ([source.file] if source.file else []) + source.files
+        evidence.extend(Evidence(file=file, page=source.page) for file in files)
+    record_change(
+        brand,
+        what=f"Set {args.path} to {value}",
+        why=args.reason,
+        evidence=evidence,
+        before=[],
+        after=[],
+        formats=[departure.format] if departure and departure.format else ["slides", "doc"],
+    )
+    return 0
+
+
 def run_brand(args: argparse.Namespace) -> int:
     try:
         if args.brand_command == "init":
@@ -273,6 +324,8 @@ def run_brand(args: argparse.Namespace) -> int:
             return _gaps(brand_path(args.slug, args.root))
         elif args.brand_command == "templates":
             return _templates(brand_path(args.slug, args.root))
+        elif args.brand_command == "set":
+            return _set(brand_path(args.slug, args.root), args)
         elif args.brand_command == "measure":
             return _measure(brand_path(args.slug, args.root))
         else:
@@ -281,7 +334,7 @@ def run_brand(args: argparse.Namespace) -> int:
                 print(f"{record.id}  {record.created[:10]}  {record.what}")
             if not records:
                 print("no changes")
-    except (BrandError, GitError) as error:
+    except (BrandError, GitError, ThemeError, yaml.YAMLError) as error:
         print(error, file=sys.stderr)
         return 2
     return 0
