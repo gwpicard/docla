@@ -1,5 +1,6 @@
 """Index PDF pages and their reproducible visual evidence."""
 
+import hashlib
 import re
 import shutil
 from collections import Counter
@@ -92,19 +93,20 @@ def _colours(facts: PageFacts) -> list[ColourUse]:
     ]
 
 
-def _parse_file(brand: Path, entry: MaterialEntry) -> list[PageEntry]:
+def _parse_file(brand: Path, entry: MaterialEntry, key: str) -> list[PageEntry]:
     path = brand / entry.path
+    digest = hashlib.sha256(path.read_bytes()).hexdigest()
     facts = PdfPlumberFacts().extract(path)
     with pdfplumber.open(path) as pdf:
         texts = [page.extract_text() or "" for page in pdf.pages]
-    folder = brand / WORK / "pages" / material_key(entry.path)
+    folder = brand / WORK / "pages" / key
     if folder.exists():
         shutil.rmtree(folder)
     images = PdfiumRasteriser().render(path, folder, scale=PAGE_SCALE)
     return [
         PageEntry(
             file=entry.path,
-            sha256=entry.sha256,
+            sha256=digest,
             role=entry.role,
             page=page.page,
             format="slides" if page.width > page.height else "doc",
@@ -134,10 +136,16 @@ def parse_pdfs(brand: Path) -> PageIndex:
     manifest = load_manifest(brand)
     pages: list[PageEntry] = []
     skipped: list[SkippedFile] = []
+    used: set[str] = set()
     for entry in manifest.files:
         if entry.type == "pdf" and entry.unread is None:
+            key = material_key(entry.path)
+            if key in used:
+                # Two paths that differ only in punctuation share a key; keep their renders apart.
+                key = f"{key}-{hashlib.sha256(entry.path.encode()).hexdigest()[:8]}"
+            used.add(key)
             try:
-                pages.extend(_parse_file(brand, entry))
+                pages.extend(_parse_file(brand, entry, key))
             except Exception as error:
                 skipped.append(SkippedFile(file=entry.path, reason=str(error)))
     index = PageIndex(pages=sorted(pages, key=lambda page: (page.file, page.page)), skipped=skipped)
