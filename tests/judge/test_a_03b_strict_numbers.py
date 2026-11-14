@@ -38,7 +38,7 @@ def workbook(path):
 
 def facts_for(path):
     assert hasattr(gatherer, "with_fact_ids"), "with_fact_ids must exist"
-    facts = gatherer.with_fact_ids(table_facts(path, "S1"))
+    facts = gatherer.with_fact_ids(table_facts(path, "S1", typed=True))
     assert len(facts) == 1 and facts[0].id is not None
     return facts
 
@@ -138,7 +138,7 @@ title: Readout
 
     class FakeAgents:
         async def gather(self, extracted):
-            return table_facts(path, "S1")
+            return table_facts(path, "S1", typed=True)
 
         async def outline(self, facts, doctype, front, store):
             raise AssertionError("an approved outline must not be regenerated")
