@@ -1,11 +1,13 @@
 """Command line interface for brands."""
 
 import argparse
+import asyncio
 import sys
 from collections import Counter
 from pathlib import Path
 from typing import Any
 
+from docla.brand import agents
 from docla.brand.changes import Evidence, begin_change, change_log, record_change
 from docla.brand.fonts import check_fonts, font_paths, install_fonts, write_report
 from docla.brand.gaps import check_gaps
@@ -13,6 +15,7 @@ from docla.brand.git import GitError, run_git
 from docla.brand.intake import MANIFEST, material_files, take_in
 from docla.brand.pages import load_manifest, parse_pdfs
 from docla.brand.questions import add_questions, open_questions
+from docla.brand.segment import segment_needed, segment_pages, topic_groups
 from docla.brand.workspace import MATERIAL_CLASSES, BrandError, brand_path, default_root, init_brand
 
 
@@ -31,6 +34,9 @@ def add_brand_commands(subparsers: Any) -> None:
     parse = commands.add_parser("parse", help="index PDF pages")
     parse.add_argument("slug")
     parse.add_argument("--root", type=Path, default=default_root())
+    segment = commands.add_parser("segment", help="sort guideline pages into topics")
+    segment.add_argument("slug")
+    segment.add_argument("--root", type=Path, default=default_root())
     fonts = commands.add_parser("fonts", help="check brand fonts")
     fonts.add_argument("slug")
     fonts.add_argument("--root", type=Path, default=default_root())
@@ -40,6 +46,29 @@ def add_brand_commands(subparsers: Any) -> None:
     templates = commands.add_parser("templates", help="read PowerPoint templates")
     templates.add_argument("slug")
     templates.add_argument("--root", type=Path, default=default_root())
+
+
+def _segment(brand: Path) -> int:
+    if not segment_needed(brand):
+        print("topics up to date")
+        return 0
+    begin_change(brand, "segment")
+    topics = asyncio.run(segment_pages(brand, agents.brand_claude(brand)))
+    record_change(
+        brand,
+        what="Sort the guidelines' pages into topics",
+        why="Extraction reads each topic's pages together",
+        evidence=[
+            Evidence(file=entry.file, note=f"{len(entry.pages) + len(entry.missing)} pages") for entry in topics.files
+        ],
+        before=[],
+        after=[],
+        formats=["slides", "doc"],
+    )
+    for topic, pages in topic_groups(topics).items():
+        print(f"{topic}  {len(pages)} pages")
+    print(f"{sum(len(entry.missing) for entry in topics.files)} pages without a topic")
+    return 0
 
 
 def _templates(brand: Path) -> int:
@@ -178,6 +207,8 @@ def run_brand(args: argparse.Namespace) -> int:
             return _intake(brand_path(args.slug, args.root))
         elif args.brand_command == "parse":
             return _parse(brand_path(args.slug, args.root))
+        elif args.brand_command == "segment":
+            return _segment(brand_path(args.slug, args.root))
         elif args.brand_command == "fonts":
             return _fonts(brand_path(args.slug, args.root))
         elif args.brand_command == "gaps":
