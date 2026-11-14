@@ -1,9 +1,11 @@
 """Gather facts from source spans cited by Claude."""
 
 import base64
+import hashlib
 import re
-from collections.abc import Iterator
-from typing import Any
+from collections.abc import Iterator, Sequence
+from decimal import Decimal
+from typing import Any, Literal
 
 from pydantic import BaseModel
 
@@ -19,6 +21,19 @@ class Fact(BaseModel):
     text: str
     source_key: str
     locator: str | None = None
+    id: str | None = None
+    kind: Literal["number", "percent", "currency", "date", "text"] = "text"
+    value: Decimal | None = None
+    unit: str | None = None
+
+
+def fact_id(fact: Fact) -> str:
+    content = f"{fact.source_key}\x1f{fact.locator or ''}\x1f{fact.text}"
+    return "F" + hashlib.sha256(content.encode("utf-8")).hexdigest()[:10]
+
+
+def with_fact_ids(facts: Sequence[Fact]) -> list[Fact]:
+    return [fact.model_copy(update={"id": fact.id if fact.id is not None else fact_id(fact)}) for fact in facts]
 
 
 def _chunks(source: Extracted) -> Iterator[tuple[int, dict[str, Any]]]:

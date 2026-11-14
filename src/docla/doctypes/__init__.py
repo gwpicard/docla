@@ -5,7 +5,8 @@ import yaml  # type: ignore[import-untyped]
 from pydantic import BaseModel, ConfigDict, Field, ValidationError, model_validator
 
 from docla.model import Document, Format
-from docla.render.chooser import Chooser
+from docla.render.chooser import Chooser, load_chooser
+from docla.render.components import all_manifests
 from docla.render.compose import default_chooser
 
 ANY_INTENT = "any"
@@ -144,3 +145,47 @@ def load_doctypes() -> dict[str, Doctype]:
     """Load every packaged doctype, keyed by name."""
     loaded = (load_doctype(path) for path in sorted(packaged_dir().glob("*.yaml")))
     return {doctype.name: doctype for doctype in loaded}
+
+
+def library_dir() -> Path:
+    return packaged_dir() / "library"
+
+
+def load_library_doctypes(chooser: Chooser | None = None) -> dict[str, Doctype]:
+    packaged = load_doctypes()
+    result: dict[str, Doctype] = {}
+    for path in sorted(library_dir().glob("*.yaml")):
+        doctype = load_doctype(path, chooser)
+        if doctype.name in packaged:
+            raise DoctypeError(f"{path.name}: duplicates a top-level packaged doctype")
+        result[doctype.name] = doctype
+    return result
+
+
+def packaged_doctypes(chooser: Chooser | None = None) -> dict[str, Doctype]:
+    return {**load_doctypes(), **load_library_doctypes(chooser)}
+
+
+def theme_doctypes_dir(theme_root: Path) -> Path:
+    return theme_root / "doctypes"
+
+
+def theme_chooser(theme_root: Path) -> Chooser:
+    path = theme_root / "chooser.yaml"
+    return load_chooser(path, manifests=all_manifests()) if path.exists() else default_chooser()
+
+
+def load_brand_doctypes(theme_root: Path, chooser: Chooser | None = None) -> dict[str, Doctype]:
+    paths = sorted(theme_doctypes_dir(theme_root).glob("*.yaml"))
+    if not paths:
+        return {}
+    selected = chooser or theme_chooser(theme_root)
+    loaded = (load_doctype(path, selected) for path in paths)
+    return {doctype.name: doctype for doctype in loaded}
+
+
+def doctypes_for(theme_root: Path | None = None, chooser: Chooser | None = None) -> dict[str, Doctype]:
+    result = packaged_doctypes()
+    if theme_root is not None:
+        result.update(load_brand_doctypes(theme_root, chooser))
+    return result
