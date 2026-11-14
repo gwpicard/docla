@@ -5,7 +5,7 @@ from __future__ import annotations
 import asyncio
 import copy
 import hashlib
-from collections.abc import Awaitable, Callable
+from collections.abc import Awaitable, Callable, Sequence
 from dataclasses import dataclass, field
 from difflib import SequenceMatcher
 from pathlib import Path
@@ -23,6 +23,7 @@ from docla.source.patches import FactGuard, PatchRejected, apply_patch
 from docla.theme import Theme
 
 if TYPE_CHECKING:
+    from docla.agents.gatherer import Fact
     from docla.loop.heal_log import HealLog
 
 
@@ -68,6 +69,7 @@ class LoopContext:
     rules: list[Rule] = field(default_factory=all_rules)
     assets: list[Path] | None = None
     fact_guard: FactGuard | None = None
+    source_facts: Sequence[Fact] | None = None
     micro_attempts: int = 3
     best_of_n: BestOfN | None = None
     blocking_severities: frozenset[str] = frozenset({"error"})
@@ -120,11 +122,14 @@ async def evaluate(
             composition=compose(doc, assets=ctx.assets),
             final=ctx.final,
             assets=ctx.assets,
+            source_facts=ctx.source_facts,
         )
     except (ComposeError, TypstError) as exc:
         error = str(exc)
         render = None
-        check_ctx = CheckContext(doc, theme=ctx.theme, final=ctx.final, assets=ctx.assets)
+        check_ctx = CheckContext(
+            doc, theme=ctx.theme, final=ctx.final, assets=ctx.assets, source_facts=ctx.source_facts
+        )
     rules = micro_rules(ctx.rules)
     findings = [
         finding for tier in TIERS for finding in run_checks([rule for rule in rules if rule.tier == tier], check_ctx)

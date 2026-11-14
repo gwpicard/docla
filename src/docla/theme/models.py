@@ -33,6 +33,7 @@ def to_colour(value: str) -> str:
 
 
 class ThemeInfo(BaseModel):
+    labelled: bool = False
     name: str
     version: str
     formats: list[Format]
