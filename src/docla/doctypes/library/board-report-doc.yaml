@@ -1,0 +1,63 @@
+name: board-report-doc
+format: doc
+audience: 'The board: directors who approve funding and hold management to account'
+length: {pages: [4, 20]}
+default_length: 8
+twin: board-report
+required_fields:
+  - key: author
+    label: Author
+    ask: Who is named as the author on the cover?
+  - key: date
+    label: Date
+    ask: Which date goes on the cover?
+questions:
+  - key: period
+    ask: Which period does the report cover?
+  - key: comparison
+    ask: 'Which comparison comes first: budget, the previous quarter or the previous year?'
+outline:
+  - section: cover
+    intent: body
+    required: true
+    layouts: [body]
+  - section: agenda
+    intent: callout
+    fill: summary
+    from: [performance, initiatives, profitability, risks]
+    layouts: [callout]
+  - section: summary
+    intent: callout
+    required: true
+    fill: summary
+    layouts: [callout]
+  - section: performance
+    intent: body
+    required: true
+    layouts: [body]
+  - section: initiatives
+    intent: body
+    repeat: [1, 8]
+    layouts: [body]
+  - section: profitability
+    intent: body
+    layouts: [body]
+  - section: risks
+    intent: body
+    layouts: [body]
+  - section: decisions
+    intent: callout
+    required: true
+    layouts: [callout]
+  - section: notice
+    intent: body
+    fill: fixed
+    layouts: [body]
+    text:
+      title: Confidential
+      paragraphs: ['Prepared for the board. Not for circulation.']
+checks: []
+checklist:
+  - Does the summary state the quarter's result in one line?
+  - Does every number in the report come from the data?
+  - Does the decisions section name the decision the board is asked to take?

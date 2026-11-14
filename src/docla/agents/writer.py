@@ -148,7 +148,8 @@ async def repair(
 
 def _fact_line(fact: Fact) -> str:
     key = fact.source_key if fact.locator is None else f"{fact.source_key} {fact.locator}"
-    return f'<source key="{key}">{fact.text}</source>'
+    prefix = f"{fact.id} " if fact.id is not None else ""
+    return prefix + f'<source key="{key}">{fact.text}</source>'
 
 
 async def draft(

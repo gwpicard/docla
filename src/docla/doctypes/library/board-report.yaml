@@ -1,0 +1,63 @@
+name: board-report
+format: slides
+audience: 'The board: directors who approve funding and hold management to account'
+length: {slides: [6, 20]}
+default_length: 12
+twin: board-report-doc
+required_fields:
+  - key: author
+    label: Author
+    ask: Who is named as the author on the cover?
+  - key: date
+    label: Date
+    ask: Which date goes on the cover?
+questions:
+  - key: period
+    ask: Which period does the report cover?
+  - key: comparison
+    ask: 'Which comparison comes first: budget, the previous quarter or the previous year?'
+outline:
+  - section: cover
+    intent: cover
+    required: true
+    layouts: [cover]
+  - section: agenda
+    intent: agenda
+    fill: summary
+    from: [performance, initiatives, profitability, risks]
+    layouts: [agenda]
+  - section: summary
+    intent: key-numbers
+    required: true
+    fill: summary
+    layouts: [key-figures, bullets]
+  - section: performance
+    intent: chart
+    required: true
+    layouts: [chart, bullets]
+  - section: initiatives
+    intent: any
+    repeat: [1, 8]
+    layouts: [key-figures, chart, comparison, table, bullets]
+  - section: profitability
+    intent: chart
+    layouts: [chart, bullets]
+  - section: risks
+    intent: bullets
+    layouts: [bullets]
+  - section: decisions
+    intent: statement
+    required: true
+    layouts: [statement]
+  - section: notice
+    intent: closing
+    fill: fixed
+    layouts: [closing]
+    text:
+      title: Confidential
+      paragraphs: ['Prepared for the board. Not for circulation.']
+checks: []
+checklist:
+  - Does the summary state the quarter's result in one line?
+  - Does every number on the slides come from the data?
+  - Does the last content slide name the decision the board is asked to take?
