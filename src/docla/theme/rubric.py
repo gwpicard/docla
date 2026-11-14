@@ -9,6 +9,7 @@ from pydantic import BaseModel, ConfigDict, Field, ValidationError, field_valida
 from docla.model import Format, Remedy
 from docla.model.rules import Severity
 from docla.theme import Theme, ThemeError
+from docla.theme.labels import load_provenance
 
 
 class RubricApplies(BaseModel):
@@ -105,6 +106,11 @@ def load_rubric(theme: Theme) -> Rubric:
         if len(rubric.ids()) != len(set(rubric.ids())):
             raise ValueError("duplicate rubric id")
         _check_examples(theme.root, rubric)
+        if theme.info.labelled:
+            provenance = load_provenance(theme)
+            for item in rubric.items:
+                if item.id not in provenance.rubric:
+                    raise ValueError(f"missing provenance for {item.id}")
         return rubric
     except (yaml.YAMLError, ValidationError, ValueError, OSError) as error:
         raise ThemeError(f"rubric/visual.yaml: {error}") from error

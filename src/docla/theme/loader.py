@@ -22,6 +22,10 @@ def load_theme(root: Path) -> Theme:
     _check_formats(info, tokens)
     theme = Theme(root=root, info=info, tokens=tokens)
     _check_fonts(theme)
+    if info.labelled:
+        from docla.theme.labels import check_token_labels
+
+        check_token_labels(theme)
     return theme
 
 
