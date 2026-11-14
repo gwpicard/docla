@@ -24,7 +24,7 @@ from docla.agents.summariser import summarise, summary_sources
 from docla.agents.writer import SectionJob, draft, draft_to_section, repair
 from docla.checks.catalogue import all_rules
 from docla.config import ProjectConfig, load_project_config
-from docla.doctypes import load_doctypes
+from docla.doctypes import Doctype, load_brand_doctypes, load_doctypes, load_library_doctypes
 from docla.loop.best_of import best_of_n
 from docla.loop.guards import NUMBER, FactGuard, support_tokens
 from docla.loop.heal_log import HealLog
@@ -41,6 +41,7 @@ from docla.source.parser import parse
 from docla.source.patches import TEXT_FIELDS
 from docla.source.serialiser import serialise
 from docla.sources import extract
+from docla.theme import Theme
 from docla.theme.brief import brief_card
 from docla.theme.rubric import load_calibration, load_rubric
 
@@ -200,7 +201,11 @@ def _outline_output(file: Any, doc: Any, questions: Any = ()) -> None:
     print(f"approve the outline with: docla write {file} --approve")
 
 
-async def _make_outline(file: Any, doc: Any, agents: Any, run_dir: Any, ids: Any) -> None:
+def _doctypes(theme: Theme) -> dict[str, Doctype]:
+    return {**load_doctypes(), **load_library_doctypes(), **load_brand_doctypes(theme.root)}
+
+
+async def _make_outline(file: Any, doc: Any, agents: Any, run_dir: Any, ids: Any, theme: Theme) -> None:
     from docla.tables import typed_table_facts
 
     extracted = extract(file.parent)
@@ -208,7 +213,7 @@ async def _make_outline(file: Any, doc: Any, agents: Any, run_dir: Any, ids: Any
     run_dir.mkdir(parents=True, exist_ok=True)
     (run_dir / "facts.json").write_bytes(TypeAdapter(list[Fact]).dump_json(facts, indent=2))
     front = {**doc.front, "format": doc.format}
-    doc, questions = await agents.outline(facts, load_doctypes()[front["doctype"]], front, ids)
+    doc, questions = await agents.outline(facts, _doctypes(theme)[front["doctype"]], front, ids)
     doc, _ = stamp(doc, ids)
     ids.save()
     doc.sources = [Source(key=s.key, text=s.name) for s in extracted]
@@ -261,7 +266,7 @@ async def run_write(
         if doc.sections:
             _outline_output(file, doc)
         else:
-            await _make_outline(file, doc, agents, run_dir, ids)
+            await _make_outline(file, doc, agents, run_dir, ids, theme)
         return 0
     if not doc.sections:
         print("no outline", file=sys.stderr)
@@ -289,7 +294,7 @@ async def run_write(
             spent=spent,
         )
         doctype_name = doc.front.get("doctype")
-        doctype = load_doctypes().get(doctype_name) if isinstance(doctype_name, str) else None
+        doctype = _doctypes(theme).get(doctype_name) if isinstance(doctype_name, str) else None
         summaries = summary_sources(doc, doctype) if doctype else {}
         semaphore = asyncio.Semaphore(config.loop.max_parallel_sections)
 

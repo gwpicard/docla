@@ -16,7 +16,7 @@ from docla.agents.ledger import Ledger
 from docla.agents.scheduler import Scheduler
 from docla.checks.catalogue import all_rules
 from docla.config import load_project_config
-from docla.doctypes import load_doctypes
+from docla.doctypes import doctypes_for
 from docla.loop.guards import FactGuard
 from docla.loop.heal_log import HealLog
 from docla.loop.macro import MacroContext, _job, build_document
@@ -146,7 +146,7 @@ async def build(doc: str, body: BuildBody, request: Request) -> dict[str, str]:
         writer = _DraftedWriter(snapshot, agents.writer(_facts(app.state.project, doc), snapshot))
         workdir = app.state.project / ".docla" / "render" / "jobs" / job_id
         name = snapshot.front.get("doctype")
-        doctype = load_doctypes().get(name) if isinstance(name, str) else None
+        doctype = doctypes_for(theme.root).get(name) if isinstance(name, str) else None
         progress({"stage": "building", "rev": snapshot.rev})
         version = await build_document(
             snapshot,
