@@ -34,7 +34,16 @@ def _interfaces(*names):
     return templates
 
 
+
+def _require_docx():
+    try:
+        import docx  # noqa: F401
+    except ImportError:
+        raise AssertionError("python-docx must be installed (B.05b adds it as a dependency)") from None
+
+
 def _report(path):
+    _require_docx()
     from docx import Document
     from docx.enum.style import WD_STYLE_TYPE
     from docx.oxml import OxmlElement
@@ -121,6 +130,7 @@ def test_D2_effective_named_styles(tmp_path):
 
 def test_D3_style_inheritance_cycle():
     module = _interfaces("resolve_style")
+    _require_docx()
     from docx.oxml import parse_xml
 
     styles = parse_xml(b'<w:styles xmlns:w="http://schemas.openxmlformats.org/wordprocessingml/2006/main">'
