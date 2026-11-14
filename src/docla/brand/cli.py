@@ -37,6 +37,35 @@ def add_brand_commands(subparsers: Any) -> None:
     gaps = commands.add_parser("gaps", help="check missing brand materials")
     gaps.add_argument("slug")
     gaps.add_argument("--root", type=Path, default=default_root())
+    templates = commands.add_parser("templates", help="read PowerPoint templates")
+    templates.add_argument("slug")
+    templates.add_argument("--root", type=Path, default=default_root())
+
+
+def _templates(brand: Path) -> int:
+    from docla.brand.templates import read_templates
+
+    manifest = load_manifest(brand)
+    if not any(e.type in ("pptx", "potx") and e.unread is None for e in manifest.files):
+        print("no readable PowerPoint templates")
+        return 2
+    begin_change(brand, "templates")
+    report = read_templates(brand)
+    if report.templates:
+        record_change(
+            brand,
+            what="Read the brand's templates",
+            why="Template values are measured, not guessed",
+            evidence=[Evidence(file=t.source, note=f"{len(t.layouts)} layouts") for t in report.templates],
+            before=[],
+            after=[],
+            formats=sorted({t.format for t in report.templates}),
+        )
+    for template in report.templates:
+        print(f"{template.source}  {template.format}  {len(template.layouts)} layouts  {len(template.colours)} colours")
+    for item in report.unread:
+        print(f"{item.file}  unread: {item.reason}")
+    return 0
 
 
 def _parse(brand: Path) -> int:
@@ -143,6 +172,8 @@ def run_brand(args: argparse.Namespace) -> int:
             return _fonts(brand_path(args.slug, args.root))
         elif args.brand_command == "gaps":
             return _gaps(brand_path(args.slug, args.root))
+        elif args.brand_command == "templates":
+            return _templates(brand_path(args.slug, args.root))
         else:
             records = change_log(brand_path(args.slug, args.root))
             for record in records:
