@@ -17,8 +17,8 @@ from docla.brand.departures import _proposal, set_token
 from docla.brand.fonts import check_fonts, font_paths, install_fonts, write_report
 from docla.brand.gaps import check_gaps
 from docla.brand.git import GitError, run_git
-from docla.brand.intake import MANIFEST, material_files, take_in
 from docla.brand.illustrative import illustrative_questions
+from docla.brand.intake import MANIFEST, material_files, take_in
 from docla.brand.measure import _collect, measure_brand
 from docla.brand.pages import load_manifest, parse_pdfs
 from docla.brand.questions import add_questions, drop_open_questions, load_questions, open_questions

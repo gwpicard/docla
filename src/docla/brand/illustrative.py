@@ -41,7 +41,7 @@ def mark_illustrative(claims: list[Claim], index: PageIndex) -> list[Claim]:
             reason = "shown"
         elif _image_only(claim, pages):
             reason = "image"
-        updates = {"illustrative": reason is not None, "illustrative_reason": reason}
+        updates: dict[str, object] = {"illustrative": reason is not None, "illustrative_reason": reason}
         if reason is not None:
             updates["strength"] = "soft"
         marked.append(claim.model_copy(update=updates))
@@ -61,7 +61,10 @@ def illustrative_questions(claims: list[Claim]) -> list[BrandQuestion]:
                 blocking=False,
                 source=QuestionSource(file=source.file, page=source.page, quote=source.quote),
                 format=claim.formats[0] if len(claim.formats) == 1 else None,
-                text=f'Page {source.page} of {source.file} shows: "{claim.statement}" Is this a rule, or only an example?',
+                text=(
+                    f'Page {source.page} of {source.file} shows: "{claim.statement}" '
+                    "Is this a rule, or only an example?"
+                ),
                 options=[
                     QuestionOption(id="rule", label="Make it a rule"),
                     QuestionOption(id="example", label="Only an example"),
