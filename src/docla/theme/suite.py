@@ -6,7 +6,7 @@ from pathlib import Path
 
 import yaml  # type: ignore[import-untyped]
 
-from docla.doctypes import DoctypeError, load_doctype, packaged_dir
+from docla.doctypes import DoctypeError, library_dir, load_doctype, packaged_dir, theme_doctypes_dir
 from docla.model import Document, Section
 from docla.render.chooser import Chooser, ChooserError, default_path, load_chooser
 from docla.render.components import all_manifests
@@ -34,10 +34,14 @@ def _chooser(theme: Theme) -> tuple[str, Chooser | None]:
     return "ok chooser", chooser
 
 
-def _doctypes(chooser: Chooser | None) -> str:
+def _doctypes(theme: Theme, chooser: Chooser | None) -> str:
     if chooser is None:
         return "fail doctypes: chooser did not load"
-    for path in sorted(packaged_dir().glob("*.yaml")):
+    for path in (
+        *sorted(packaged_dir().glob("*.yaml")),
+        *sorted(library_dir().glob("*.yaml")),
+        *sorted(theme_doctypes_dir(theme.root).glob("*.yaml")),
+    ):
         try:
             load_doctype(path, chooser)
         except DoctypeError as error:
@@ -90,7 +94,7 @@ def theme_test(theme: Theme, out: Path) -> list[str]:
     """Return the results of the theme suite in execution order."""
     rules = _rules(theme)
     chooser_line, chooser = _chooser(theme)
-    doctypes = _doctypes(chooser)
+    doctypes = _doctypes(theme, chooser)
     fixtures = _fixtures(theme, out)
     gold = _gold(theme, out) if rules == "ok rules" else "fail gold: rules did not load"
     lines = [rules, chooser_line, doctypes, fixtures, gold]

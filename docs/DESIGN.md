@@ -439,6 +439,7 @@ colour, font or margin constant.
 themes/acme/
   theme.yaml                 # identity, version, which doctypes/formats it supports
   tokens.yaml                # colours, type scale, spacing, grid, page models, logo, imagery rules
+  provenance.yaml            # value label and source of every token and rubric item
   fonts/                     # font files + LICENSES.txt (required)
   assets/                    # logo (SVG), icons, approved images, patterns
   components/                # theme-specific Typst overrides (optional)
@@ -588,6 +589,12 @@ overrides the stronger rule, which writes an `override` entry with a reason.
 * Every document records the theme version it was built with in its manifest. Rebuilding with a newer theme shows a diff of findings.
 * `docla theme test` runs the theme's own test suite (16.5): specimen renders, gold corpus (must be clean), anti corpus (must be flagged), every learning's fixtures.
 * `docla theme health` prints: number of rules by tier and origin, fire rate and false-positive rate per rule over the last N builds, rules on probation, rules never fired.
+
+### 6.6 Value labels
+
+Themes declaring `labelled: true` give every token, rubric item and rule a source and a label: Measured, Derived, Inferred or Answered. Derived values name their inputs, inferred values explain the judgement, and answered values cite the question. Token paths include the format where values differ.
+
+A rule measured from examples is soft and proposed. A hard measured rule requires a supplied template or guidelines with a quote. Such rules use `origin: ingested`; `origin: measured` remains reserved for measurements from examples and cannot be hard.
 
 ---
 
@@ -1309,7 +1316,7 @@ stats: {fired: 0, dismissed: 0, last_fired: null}
 
 Required fields: `id`, `title`, `origin`, `strength`, `tier`, `severity`, `check`, `remedy`, `provenance`.
 Linter: a rule without provenance is rejected; `strength: hard` with `origin: measured` is rejected (a measurement alone
-never creates a hard rule).
+never creates a hard rule). Template and quoted guideline rules use `origin: ingested`, even when their value label is Measured.
 
 ### 10.2 Tiers (the order sensors run)
 

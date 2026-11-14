@@ -1,14 +1,19 @@
+from __future__ import annotations
+
 import hashlib
-from collections.abc import Callable
+from collections.abc import Callable, Sequence
 from dataclasses import dataclass, field
 from pathlib import Path
-from typing import Any, Protocol, get_args
+from typing import TYPE_CHECKING, Any, Protocol, get_args
 
 from docla.facts.layout import LayoutFacts
 from docla.model import Box, Document, Finding, Rule
 from docla.model.rules import Severity, Tier
 from docla.render.compose import Composition
 from docla.theme import Theme
+
+if TYPE_CHECKING:
+    from docla.agents.gatherer import Fact
 
 # Tiers run in the order the model declares them.
 TIERS: tuple[Tier, ...] = get_args(Tier)
@@ -25,6 +30,8 @@ class CheckContext:
     final: bool = False
     assets: list[Path] | None = None
     pages_png: list[Path] = field(default_factory=list)
+
+    source_facts: Sequence[Fact] | None = None
 
     def page_png(self, n: int) -> Path:
         if n < 1 or n > len(self.pages_png):

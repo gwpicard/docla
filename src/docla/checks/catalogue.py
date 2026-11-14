@@ -9,6 +9,7 @@ from docla.checks import (
     fonts,
     gaps,
     images,
+    numbers,
     outline,
     palette,
     pixels,
@@ -70,6 +71,7 @@ def all_rules() -> list[Rule]:
         *charts.RULES,
         *sequence.RULES,
         *pixels.RULES,
+        *numbers.RULES,
     ]
 
 
