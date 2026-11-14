@@ -7,7 +7,7 @@ from importlib.resources import files
 from pathlib import Path
 from typing import Literal, get_args
 
-from pydantic import BaseModel
+from pydantic import BaseModel, Field
 
 from docla.agents.client import Claude
 from docla.brand.agents import page_blocks
@@ -79,7 +79,7 @@ class DroppedClaim(BaseModel):
 class ClaimSet(BaseModel):
     schema_version: int = 1
     claims: list[Claim]
-    dropped: list[DroppedClaim]
+    dropped: list[DroppedClaim] = Field(default_factory=list)
 
 
 def normalise(text: str) -> str:
