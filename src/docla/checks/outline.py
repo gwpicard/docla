@@ -27,7 +27,9 @@ class OutlineConforms:
 
     def run(self, ctx: CheckContext, rule: Rule) -> list[Finding]:
         name = ctx.doc.front.get("doctype")
-        doctype = doctypes_for(ctx.theme.root if ctx.theme is not None else None).get(name) if isinstance(name, str) else None
+        doctype = (
+            doctypes_for(ctx.theme.root if ctx.theme is not None else None).get(name) if isinstance(name, str) else None
+        )
         if doctype is None:
             return []
         return [
