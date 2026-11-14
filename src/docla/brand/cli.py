@@ -2,6 +2,7 @@
 
 import argparse
 import asyncio
+import re
 import sys
 from collections import Counter
 from pathlib import Path
@@ -278,7 +279,7 @@ def _set(brand: Path, args: argparse.Namespace) -> int:
         return 2
     if proposal and not args.reason.strip():
         raise BrandError(f"A reason is required for departure: {args.path}")
-    begin_change(brand, "set-" + args.path.replace(".", "-"))
+    begin_change(brand, "set-" + re.sub(r"[^a-z0-9]+", "-", args.path.lower()).strip("-")[:36])
     departure = set_token(
         brand,
         args.path,
