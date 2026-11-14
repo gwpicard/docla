@@ -1,14 +1,14 @@
 """Persistent questions raised during brand ingestion."""
 
 from pathlib import Path
-from typing import Literal
+from typing import Annotated, Any, Literal
 
 import yaml  # type: ignore[import-untyped]
-from pydantic import BaseModel
+from pydantic import BaseModel, Field
 
 from docla.model.source import Format
 
-QuestionKind = Literal["font", "gap", "identity"]
+QuestionKind = Literal["font", "gap", "identity", "conflict", "token", "confirm", "rule"]
 QUESTIONS = Path("theme/ingest/questions.yaml")
 
 
@@ -16,6 +16,32 @@ class QuestionSource(BaseModel):
     file: str
     page: int | None = None
     quote: str | None = None
+    crop: str | None = None
+
+
+class SetToken(BaseModel):
+    kind: Literal["set-token"]
+    path: str
+    value: Any
+
+
+class WriteRule(BaseModel):
+    kind: Literal["write-rule"]
+    rule: dict[str, Any]
+
+
+class DropRule(BaseModel):
+    kind: Literal["drop-rule"]
+    id: str
+
+
+Effect = Annotated[SetToken | WriteRule | DropRule, Field(discriminator="kind")]
+
+
+class QuestionOption(BaseModel):
+    id: str
+    label: str
+    effects: list[Effect] = Field(default_factory=list)
 
 
 class BrandQuestion(BaseModel):
@@ -28,6 +54,10 @@ class BrandQuestion(BaseModel):
     answer: str | None = None
     answered_by: str | None = None
     answered_at: str | None = None
+    evidence: list[QuestionSource] = Field(default_factory=list)
+    options: list[QuestionOption] = Field(default_factory=list)
+    recommended: str | None = None
+    option: str | None = None
 
 
 def load_questions(brand: Path) -> list[BrandQuestion]:
@@ -52,6 +82,9 @@ def add_questions(brand: Path, questions: list[BrandQuestion]) -> list[BrandQues
             existing.text = question.text
             existing.source = question.source
             existing.blocking = question.blocking
+            existing.evidence = question.evidence
+            existing.options = question.options
+            existing.recommended = question.recommended
     path = brand / QUESTIONS
     path.parent.mkdir(parents=True, exist_ok=True)
     path.write_text(yaml.safe_dump({"questions": [q.model_dump() for q in stored]}, sort_keys=False), encoding="utf-8")
