@@ -13,7 +13,7 @@ from docla.brand.claims import Claim, VerifiedSource, load_claims, normalise
 from docla.brand.workspace import BrandError
 from docla.model.source import Format
 from docla.theme import neutral_theme
-from docla.theme.models import to_pt
+from docla.theme.models import to_colour, to_pt
 
 TOKEN_CLAIMS = Path("theme/ingest/token-claims.json")
 
@@ -81,9 +81,7 @@ def path_format(path: str) -> Format | None:
 def _parse_value(path: str, value: str) -> float | int | str:
     value = value.strip()
     if path.startswith("colour.roles."):
-        if not re.fullmatch(r"#?[0-9a-fA-F]{6}", value):
-            raise ValueError
-        return "#" + value.lstrip("#").upper()
+        return to_colour(value if value.startswith("#") else "#" + value)
     if path.startswith("type.families."):
         if not value:
             raise ValueError
