@@ -6,6 +6,7 @@ from pydantic import BaseModel, ConfigDict, Field, model_validator
 from docla.model.source import Format
 
 Tier = Literal["source", "geometry", "pixel", "semantic"]
+ValueLabel = Literal["measured", "derived", "inferred", "answered"]
 Severity = Literal["error", "warning", "info"]
 
 
@@ -26,6 +27,7 @@ class Remedy(BaseModel):
 
 
 class Provenance(BaseModel):
+    label: ValueLabel | None = None
     source: dict[str, Any] | None = None
     created: date | None = None
     by: str | None = None
