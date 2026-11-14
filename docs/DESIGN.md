@@ -651,6 +651,8 @@ resumable. Models are named in 14.2.
 * Build a `PageIndex`: `{file, page, text, png, fonts, colours}`.
 * Guidelines PDFs are visual, so S2 and S3 must see page images, not just text.
 
+S4 also measures the guidelines’ layout pages and supplied templates alongside examples. Sources take precedence in this order: guidelines, templates, layout pages, examples. Agreement settles a measured value; conflict raises a question while keeping the strongest source; an example-only value is proposed for confirmation.
+
 **S2 Segment (Claude, vision).** Input: page PNGs of the guideline document in batches of ~10 plus their text.
 Output (schema `TopicMap`): for each page, one or more topics from a closed set
 `colour, typography, grid-layout, logo, imagery, iconography, charts-data-viz, voice-tone, templates, dos-donts, legal-mandatory, accessibility, other`.
@@ -1315,8 +1317,7 @@ stats: {fired: 0, dismissed: 0, last_fired: null}
 ```
 
 Required fields: `id`, `title`, `origin`, `strength`, `tier`, `severity`, `check`, `remedy`, `provenance`.
-Linter: a rule without provenance is rejected; `strength: hard` with `origin: measured` is rejected (a measurement alone
-never creates a hard rule). Template and quoted guideline rules use `origin: ingested`, even when their value label is Measured.
+Linter: a rule without provenance is rejected. `origin: measured` marks a value measured only from examples and is never hard; a value measured from a template the brand supplied, or stated in its guidelines, is `origin: ingested` with the value label Measured and may be hard (6.6, B.16).
 
 ### 10.2 Tiers (the order sensors run)
 
