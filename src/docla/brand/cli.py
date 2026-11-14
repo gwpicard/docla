@@ -2,6 +2,7 @@
 
 import argparse
 import sys
+from collections import Counter
 from pathlib import Path
 from typing import Any
 
@@ -10,6 +11,7 @@ from docla.brand.fonts import check_fonts, font_paths, install_fonts, write_repo
 from docla.brand.gaps import check_gaps
 from docla.brand.git import GitError
 from docla.brand.intake import MANIFEST, material_files, take_in
+from docla.brand.pages import load_manifest, parse_pdfs
 from docla.brand.questions import add_questions, open_questions
 from docla.brand.workspace import MATERIAL_CLASSES, BrandError, brand_path, default_root, init_brand
 
@@ -26,12 +28,39 @@ def add_brand_commands(subparsers: Any) -> None:
     intake = commands.add_parser("intake", help="record brand materials")
     intake.add_argument("slug")
     intake.add_argument("--root", type=Path, default=default_root())
+    parse = commands.add_parser("parse", help="index PDF pages")
+    parse.add_argument("slug")
+    parse.add_argument("--root", type=Path, default=default_root())
     fonts = commands.add_parser("fonts", help="check brand fonts")
     fonts.add_argument("slug")
     fonts.add_argument("--root", type=Path, default=default_root())
     gaps = commands.add_parser("gaps", help="check missing brand materials")
     gaps.add_argument("slug")
     gaps.add_argument("--root", type=Path, default=default_root())
+
+
+def _parse(brand: Path) -> int:
+    manifest = load_manifest(brand)
+    if not any(entry.type == "pdf" and entry.unread is None for entry in manifest.files):
+        print("no readable PDFs")
+        return 2
+    begin_change(brand, "parse")
+    index = parse_pdfs(brand)
+    counts = Counter(page.file for page in index.pages)
+    record_change(
+        brand,
+        what="Parse the brand's PDFs",
+        why="Later stages read pages from one index",
+        evidence=[Evidence(file=file, note=f"{count} pages") for file, count in counts.items()],
+        before=[],
+        after=[],
+        formats=["slides", "doc"],
+    )
+    for file, count in counts.items():
+        print(f"{file}  {count} pages")
+    for skipped in index.skipped:
+        print(f"{skipped.file}  skipped: {skipped.reason}")
+    return 0
 
 
 def _gaps(brand: Path) -> int:
@@ -108,6 +137,8 @@ def run_brand(args: argparse.Namespace) -> int:
             print(init_brand(args.slug, args.root))
         elif args.brand_command == "intake":
             return _intake(brand_path(args.slug, args.root))
+        elif args.brand_command == "parse":
+            return _parse(brand_path(args.slug, args.root))
         elif args.brand_command == "fonts":
             return _fonts(brand_path(args.slug, args.root))
         elif args.brand_command == "gaps":
