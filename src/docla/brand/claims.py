@@ -42,6 +42,7 @@ class ExtractedClaim(BaseModel):
     sources: list[ClaimSource]
     confidence: float
     check_hint: str | None = None
+    basis: Literal["stated", "shown"] = "stated"
 
 
 class ExtractReply(BaseModel):
@@ -63,6 +64,9 @@ class Claim(BaseModel):
     sources: list[VerifiedSource]
     confidence: float
     check_hint: str | None = None
+    basis: Literal["stated", "shown"] = "stated"
+    illustrative: bool = False
+    illustrative_reason: Literal["shown", "image"] | None = None
 
 
 class DroppedClaim(BaseModel):
@@ -138,8 +142,11 @@ def claim_id(topic: Topic, kind: ClaimKind, statement: str, sources: list[ClaimS
 
 
 async def extract_claims(brand: Path, claude: Claude, *, batch_size: int = 8) -> ClaimSet:
+    from docla.brand.illustrative import mark_illustrative
+
     groups = topic_groups(load_topics(brand))
-    pages = {(page.file, page.page): page for page in load_pages(brand).pages if page.role == "guidelines"}
+    index = load_pages(brand)
+    pages = {(page.file, page.page): page for page in index.pages if page.role == "guidelines"}
     prompt = files("docla.brand.prompts").joinpath("extract.txt").read_text(encoding="utf-8")
     result = ClaimSet(claims=[], dropped=[])
     seen: set[str] = set()
@@ -173,6 +180,7 @@ async def extract_claims(brand: Path, claude: Claude, *, batch_size: int = 8) ->
                     result.claims.append(
                         Claim(**extracted.model_dump(exclude={"sources"}), id=identifier, topic=topic, sources=sources)
                     )
+    result.claims = mark_illustrative(result.claims, index)
     path = brand / CLAIMS
     path.parent.mkdir(parents=True, exist_ok=True)
     path.write_text(result.model_dump_json(indent=2) + "\n", encoding="utf-8")
