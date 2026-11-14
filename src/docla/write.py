@@ -4,7 +4,7 @@ import asyncio
 import os
 import shutil
 import sys
-from collections.abc import Callable
+from collections.abc import Callable, Sequence
 from dataclasses import dataclass
 from functools import partial
 from pathlib import Path
@@ -15,7 +15,7 @@ from pydantic import TypeAdapter
 from docla.agents.cassette import Cassette, Transport
 from docla.agents.client import AnthropicTransport, CassetteTransport, Claude
 from docla.agents.critic import CriticImage, calibrate, corroborate
-from docla.agents.gatherer import Fact, gather
+from docla.agents.gatherer import Fact, gather, with_fact_ids
 from docla.agents.ledger import BudgetExceeded
 from docla.agents.planner import outline_to_document, plan
 from docla.agents.prompts import ROLES
@@ -26,7 +26,7 @@ from docla.checks.catalogue import all_rules
 from docla.config import ProjectConfig, load_project_config
 from docla.doctypes import load_doctypes
 from docla.loop.best_of import best_of_n
-from docla.loop.guards import FactGuard
+from docla.loop.guards import NUMBER, FactGuard, support_tokens
 from docla.loop.heal_log import HealLog
 from docla.loop.look import CriticPage, PageCritic
 from docla.loop.macro import MacroContext, Summariser, build_document
@@ -181,10 +181,12 @@ def claude_agents(claude: Any, theme: Any, *, config: ProjectConfig | None = Non
 
 
 async def _facts(project: Any, run_dir: Any, agents: Any) -> Any:
+    from docla.tables import typed_table_facts
+
     path = run_dir / "facts.json"
     if path.exists():
-        return TypeAdapter(list[Fact]).validate_json(path.read_text())
-    facts = await agents.gather(extract(project))
+        return with_fact_ids(typed_table_facts(TypeAdapter(list[Fact]).validate_json(path.read_text()), project))
+    facts = with_fact_ids(typed_table_facts(await agents.gather(extract(project)), project))
     run_dir.mkdir(parents=True, exist_ok=True)
     path.write_bytes(TypeAdapter(list[Fact]).dump_json(facts, indent=2))
     return facts
@@ -199,8 +201,10 @@ def _outline_output(file: Any, doc: Any, questions: Any = ()) -> None:
 
 
 async def _make_outline(file: Any, doc: Any, agents: Any, run_dir: Any, ids: Any) -> None:
+    from docla.tables import typed_table_facts
+
     extracted = extract(file.parent)
-    facts = await agents.gather(extracted)
+    facts = with_fact_ids(typed_table_facts(await agents.gather(extracted), file.parent))
     run_dir.mkdir(parents=True, exist_ok=True)
     (run_dir / "facts.json").write_bytes(TypeAdapter(list[Fact]).dump_json(facts, indent=2))
     front = {**doc.front, "format": doc.format}
@@ -221,6 +225,20 @@ class _DraftedWriter:
 
     async def repair(self, job: Any, state: Any, history: Any, *, strategy: Any = None) -> Any:
         return await self.writer.repair(job, state, history, strategy=strategy)
+
+
+def fact_guard_for(doc: Document, facts: Sequence[Fact]) -> FactGuard:
+    metadata = [f"{s.key} {s.text}" for s in doc.sources]
+    metadata += [value for value in doc.front.values() if isinstance(value, str)]
+    evidence = [f.text for f in facts] + metadata
+    exempt = {token for text in metadata for token in support_tokens(text) if NUMBER.fullmatch(token)}
+    return FactGuard(
+        evidence,
+        {s.key for s in doc.sources},
+        facts=facts,
+        numbers_from_facts=any(f.kind != "text" for f in facts),
+        exempt=exempt,
+    )
 
 
 async def run_write(
@@ -257,15 +275,14 @@ async def run_write(
         facts = await _facts(project, run_dir, agents)
         config = load_project_config(project)
         assets = [project / "assets", theme.root / "assets"]
-        evidence = [f.text for f in facts] + [f"{s.key} {s.text}" for s in doc.sources]
-        evidence += [v for v in doc.front.values() if isinstance(v, str)]
         ctx = LoopContext(
             doc,
             theme,
             run_dir,
             agents.writer(facts, doc),
             assets=assets,
-            fact_guard=FactGuard(evidence, {s.key for s in doc.sources}),
+            fact_guard=fact_guard_for(doc, facts),
+            source_facts=facts,
             micro_attempts=config.loop.micro_attempts,
             best_of_n=partial(best_of_n, n=config.loop.best_of_n),
             heal_log=HealLog(run_dir),
