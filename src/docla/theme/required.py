@@ -2,7 +2,7 @@
 
 from typing import Literal
 
-import yaml
+import yaml  # type: ignore[import-untyped]
 from pydantic import BaseModel, ConfigDict, Field, ValidationError, field_validator
 
 from docla.model.source import Format

@@ -6,7 +6,7 @@ from importlib.resources import files
 from pathlib import Path
 from typing import Any
 
-import yaml
+import yaml  # type: ignore[import-untyped]
 from pydantic import BaseModel
 
 from docla.agents.client import Claude
@@ -117,18 +117,18 @@ def _assemble(
     dropped: list[dict[str, str]] = []
     kept: dict[str, Any] = {"banned": [], "terminology": [], "required": []}
     banned = set()
-    for draft in reply.banned:
-        if _ground(draft.term, draft.source_id, sources, dropped, word=True):
-            banned.add(draft.term.lower())
-            kept["banned"].append(draft.model_dump())
+    for banned_draft in reply.banned:
+        if _ground(banned_draft.term, banned_draft.source_id, sources, dropped, word=True):
+            banned.add(banned_draft.term.lower())
+            kept["banned"].append(banned_draft.model_dump())
     terms: dict[str, Term] = {}
-    for draft in reply.terminology:
-        valid = _ground(draft.preferred, draft.source_id, sources, dropped, word=True)
-        avoid = [word for word in draft.avoid if _ground(word, draft.source_id, sources, dropped, word=True)]
+    for pair_draft in reply.terminology:
+        valid = _ground(pair_draft.preferred, pair_draft.source_id, sources, dropped, word=True)
+        avoid = [word for word in pair_draft.avoid if _ground(word, pair_draft.source_id, sources, dropped, word=True)]
         if valid and avoid:
-            term = terms.setdefault(draft.preferred, Term(preferred=draft.preferred, avoid=[]))
+            term = terms.setdefault(pair_draft.preferred, Term(preferred=pair_draft.preferred, avoid=[]))
             term.avoid.extend(word for word in avoid if word not in term.avoid)
-            kept["terminology"].append(draft.model_dump())
+            kept["terminology"].append(pair_draft.model_dump())
     required: list[RequiredElement] = []
     questions: list[BrandQuestion] = []
     for draft in reply.required:
