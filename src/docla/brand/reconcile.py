@@ -52,7 +52,7 @@ class ProposedRule(BaseModel):
         return {
             "id": self.id,
             "title": self.title,
-            "origin": "measured",
+            "origin": "ingested",
             "strength": "soft",
             "status": status,
             "severity": "warning",
