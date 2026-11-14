@@ -21,6 +21,7 @@ from docla.brand.questions import (
 )
 from docla.brand.reconcile import RECONCILE, load_reconciliation
 from docla.brand.workspace import BrandError
+from docla.model import Rule
 from docla.theme import ThemeError, load_theme, neutral_theme
 from docla.theme.rubric import load_rubric
 from docla.theme.rules import _check_kind, load_theme_rules
@@ -213,7 +214,9 @@ def _write(
                             QuestionOption(
                                 id="soften",
                                 label="Soften",
-                                effects=[WriteRule(kind="write-rule", rule={**rule, "strength": "soft"})],
+                                effects=[
+                                    WriteRule(kind="write-rule", rule=Rule.model_validate({**rule, "strength": "soft"}))
+                                ],
                             ),
                         ],
                     )
@@ -280,11 +283,11 @@ def _save(
             path.unlink()
         for path, data in old.items():
             path.write_bytes(data)
-        for path, data in previous.items():
-            if data is None:
+        for path, prior_data in previous.items():
+            if prior_data is None:
                 path.unlink(missing_ok=True)
             else:
-                path.write_bytes(data)
+                path.write_bytes(prior_data)
         raise
     add_questions(brand, questions)
     return RuleSynthesis(
