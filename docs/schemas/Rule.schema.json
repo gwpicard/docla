@@ -27,6 +27,24 @@
           "default": null,
           "title": "Created"
         },
+        "label": {
+          "anyOf": [
+            {
+              "enum": [
+                "measured",
+                "derived",
+                "inferred",
+                "answered"
+              ],
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Label"
+        },
         "source": {
           "anyOf": [
             {
