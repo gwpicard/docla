@@ -18,9 +18,10 @@ from docla.brand.fonts import check_fonts, font_paths, install_fonts, write_repo
 from docla.brand.gaps import check_gaps
 from docla.brand.git import GitError, run_git
 from docla.brand.intake import MANIFEST, material_files, take_in
+from docla.brand.illustrative import illustrative_questions
 from docla.brand.measure import _collect, measure_brand
 from docla.brand.pages import load_manifest, parse_pdfs
-from docla.brand.questions import add_questions, open_questions
+from docla.brand.questions import add_questions, drop_open_questions, load_questions, open_questions
 from docla.brand.segment import load_topics, segment_needed, segment_pages, topic_groups
 from docla.brand.workspace import MATERIAL_CLASSES, BrandError, brand_path, default_root, init_brand
 from docla.facts.pdf import PdfPlumberFacts
@@ -101,6 +102,13 @@ def _extract(brand: Path) -> int:
     topics = load_topics(brand)
     begin_change(brand, "extract")
     result = asyncio.run(extract_claims(brand, agents.brand_claude(brand)))
+    questions = illustrative_questions(result.claims)
+    add_questions(brand, questions)
+    current_ids = {question.id for question in questions}
+    drop_open_questions(
+        brand,
+        [q.id for q in load_questions(brand) if q.id.startswith("claim.illustrative.") and q.id not in current_ids],
+    )
     evidence = [Evidence(file=s.file, page=s.page, quote=s.quote) for claim in result.claims for s in claim.sources[:1]]
     record_change(
         brand,
@@ -112,6 +120,7 @@ def _extract(brand: Path) -> int:
         formats=["slides", "doc"],
     )
     print(f"{len(result.claims)} claims kept, {len(result.dropped)} dropped")
+    print(f"{len(questions)} illustrative claims")
     for topic in topic_groups(topics):
         print(f"{topic}  {sum(claim.topic == topic for claim in result.claims)}")
     return 0
