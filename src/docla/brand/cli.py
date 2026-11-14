@@ -7,8 +7,9 @@ from typing import Any
 
 from docla.brand.changes import Evidence, begin_change, change_log, record_change
 from docla.brand.fonts import check_fonts, font_paths, install_fonts, write_report
+from docla.brand.gaps import check_gaps
 from docla.brand.git import GitError
-from docla.brand.intake import material_files, take_in
+from docla.brand.intake import MANIFEST, material_files, take_in
 from docla.brand.questions import add_questions, open_questions
 from docla.brand.workspace import MATERIAL_CLASSES, BrandError, brand_path, default_root, init_brand
 
@@ -28,6 +29,32 @@ def add_brand_commands(subparsers: Any) -> None:
     fonts = commands.add_parser("fonts", help="check brand fonts")
     fonts.add_argument("slug")
     fonts.add_argument("--root", type=Path, default=default_root())
+    gaps = commands.add_parser("gaps", help="check missing brand materials")
+    gaps.add_argument("slug")
+    gaps.add_argument("--root", type=Path, default=default_root())
+
+
+def _gaps(brand: Path) -> int:
+    if not (brand / MANIFEST).exists():
+        raise BrandError("Run docla brand intake first")
+    begin_change(brand, "gaps")
+    gaps, identities = check_gaps(brand)
+    record_change(
+        brand,
+        what="Record what the brand does not provide",
+        why="Every gap is a question or a recorded decision",
+        evidence=[Evidence(file=MANIFEST.as_posix())]
+        + [Evidence(file=i.file, page=i.page, quote=i.quote) for i in identities],
+        before=[],
+        after=[],
+        formats=["slides", "doc"],
+    )
+    for gap in gaps:
+        print(f"{gap.kind}  {gap.format or '-'}")
+    for identity in identities:
+        print(f"{identity.file}  version {identity.version or '?'}  {identity.date or '?'}")
+    print(f"{len(open_questions(brand))} open questions")
+    return 0
 
 
 def _fonts(brand: Path) -> int:
@@ -83,6 +110,8 @@ def run_brand(args: argparse.Namespace) -> int:
             return _intake(brand_path(args.slug, args.root))
         elif args.brand_command == "fonts":
             return _fonts(brand_path(args.slug, args.root))
+        elif args.brand_command == "gaps":
+            return _gaps(brand_path(args.slug, args.root))
         else:
             records = change_log(brand_path(args.slug, args.root))
             for record in records:

@@ -8,7 +8,7 @@ from pydantic import BaseModel
 
 from docla.model.source import Format
 
-QuestionKind = Literal["font"]
+QuestionKind = Literal["font", "gap", "identity"]
 QUESTIONS = Path("theme/ingest/questions.yaml")
 
 
@@ -60,3 +60,13 @@ def add_questions(brand: Path, questions: list[BrandQuestion]) -> list[BrandQues
 
 def open_questions(brand: Path) -> list[BrandQuestion]:
     return [question for question in load_questions(brand) if question.answer is None]
+
+
+def drop_open_questions(brand: Path, ids: list[str]) -> list[str]:
+    stored = load_questions(brand)
+    removed = [q.id for q in stored if q.id in ids and q.answer is None]
+    if removed:
+        path = brand / QUESTIONS
+        kept = [q.model_dump() for q in stored if q.id not in removed or q.answer is not None]
+        path.write_text(yaml.safe_dump({"questions": kept}, sort_keys=False), encoding="utf-8")
+    return removed
