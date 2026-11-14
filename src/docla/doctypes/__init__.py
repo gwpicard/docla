@@ -1,10 +1,12 @@
+import re
+from collections.abc import Iterator, Mapping
 from pathlib import Path
 from typing import Any, Literal
 
 import yaml  # type: ignore[import-untyped]
-from pydantic import BaseModel, ConfigDict, Field, ValidationError, model_validator
+from pydantic import BaseModel, ConfigDict, Field, ValidationError, field_validator, model_validator
 
-from docla.model import Document, Format
+from docla.model import Document, Format, Item, Section
 from docla.render.chooser import Chooser, load_chooser
 from docla.render.components import all_manifests
 from docla.render.compose import default_chooser
@@ -28,6 +30,20 @@ class Question(BaseModel):
     ask: str
 
 
+class FixedText(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+
+    title: str | None = None
+    paragraphs: list[str] = Field(default_factory=list)
+    items: list[str] = Field(default_factory=list)
+
+    @model_validator(mode="after")
+    def _check(self) -> "FixedText":
+        if not any(value.strip() for value in [self.title or "", *self.paragraphs, *self.items]):
+            raise ValueError("fixed text must contain non-blank text")
+        return self
+
+
 class OutlineEntry(BaseModel):
     model_config = ConfigDict(extra="forbid", populate_by_name=True)
 
@@ -38,6 +54,8 @@ class OutlineEntry(BaseModel):
     fill: Literal["facts", "summary", "fixed"] = "facts"
     from_: list[str] = Field(default_factory=list, alias="from")
     children: list["OutlineEntry"] = Field(default_factory=list)
+    layouts: list[str] = Field(default_factory=list)
+    text: FixedText | None = None
 
     @model_validator(mode="after")
     def _check(self) -> "OutlineEntry":
@@ -45,7 +63,17 @@ class OutlineEntry(BaseModel):
             raise ValueError(f"section {self.section!r} has neither intent nor children")
         if self.repeat is not None:
             _check_range(f"section {self.section!r}: repeat", self.repeat)
+        self._check_fixed()
+        if len(self.layouts) != len(set(self.layouts)):
+            raise ValueError(f"section {self.section!r}: duplicate layouts")
         return self
+
+    def _check_fixed(self) -> None:
+        if self.fill == "fixed":
+            if self.text is None or self.intent in (None, ANY_INTENT) or self.children:
+                raise ValueError(f"section {self.section!r}: fixed requires text, a concrete intent and no children")
+        elif self.text is not None:
+            raise ValueError(f"section {self.section!r}: text requires fixed fill")
 
 
 class RuleRef(BaseModel):
@@ -53,6 +81,25 @@ class RuleRef(BaseModel):
 
     rule: str
     params: dict[str, Any] = Field(default_factory=dict)
+
+
+class RequiredField(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+
+    key: str
+    label: str
+    ask: str
+
+    @field_validator("key")
+    @classmethod
+    def _check_key(cls, value: str) -> str:
+        if re.fullmatch(r"[a-z][a-z0-9_]{0,40}", value) is None:
+            raise ValueError("invalid required field key")
+        return value
+
+
+def length_unit(fmt: Format) -> Literal["slides", "pages"]:
+    return "slides" if fmt == "slides" else "pages"
 
 
 class Doctype(BaseModel):
@@ -66,11 +113,23 @@ class Doctype(BaseModel):
     outline: list[OutlineEntry]
     checks: list[RuleRef]
     checklist: list[str]
+    required_fields: list[RequiredField] = Field(default_factory=list)
+    default_length: int | None = Field(default=None, ge=1)
+    twin: str | None = None
 
     @model_validator(mode="after")
     def _check(self) -> "Doctype":
         for unit, bounds in self.length.items():
             _check_range(f"length {unit!r}", bounds)
+        keys = [field.key for field in self.required_fields]
+        if len(keys) != len(set(keys)):
+            raise ValueError("required field keys must be unique")
+        if self.twin == self.name:
+            raise ValueError("twin must differ from name")
+        if self.default_length is not None:
+            bounds = self.length.get(length_unit(self.format))
+            if bounds is None or not bounds[0] <= self.default_length <= bounds[1]:
+                raise ValueError("default length must be within the format length range")
         return self
 
 
@@ -114,7 +173,9 @@ def load_doctype(path: Path, chooser: Chooser | None = None) -> Doctype:
     doctype = _read(path)
     if doctype.name != path.stem:
         raise DoctypeError(f"{path.name}: name {doctype.name!r} differs from the file stem {path.stem!r}")
-    _check_intents(path, doctype.format, doctype.outline, default_chooser() if chooser is None else chooser)
+    selected = default_chooser() if chooser is None else chooser
+    _check_intents(path, doctype.format, doctype.outline, selected)
+    _check_layouts(path, doctype.format, doctype.outline, selected)
     return doctype
 
 
@@ -134,6 +195,51 @@ def _check_intents(path: Path, fmt: Format, outline: list[OutlineEntry], chooser
                 f"which the chooser has no entries for in format {fmt!r}"
             )
         _check_intents(path, fmt, entry.children, chooser)
+
+
+def walk(outline: list[OutlineEntry]) -> Iterator[OutlineEntry]:
+    for entry in outline:
+        yield entry
+        yield from walk(entry.children)
+
+
+def _check_layouts(path: Path, fmt: Format, outline: list[OutlineEntry], chooser: Chooser) -> None:
+    for entry in walk(outline):
+        if entry.intent is None:
+            allowed: set[str | None] = set()
+        elif entry.intent == ANY_INTENT:
+            allowed = set(chooser.names(fmt))
+        else:
+            allowed = {item.component for item in chooser.entries[(entry.intent, fmt)]}
+        for layout in entry.layouts:
+            if layout not in allowed:
+                raise DoctypeError(f"{path.name}: section {entry.section!r} has invalid layout {layout!r}")
+
+
+def fixed_section(entry: OutlineEntry) -> Section:
+    if entry.fill != "fixed" or entry.text is None or entry.intent is None:
+        raise ValueError("entry is not fixed")
+    return Section(
+        intent=entry.intent,
+        section=entry.section,
+        component=entry.layouts[0] if entry.layouts else None,
+        title=entry.text.title,
+        paragraphs=entry.text.paragraphs,
+        items=[Item(body=body) for body in entry.text.items],
+        lock="all",
+    )
+
+
+def resolve_doctype(doctypes: Mapping[str, Doctype], name: str, fmt: Format) -> Doctype:
+    doctype = doctypes.get(name)
+    if doctype is None:
+        raise DoctypeError(f"unknown doctype {name!r}")
+    if doctype.format == fmt:
+        return doctype
+    twin = doctypes.get(doctype.twin) if doctype.twin is not None else None
+    if twin is not None and twin.format == fmt:
+        return twin
+    raise DoctypeError(f"doctype {name!r} has no twin for format {fmt!r}")
 
 
 def packaged_dir() -> Path:
