@@ -144,7 +144,7 @@ def _templates(brand: Path) -> int:
     from docla.brand.templates import read_templates
 
     manifest = load_manifest(brand)
-    if not any(e.type in ("pptx", "potx") and e.unread is None for e in manifest.files):
+    if not any(e.type in ("pptx", "potx", "docx", "dotx") and e.unread is None for e in manifest.files):
         print("no readable PowerPoint templates")
         return 2
     branch = begin_change(brand, "templates")
