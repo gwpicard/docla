@@ -183,12 +183,12 @@ def test_D1_stated_and_shown_claims(tmp_path):
     brand = _brand(tmp_path)
     result = _extract(brand, ALL)
     stated = _kept(result, STATED["statement"])
-    assert stated.basis == "stated"
-    assert stated.illustrative is False
+    assert getattr(stated, "basis", None) == "stated"
+    assert getattr(stated, "illustrative", None) is False
     shown = _kept(result, SHOWN["statement"])
-    assert shown.basis == "shown"
-    assert shown.illustrative is True
-    assert shown.illustrative_reason == "shown"
+    assert getattr(shown, "basis", None) == "shown"
+    assert getattr(shown, "illustrative", None) is True
+    assert getattr(shown, "illustrative_reason", None) == "shown"
     assert shown.strength == "soft"
 
 
@@ -196,13 +196,13 @@ def test_D2_claims_read_only_inside_an_image(tmp_path):
     brand = _brand(tmp_path)
     result = _extract(brand, ALL)
     image = _kept(result, IMAGE["statement"])
-    assert image.illustrative is True
-    assert image.illustrative_reason == "image"
+    assert getattr(image, "illustrative", None) is True
+    assert getattr(image, "illustrative_reason", None) == "image"
     assert image.strength == "soft"
     outside = _kept(result, OUTSIDE["statement"])
-    assert outside.illustrative is False
+    assert getattr(outside, "illustrative", None) is False
     mixed = _kept(result, MIXED["statement"])
-    assert mixed.illustrative is False
+    assert getattr(mixed, "illustrative", None) is False
 
 
 def test_D3_illustrative_questions_include_options_and_formats():
