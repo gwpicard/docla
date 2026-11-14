@@ -11,6 +11,7 @@ from typing import Any, NamedTuple
 from pydantic import TypeAdapter
 
 from docla import __version__
+from docla.agents.gatherer import Fact
 from docla.brand.cli import add_brand_commands, run_brand
 from docla.checks.catalogue import all_rules, document_rules
 from docla.checks.engine import CheckContext, run_checks
@@ -209,12 +210,17 @@ def _check(file: Path, out: Path, theme: Theme, *, final: bool = False, outline:
     except ThemeError as error:
         raise _BuildFailed(str(error)) from error
     assets = [file.parent / "assets", theme.root / "assets"]
+    facts_path = file.parent / ".docla" / "write" / file.stem / "facts.json"
+    source_facts = TypeAdapter(list[Fact]).validate_json(facts_path.read_bytes()) if facts_path.exists() else None
     try:
         comp = compose(doc, assets=assets)
     except ComposeError:
         # Without layout facts the engine runs only the source tier.
         return _report(
-            file, out, parsed + run_checks(rules, CheckContext(doc, theme=theme, final=final, assets=assets))
+            file,
+            out,
+            parsed
+            + run_checks(rules, CheckContext(doc, theme=theme, final=final, assets=assets, source_facts=source_facts)),
         )
     built = _draw(file, out, doc, parsed, comp, theme)
     facts = layout_facts(built.pdf, built.main, built.render, font_paths=font_paths(built.render))
@@ -228,6 +234,7 @@ def _check(file: Path, out: Path, theme: Theme, *, final: bool = False, outline:
         final=final,
         assets=assets,
         pages_png=pages_png,
+        source_facts=source_facts,
     )
     return _report(file, out, built.findings + run_checks(rules, ctx))
 
