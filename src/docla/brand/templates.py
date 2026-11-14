@@ -154,7 +154,7 @@ def _theme(master: Any, warnings: list[str]) -> tuple[list[TemplateColour], list
     part = master.part.part_related_by(RT.THEME)
     root = parse_xml(part.blob)
     location = _part(part)
-    colours = []
+    colours: list[TemplateColour] = []
     for scheme in root.xpath(".//a:clrScheme"):
         for item in scheme:
             role = item.tag.split("}")[-1]
@@ -173,7 +173,11 @@ def _theme(master: Any, warnings: list[str]) -> tuple[list[TemplateColour], list
 def _colour(item: Any, role: str, where: str, colours: list[TemplateColour], warnings: list[str]) -> None:
     node = item[0] if len(item) else None
     tag = node.tag.split("}")[-1] if node is not None else ""
-    value = node.get("val" if tag == "srgbClr" else "lastClr") if tag in ("srgbClr", "sysClr") else None
+    value = (
+        node.get("val" if tag == "srgbClr" else "lastClr")
+        if node is not None and tag in ("srgbClr", "sysClr")
+        else None
+    )
     if value:
         colours.append(TemplateColour(role=role, hex=f"#{value.upper()}", where=where))
     else:
@@ -190,7 +194,8 @@ def _styles(master: Any, fonts: list[TemplateFont]) -> list[StyleFact]:
         node = nodes[0]
         latin = node.xpath("./a:latin")
         font = latin[0].get("typeface") if latin else None
-        font = {"+mj-lt": families.get("major"), "+mn-lt": families.get("minor")}.get(font, font)
+        if font is not None:
+            font = {"+mj-lt": families.get("major"), "+mn-lt": families.get("minor")}.get(font, font)
         rgb = node.xpath("./a:solidFill/a:srgbClr")
         scheme = node.xpath("./a:solidFill/a:schemeClr")
         result.append(
@@ -225,7 +230,7 @@ def _placeholder(shape: Any) -> str:
 
 
 def _shape(shape: Any) -> ShapeFact:
-    kinds = {
+    kinds: dict[Any, Literal["picture", "shape", "line", "group", "other"]] = {
         MSO_SHAPE_TYPE.PICTURE: "picture",
         MSO_SHAPE_TYPE.AUTO_SHAPE: "shape",
         MSO_SHAPE_TYPE.LINE: "line",
