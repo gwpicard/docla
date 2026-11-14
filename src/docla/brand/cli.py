@@ -24,6 +24,7 @@ from docla.brand.intake import MANIFEST, material_files, take_in
 from docla.brand.measure import _collect, measure_brand
 from docla.brand.pages import load_manifest, parse_pdfs
 from docla.brand.questions import add_questions, drop_open_questions, load_questions, open_questions
+from docla.brand.roles import load_roles, record_roles
 from docla.brand.segment import load_topics, segment_needed, segment_pages, topic_groups
 from docla.brand.tokenmap import tie_claims
 from docla.brand.workspace import MATERIAL_CLASSES, BrandError, brand_path, default_root, init_brand
@@ -54,6 +55,12 @@ def add_brand_commands(subparsers: Any) -> None:
     parse = commands.add_parser("parse", help="index PDF pages")
     parse.add_argument("slug")
     parse.add_argument("--root", type=Path, default=default_root())
+    roles = commands.add_parser("roles", help="map pages to components")
+    roles.add_argument("slug")
+    roles.add_argument("--root", type=Path, default=default_root())
+    roles.add_argument("--map", action="append", default=[])
+    roles.add_argument("--unmap", action="append", default=[])
+    roles.add_argument("--note")
     segment = commands.add_parser("segment", help="sort guideline pages into topics")
     segment.add_argument("slug")
     segment.add_argument("--root", type=Path, default=default_root())
@@ -437,6 +444,39 @@ def _set(brand: Path, args: argparse.Namespace) -> int:
     return 0
 
 
+def _role_page(value: str) -> tuple[str, int]:
+    try:
+        file, page = value.rsplit(":", 1)
+        if not file:
+            raise ValueError
+        return file, int(page)
+    except ValueError as error:
+        raise BrandError(f"Invalid page argument: {value}") from error
+
+
+def _roles(brand: Path, args: argparse.Namespace) -> int:
+    if not args.map and not args.unmap:
+        mappings = load_roles(brand).mappings
+        for item in mappings:
+            print(f"{item.file} p{item.page}  {item.component}  {item.format}")
+        if not mappings:
+            print("no mappings")
+        return 0
+    mapped = []
+    for value in args.map:
+        if "=" not in value:
+            raise BrandError(f"Invalid mapping argument: {value}")
+        reference, component = value.rsplit("=", 1)
+        file, page = _role_page(reference)
+        if not component:
+            raise BrandError(f"Invalid mapping argument: {value}")
+        mapped.append((file, page, component))
+    unmapped = [_role_page(value) for value in args.unmap]
+    record_roles(brand, mapped, unmapped, note=args.note)
+    print(f"{len(load_roles(brand).mappings)} mappings")
+    return 0
+
+
 def run_brand(args: argparse.Namespace) -> int:
     try:
         if args.brand_command == "init":
@@ -445,6 +485,8 @@ def run_brand(args: argparse.Namespace) -> int:
             return _intake(brand_path(args.slug, args.root))
         elif args.brand_command == "parse":
             return _parse(brand_path(args.slug, args.root))
+        elif args.brand_command == "roles":
+            return _roles(brand_path(args.slug, args.root), args)
         elif args.brand_command == "segment":
             return _segment(brand_path(args.slug, args.root))
         elif args.brand_command == "extract":
