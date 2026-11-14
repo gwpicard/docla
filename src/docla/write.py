@@ -4,7 +4,7 @@ import asyncio
 import os
 import shutil
 import sys
-from collections.abc import Callable
+from collections.abc import Callable, Sequence
 from dataclasses import dataclass
 from functools import partial
 from pathlib import Path
@@ -26,7 +26,7 @@ from docla.checks.catalogue import all_rules
 from docla.config import ProjectConfig, load_project_config
 from docla.doctypes import load_doctypes
 from docla.loop.best_of import best_of_n
-from docla.loop.guards import FactGuard
+from docla.loop.guards import NUMBER, FactGuard, support_tokens
 from docla.loop.heal_log import HealLog
 from docla.loop.look import CriticPage, PageCritic
 from docla.loop.macro import MacroContext, Summariser, build_document
@@ -227,6 +227,20 @@ class _DraftedWriter:
         return await self.writer.repair(job, state, history, strategy=strategy)
 
 
+def fact_guard_for(doc: Document, facts: Sequence[Fact]) -> FactGuard:
+    metadata = [f"{s.key} {s.text}" for s in doc.sources]
+    metadata += [value for value in doc.front.values() if isinstance(value, str)]
+    evidence = [f.text for f in facts] + metadata
+    exempt = {token for text in metadata for token in support_tokens(text) if NUMBER.fullmatch(token)}
+    return FactGuard(
+        evidence,
+        {s.key for s in doc.sources},
+        facts=facts,
+        numbers_from_facts=any(f.kind != "text" for f in facts),
+        exempt=exempt,
+    )
+
+
 async def run_write(
     file: Path,
     *,
@@ -261,15 +275,13 @@ async def run_write(
         facts = await _facts(project, run_dir, agents)
         config = load_project_config(project)
         assets = [project / "assets", theme.root / "assets"]
-        evidence = [f.text for f in facts] + [f"{s.key} {s.text}" for s in doc.sources]
-        evidence += [v for v in doc.front.values() if isinstance(v, str)]
         ctx = LoopContext(
             doc,
             theme,
             run_dir,
             agents.writer(facts, doc),
             assets=assets,
-            fact_guard=FactGuard(evidence, {s.key for s in doc.sources}, facts=facts),
+            fact_guard=fact_guard_for(doc, facts),
             source_facts=facts,
             micro_attempts=config.loop.micro_attempts,
             best_of_n=partial(best_of_n, n=config.loop.best_of_n),
