@@ -9,7 +9,7 @@ from typing import Any
 from docla.brand.changes import Evidence, begin_change, change_log, record_change
 from docla.brand.fonts import check_fonts, font_paths, install_fonts, write_report
 from docla.brand.gaps import check_gaps
-from docla.brand.git import GitError
+from docla.brand.git import GitError, run_git
 from docla.brand.intake import MANIFEST, material_files, take_in
 from docla.brand.pages import load_manifest, parse_pdfs
 from docla.brand.questions import add_questions, open_questions
@@ -49,8 +49,18 @@ def _templates(brand: Path) -> int:
     if not any(e.type in ("pptx", "potx") and e.unread is None for e in manifest.files):
         print("no readable PowerPoint templates")
         return 2
-    begin_change(brand, "templates")
+    branch = begin_change(brand, "templates")
     report = read_templates(brand)
+    if not report.templates:
+        # Nothing could be read: abandon the change so the brand is back on main, unchanged.
+        run_git(brand, "reset", "-q", "--hard")
+        run_git(brand, "clean", "-fdq")
+        run_git(brand, "checkout", "-q", "main")
+        run_git(brand, "branch", "-q", "-D", branch)
+        for item in report.unread:
+            print(f"{item.file}  unread: {item.reason}")
+        print("no readable PowerPoint templates")
+        return 2
     if report.templates:
         record_change(
             brand,
