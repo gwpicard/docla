@@ -1,6 +1,7 @@
 import json
 import os
 import tempfile
+from collections.abc import Collection, Mapping
 from pathlib import Path
 
 from docla.model import Document, Patch
@@ -30,8 +31,16 @@ def _write_atomic(path: Path, text: str) -> None:
         raise
 
 
-def _append_log(oplog: Path, path: Path, patch: Patch, rev: int, before: Document) -> None:
-    inverse = inverse_ops(before, patch)
+def _append_log(
+    oplog: Path,
+    path: Path,
+    patch: Patch,
+    rev: int,
+    before: Document,
+    *,
+    kept: Mapping[str, Collection[str]] | None = None,
+) -> None:
+    inverse = inverse_ops(before, patch, kept=kept)
     entry = {
         "rev": rev,
         "author": patch.author,
@@ -54,15 +63,23 @@ def _parse_editable(path: Path) -> Document:
     return doc
 
 
-def apply_to_file(path: Path, patch: Patch, oplog: Path, ids: IdStore, fact_guard: FactGuard | None = None) -> Document:
+def apply_to_file(
+    path: Path,
+    patch: Patch,
+    oplog: Path,
+    ids: IdStore,
+    fact_guard: FactGuard | None = None,
+    *,
+    kept: Mapping[str, Collection[str]] | None = None,
+) -> Document:
     """Apply `patch` to the working file at `path` and append the change to `oplog`."""
     doc = _parse_editable(path)
     stamped, _ = stamp(doc, ids)
     stamped = stamped.model_copy(update={"rev": current_rev(oplog)})
-    result = apply_patch(stamped, patch, fact_guard)
+    result = apply_patch(stamped, patch, fact_guard, kept=kept)
     ids.save()
     _write_atomic(path, serialise(result))
-    _append_log(oplog, path, patch, result.rev, stamped)
+    _append_log(oplog, path, patch, result.rev, stamped, kept=kept)
     return result
 
 
