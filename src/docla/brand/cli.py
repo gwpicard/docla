@@ -9,7 +9,7 @@ from typing import Any
 from docla.brand.changes import Evidence, begin_change, change_log, record_change
 from docla.brand.fonts import check_fonts, font_paths, install_fonts, write_report
 from docla.brand.gaps import check_gaps
-from docla.brand.git import GitError
+from docla.brand.git import GitError, run_git
 from docla.brand.intake import MANIFEST, material_files, take_in
 from docla.brand.pages import load_manifest, parse_pdfs
 from docla.brand.questions import add_questions, open_questions
@@ -37,6 +37,45 @@ def add_brand_commands(subparsers: Any) -> None:
     gaps = commands.add_parser("gaps", help="check missing brand materials")
     gaps.add_argument("slug")
     gaps.add_argument("--root", type=Path, default=default_root())
+    templates = commands.add_parser("templates", help="read PowerPoint templates")
+    templates.add_argument("slug")
+    templates.add_argument("--root", type=Path, default=default_root())
+
+
+def _templates(brand: Path) -> int:
+    from docla.brand.templates import read_templates
+
+    manifest = load_manifest(brand)
+    if not any(e.type in ("pptx", "potx") and e.unread is None for e in manifest.files):
+        print("no readable PowerPoint templates")
+        return 2
+    branch = begin_change(brand, "templates")
+    report = read_templates(brand)
+    if not report.templates:
+        # Nothing could be read: abandon the change so the brand is back on main, unchanged.
+        run_git(brand, "reset", "-q", "--hard")
+        run_git(brand, "clean", "-fdq")
+        run_git(brand, "checkout", "-q", "main")
+        run_git(brand, "branch", "-q", "-D", branch)
+        for item in report.unread:
+            print(f"{item.file}  unread: {item.reason}")
+        print("no readable PowerPoint templates")
+        return 2
+    if report.templates:
+        record_change(
+            brand,
+            what="Read the brand's templates",
+            why="Template values are measured, not guessed",
+            evidence=[Evidence(file=t.source, note=f"{len(t.layouts)} layouts") for t in report.templates],
+            before=[],
+            after=[],
+            formats=sorted({t.format for t in report.templates}),
+        )
+    for template in report.templates:
+        print(f"{template.source}  {template.format}  {len(template.layouts)} layouts  {len(template.colours)} colours")
+    for item in report.unread:
+        print(f"{item.file}  unread: {item.reason}")
+    return 0
 
 
 def _parse(brand: Path) -> int:
@@ -143,6 +182,8 @@ def run_brand(args: argparse.Namespace) -> int:
             return _fonts(brand_path(args.slug, args.root))
         elif args.brand_command == "gaps":
             return _gaps(brand_path(args.slug, args.root))
+        elif args.brand_command == "templates":
+            return _templates(brand_path(args.slug, args.root))
         else:
             records = change_log(brand_path(args.slug, args.root))
             for record in records:
