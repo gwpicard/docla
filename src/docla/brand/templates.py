@@ -407,7 +407,9 @@ def _word_styles(document: Any, fonts: list[TemplateFont]) -> list[StyleFact]:
     root = parse_word_xml(document.part._styles_part.blob)
     families = {font.role: font.family for font in fonts}
     kinds: dict[Any, Literal["paragraph", "character", "table"]] = {
-        WD_STYLE_TYPE.PARAGRAPH: "paragraph", WD_STYLE_TYPE.CHARACTER: "character", WD_STYLE_TYPE.TABLE: "table"
+        WD_STYLE_TYPE.PARAGRAPH: "paragraph",
+        WD_STYLE_TYPE.CHARACTER: "character",
+        WD_STYLE_TYPE.TABLE: "table",
     }
     result = []
     for style in document.styles:
