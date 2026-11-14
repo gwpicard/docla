@@ -107,12 +107,14 @@ class FactGuard:
         *,
         facts: Sequence[Fact] = (),
         numbers_from_facts: bool = False,
+        exempt: Collection[str] = (),
     ):
         self.allowed = set().union(*(support_tokens(text) for text in evidence))
         for fact in facts:
             self.allowed.update(support_tokens(fact.text), fact_number_tokens(fact))
         self.facts = facts
         self.numbers_from_facts = numbers_from_facts
+        self.exempt = exempt
         self.citation_keys = citation_keys
         self.unsupported: list[str] = []
         self.resolved: dict[str, list[str]] = {}
@@ -136,7 +138,7 @@ class FactGuard:
                 )
         unsupported = fact_tokens(section) - self.allowed - derived
         if self.numbers_from_facts:
-            unsupported.update(token for token, ids in self.resolved.items() if not ids)
+            unsupported.update(token for token, ids in self.resolved.items() if not ids and token not in self.exempt)
         if self.citation_keys is not None:
             unsupported.update(
                 f"cite:{citation.key}"
