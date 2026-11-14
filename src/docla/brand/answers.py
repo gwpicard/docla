@@ -57,9 +57,9 @@ def _apply(
         return departures
     for effect in selected.effects:
         if isinstance(effect, SetToken):
-            note = selected.label if selected else text
-            reason = selected.label if selected else (text or "")
-            if selected and text:
+            note = selected.label
+            reason = selected.label
+            if text:
                 reason += f": {text}"
             departure = set_token(
                 brand,
