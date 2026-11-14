@@ -87,6 +87,7 @@ def _synthesise(brand: Path) -> int:
     from docla.brand.reconcile import load_reconciliation
     from docla.brand.synth_rules import synthesise_rules
     from docla.brand.synth_tokens import synthesise_tokens
+    from docla.brand.synth_voice import synthesise_voice
 
     with tempfile.TemporaryDirectory() as directory:
         temporary = Path(directory)
@@ -98,6 +99,7 @@ def _synthesise(brand: Path) -> int:
     rule_result = None
     if (brand / "theme/ingest/claims.json").exists():
         rule_result = asyncio.run(synthesise_rules(brand, agents.brand_claude(brand)))
+    voice_result = asyncio.run(synthesise_voice(brand, agents.brand_claude(brand)))
     evidence: dict[tuple[str, int | None], Evidence] = {}
     for item in reconciliation.values:
         source = item.provenance.source
@@ -128,6 +130,10 @@ def _synthesise(brand: Path) -> int:
         print(inferred_path)
     if rule_result is not None:
         print(f"{len(rule_result.rules)} rules, {len(rule_result.rubric)} rubric questions")
+    print(
+        f"{len(voice_result.banned)} banned terms, {len(voice_result.terminology)} preferred terms, "
+        f"{len(voice_result.required)} required elements"
+    )
     print(f"{len(open_questions(brand))} open questions")
     return 0
 
