@@ -13,6 +13,7 @@ from docla.brand.questions import BrandQuestion, QuestionOption, QuestionSource,
 from docla.brand.templates import TemplateFacts, TemplateReport
 from docla.brand.tokenmap import TOKEN_CLAIMS, load_token_claims, path_format
 from docla.brand.workspace import BrandError
+from docla.model import Rule
 from docla.model.source import Format
 from docla.theme.labels import ValueProvenance, ValueSource
 
@@ -394,7 +395,9 @@ def reconcile(brand: Path) -> Reconciliation:
                     QuestionOption(
                         id="yes",
                         label="Keep the rule",
-                        effects=[WriteRule(kind="write-rule", rule=rule.rule_data(status="active"))],
+                        effects=[
+                            WriteRule(kind="write-rule", rule=Rule.model_validate(rule.rule_data(status="active")))
+                        ],
                     ),
                     QuestionOption(id="no", label="Leave it open"),
                 ],

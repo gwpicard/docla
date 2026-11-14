@@ -10,15 +10,16 @@ from docla.agents.ledger import Ledger
 from docla.brand.pages import PageEntry
 from docla.config import ProjectConfig, load_project_config
 
-BRAND_ROLES = ("brand.segment", "brand.extract")
+BRAND_ROLES = ("brand.segment", "brand.extract", "brand.synthesise")
 
 
 def brand_models(config: ProjectConfig) -> dict[str, str]:
     models = config.models
     return {
         **models,
-        "brand.segment": models.get("brand.segment", models["triage"]),
+        "brand.segment": models.get("brand.segment", models.get("triage", ProjectConfig().models["triage"])),
         "brand.extract": models.get("brand.extract", models["critic"]),
+        "brand.synthesise": models.get("brand.synthesise", models["critic"]),
     }
 
 
