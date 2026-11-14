@@ -270,6 +270,7 @@ async def run_write(
             agents.writer(facts, doc),
             assets=assets,
             fact_guard=FactGuard(evidence, {s.key for s in doc.sources}, facts=facts),
+            source_facts=facts,
             micro_attempts=config.loop.micro_attempts,
             best_of_n=partial(best_of_n, n=config.loop.best_of_n),
             heal_log=HealLog(run_dir),
