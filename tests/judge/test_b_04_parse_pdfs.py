@@ -65,11 +65,11 @@ def test_D1_page_order_geometry_roles_and_hashes(tmp_path):
     brand = _brand(tmp_path)
     index = _interface().parse_pdfs(brand)
     assert [(p.file, p.page) for p in index.pages] == [
+        ("materials/examples/report.pdf", 1),
+        ("materials/examples/report.pdf", 2),
         ("materials/guidelines/book.pdf", 1),
         ("materials/guidelines/book.pdf", 2),
         ("materials/guidelines/book.pdf", 3),
-        ("materials/examples/report.pdf", 1),
-        ("materials/examples/report.pdf", 2),
     ]
     for page in index.pages:
         assert page.sha256 == hashlib.sha256((brand / page.file).read_bytes()).hexdigest()
