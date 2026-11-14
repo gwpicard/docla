@@ -12,7 +12,7 @@ import yaml  # type: ignore[import-untyped]
 
 from docla.brand import agents
 from docla.brand.changes import Evidence, begin_change, change_log, record_change
-from docla.brand.claims import extract_claims
+from docla.brand.claims import extract_claims, load_claims
 from docla.brand.departures import _proposal, set_token
 from docla.brand.fonts import check_fonts, font_paths, install_fonts, write_report
 from docla.brand.gaps import check_gaps
@@ -23,6 +23,7 @@ from docla.brand.measure import _collect, measure_brand
 from docla.brand.pages import load_manifest, parse_pdfs
 from docla.brand.questions import add_questions, drop_open_questions, load_questions, open_questions
 from docla.brand.segment import load_topics, segment_needed, segment_pages, topic_groups
+from docla.brand.tokenmap import tie_claims
 from docla.brand.workspace import MATERIAL_CLASSES, BrandError, brand_path, default_root, init_brand
 from docla.facts.pdf import PdfPlumberFacts
 from docla.theme import ThemeError
@@ -57,6 +58,9 @@ def add_brand_commands(subparsers: Any) -> None:
     extract = commands.add_parser("extract", help="extract guideline claims")
     extract.add_argument("slug")
     extract.add_argument("--root", type=Path, default=default_root())
+    tie = commands.add_parser("tie", help="tie claims to tokens")
+    tie.add_argument("slug")
+    tie.add_argument("--root", type=Path, default=default_root())
     fonts = commands.add_parser("fonts", help="check brand fonts")
     fonts.add_argument("slug")
     fonts.add_argument("--root", type=Path, default=default_root())
@@ -95,6 +99,26 @@ def _measure(brand: Path) -> int:
         )
     for page in result.skipped:
         print(f"{page.file}  page {page.page}  skipped: {page.reason}")
+    return 0
+
+
+def _tie(brand: Path) -> int:
+    load_claims(brand)
+    begin_change(brand, "tie")
+    result = asyncio.run(tie_claims(brand, agents.brand_claude(brand)))
+    evidence = [Evidence(file=i.source.file, page=i.source.page, quote=i.source.quote) for i in result.items]
+    record_change(
+        brand,
+        what="Tie the guidelines' claims to tokens",
+        why="Claims are compared with measurements token by token",
+        evidence=evidence or [Evidence(file="theme/ingest/claims.json")],
+        before=[],
+        after=[],
+        formats=["slides", "doc"],
+    )
+    print(f"{len(result.items)} token values, {len(result.refused)} refused")
+    for item in result.items:
+        print(f"{item.path}  {item.value}")
     return 0
 
 
@@ -327,6 +351,8 @@ def run_brand(args: argparse.Namespace) -> int:
             return _segment(brand_path(args.slug, args.root))
         elif args.brand_command == "extract":
             return _extract(brand_path(args.slug, args.root))
+        elif args.brand_command == "tie":
+            return _tie(brand_path(args.slug, args.root))
         elif args.brand_command == "fonts":
             return _fonts(brand_path(args.slug, args.root))
         elif args.brand_command == "gaps":
