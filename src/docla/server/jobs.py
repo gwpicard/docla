@@ -11,7 +11,7 @@ from fastapi import APIRouter, HTTPException, Request
 from pydantic import BaseModel, TypeAdapter, field_validator
 
 import docla.write as write
-from docla.agents.gatherer import Fact
+from docla.agents.gatherer import Fact, with_fact_ids
 from docla.agents.ledger import Ledger
 from docla.agents.scheduler import Scheduler
 from docla.checks.catalogue import all_rules
@@ -23,7 +23,9 @@ from docla.loop.macro import MacroContext, _job, build_document
 from docla.loop.micro import LoopContext, evaluate, write_section
 from docla.model import Finding, Remedy
 from docla.server.events import EventBus
+from docla.server.themes import document_theme
 from docla.source.patches import apply_patch
+from docla.theme import Theme
 from docla.theme.rules import load_theme_rules
 from docla.write import _DraftedWriter
 
@@ -79,8 +81,10 @@ class JobRunner:
         return self.jobs.get(job_id)
 
 
-def _agents(app: Any) -> write.Agents:
-    if app.state.agents is None:
+def _agents(app: Any, theme: Theme) -> write.Agents:
+    if app.state.agents is not None:
+        return cast(write.Agents, app.state.agents)
+    if theme.root not in app.state.agents_by_theme:
         project = app.state.project
         config = load_project_config(project)
         claude = write.ScheduledClaude(
@@ -89,13 +93,19 @@ def _agents(app: Any) -> write.Agents:
             write.role_models(config),
             scheduler=Scheduler(config.loop.max_parallel_sections),
         )
-        app.state.agents = write.claude_agents(claude, app.state.theme, config=config)
-    return cast(write.Agents, app.state.agents)
+        app.state.agents_by_theme[theme.root] = write.claude_agents(claude, theme, config=config)
+    return cast(write.Agents, app.state.agents_by_theme[theme.root])
 
 
 def _facts(project: Path, doc: str) -> list[Fact]:
+    from docla.tables import typed_table_facts
+
     path = project / ".docla" / "write" / doc / "facts.json"
-    return TypeAdapter(list[Fact]).validate_json(path.read_text()) if path.exists() else []
+    return (
+        with_fact_ids(typed_table_facts(TypeAdapter(list[Fact]).validate_json(path.read_text()), project))
+        if path.exists()
+        else []
+    )
 
 
 def _stale(oplog: Path, rev: int) -> bool:
@@ -131,7 +141,8 @@ async def build(doc: str, body: BuildBody, request: Request) -> dict[str, str]:
     job_id = ""
 
     async def work(progress: Progress) -> dict[str, Any]:
-        agents = _agents(app)
+        theme = document_theme(app.state, snapshot)
+        agents = _agents(app, theme)
         writer = _DraftedWriter(snapshot, agents.writer(_facts(app.state.project, doc), snapshot))
         workdir = app.state.project / ".docla" / "render" / "jobs" / job_id
         name = snapshot.front.get("doctype")
@@ -141,7 +152,7 @@ async def build(doc: str, body: BuildBody, request: Request) -> dict[str, str]:
             snapshot,
             MacroContext(
                 doc_path=path,
-                theme=app.state.theme,
+                theme=theme,
                 writer=writer,
                 workdir=workdir,
                 doctype=doctype,
@@ -183,16 +194,17 @@ async def redraft(doc: str, section_id: str, body: RedraftBody, request: Request
     job_id = ""
 
     async def work(progress: Progress) -> dict[str, Any]:
+        theme = document_theme(app.state, snapshot)
         facts = _facts(app.state.project, doc)
-        writer = _agents(app).writer(facts, snapshot)
-        guard = FactGuard(_evidence(snapshot, facts), {s.key for s in snapshot.sources})
+        writer = _agents(app, theme).writer(facts, snapshot)
+        guard = FactGuard(_evidence(snapshot, facts), {s.key for s in snapshot.sources}, facts=facts)
         workdir = app.state.project / ".docla" / "render" / "jobs" / job_id
         ctx = LoopContext(
             snapshot,
-            app.state.theme,
+            theme,
             workdir,
             writer,
-            rules=all_rules() + load_theme_rules(app.state.theme),
+            rules=all_rules() + load_theme_rules(theme),
             fact_guard=guard,
         )
         section_job = _job(snapshot, index)
