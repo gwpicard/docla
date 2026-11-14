@@ -1,5 +1,5 @@
 from docla.checks.engine import CheckContext, make_finding, register
-from docla.doctypes import Doctype, Gap, conformance, load_doctypes
+from docla.doctypes import Doctype, Gap, conformance, doctypes_for
 from docla.model import Finding, Provenance, Remedy, Rule
 from docla.model.rules import Tier
 
@@ -27,7 +27,9 @@ class OutlineConforms:
 
     def run(self, ctx: CheckContext, rule: Rule) -> list[Finding]:
         name = ctx.doc.front.get("doctype")
-        doctype = load_doctypes().get(name) if isinstance(name, str) else None
+        doctype = (
+            doctypes_for(ctx.theme.root if ctx.theme is not None else None).get(name) if isinstance(name, str) else None
+        )
         if doctype is None:
             return []
         return [

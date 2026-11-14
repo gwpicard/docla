@@ -439,6 +439,7 @@ colour, font or margin constant.
 themes/acme/
   theme.yaml                 # identity, version, which doctypes/formats it supports
   tokens.yaml                # colours, type scale, spacing, grid, page models, logo, imagery rules
+  provenance.yaml            # value label and source of every token and rubric item
   fonts/                     # font files + LICENSES.txt (required)
   assets/                    # logo (SVG), icons, approved images, patterns
   components/                # theme-specific Typst overrides (optional)
@@ -589,6 +590,12 @@ overrides the stronger rule, which writes an `override` entry with a reason.
 * `docla theme test` runs the theme's own test suite (16.5): specimen renders, gold corpus (must be clean), anti corpus (must be flagged), every learning's fixtures.
 * `docla theme health` prints: number of rules by tier and origin, fire rate and false-positive rate per rule over the last N builds, rules on probation, rules never fired.
 
+### 6.6 Value labels
+
+Themes declaring `labelled: true` give every token, rubric item and rule a source and a label: Measured, Derived, Inferred or Answered. Derived values name their inputs, inferred values explain the judgement, and answered values cite the question. Token paths include the format where values differ.
+
+A rule measured from examples is soft and proposed. A hard measured rule requires a supplied template or guidelines with a quote. Such rules use `origin: ingested`; `origin: measured` remains reserved for measurements from examples and cannot be hard.
+
 ---
 
 ## 7. Brand ingestion: what to upload and how the AI learns it
@@ -643,6 +650,8 @@ resumable. Models are named in 14.2.
 * Office files: read structurally and converted for vision as in 7.8; their `TemplateFacts` feed S3 to S5 alongside the PDF page index.
 * Build a `PageIndex`: `{file, page, text, png, fonts, colours}`.
 * Guidelines PDFs are visual, so S2 and S3 must see page images, not just text.
+
+S4 also measures the guidelines’ layout pages and supplied templates alongside examples. Sources take precedence in this order: guidelines, templates, layout pages, examples. Agreement settles a measured value; conflict raises a question while keeping the strongest source; an example-only value is proposed for confirmation.
 
 **S2 Segment (Claude, vision).** Input: page PNGs of the guideline document in batches of ~10 plus their text.
 Output (schema `TopicMap`): for each page, one or more topics from a closed set
@@ -1308,8 +1317,7 @@ stats: {fired: 0, dismissed: 0, last_fired: null}
 ```
 
 Required fields: `id`, `title`, `origin`, `strength`, `tier`, `severity`, `check`, `remedy`, `provenance`.
-Linter: a rule without provenance is rejected; `strength: hard` with `origin: measured` is rejected (a measurement alone
-never creates a hard rule).
+Linter: a rule without provenance is rejected. `origin: measured` marks a value measured only from examples and is never hard; a value measured from a template the brand supplied, or stated in its guidelines, is `origin: ingested` with the value label Measured and may be hard (6.6, B.16).
 
 ### 10.2 Tiers (the order sensors run)
 
