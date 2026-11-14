@@ -6,6 +6,7 @@ from typing import Annotated, Any, Literal
 import yaml  # type: ignore[import-untyped]
 from pydantic import BaseModel, Field
 
+from docla.model import Rule
 from docla.model.source import Format
 
 QuestionKind = Literal["font", "gap", "identity", "conflict", "token", "confirm", "rule", "illustrative"]
@@ -27,7 +28,7 @@ class SetToken(BaseModel):
 
 class WriteRule(BaseModel):
     kind: Literal["write-rule"]
-    rule: dict[str, Any]
+    rule: Rule
 
 
 class DropRule(BaseModel):

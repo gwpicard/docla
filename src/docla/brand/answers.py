@@ -73,7 +73,7 @@ def _apply(
             if departure:
                 departures.append(departure)
         elif isinstance(effect, WriteRule):
-            rule = dict(effect.rule)
+            rule = effect.rule.model_dump(by_alias=True, exclude_defaults=True)
             rule["origin"] = "ingested"
             rule["provenance"] = {
                 "label": "answered",

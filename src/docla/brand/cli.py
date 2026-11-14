@@ -85,6 +85,7 @@ def add_brand_commands(subparsers: Any) -> None:
 
 def _synthesise(brand: Path) -> int:
     from docla.brand.reconcile import load_reconciliation
+    from docla.brand.synth_rules import synthesise_rules
     from docla.brand.synth_tokens import synthesise_tokens
 
     with tempfile.TemporaryDirectory() as directory:
@@ -94,11 +95,20 @@ def _synthesise(brand: Path) -> int:
     reconciliation = load_reconciliation(brand)
     begin_change(brand, "synthesise")
     result = synthesise_tokens(brand)
+    rule_result = asyncio.run(synthesise_rules(brand, agents.brand_claude(brand)))
     evidence: dict[tuple[str, int | None], Evidence] = {}
     for item in reconciliation.values:
         source = item.provenance.source
         for file in ([source.file] if source.file else []) + source.files:
             evidence.setdefault((file, source.page), Evidence(file=file, page=source.page, quote=source.quote))
+    for ident in rule_result.rules:
+        path = brand / "theme/rules/ingested" / f"{ident}.yaml"
+        source = (yaml.safe_load(path.read_text()) or {}).get("provenance", {}).get("source", {})
+        file = source.get("file") or next(iter(source.get("files", [])), None)
+        if file:
+            evidence.setdefault(
+                (file, source.get("page")), Evidence(file=file, page=source.get("page"), quote=source.get("quote"))
+            )
     record_change(
         brand,
         what="Synthesise the brand theme",
@@ -112,6 +122,7 @@ def _synthesise(brand: Path) -> int:
         print(f"{label}: {count}")
     for path in result.inferred:
         print(path)
+    print(f"{len(rule_result.rules)} rules, {len(rule_result.rubric)} rubric questions")
     print(f"{len(open_questions(brand))} open questions")
     return 0
 
