@@ -78,22 +78,23 @@ _DATE = re.compile(
 
 def _identity(brand: Path, file: str) -> Identity:
     version = date = None
-    version_location: tuple[int, str] | None = None
-    date_location: tuple[int, str] | None = None
+    version_location: tuple[int, int, str] | None = None
+    date_location: tuple[int, int, str] | None = None
     with pdfplumber.open(brand / file) as pdf:
         for page_number, page in enumerate(pdf.pages[:3], 1):
-            for line in (page.extract_text() or "").splitlines():
+            for index, line in enumerate((page.extract_text() or "").splitlines()):
                 if version is None and (match := _VERSION.search(line)):
-                    version, version_location = match.group(1), (page_number, line)
+                    version, version_location = match.group(1), (page_number, index, line)
                 if date is None and (match := _DATE.search(line)):
-                    date, date_location = match.group(), (page_number, line)
-    location = version_location or date_location
+                    date, date_location = match.group(), (page_number, index, line)
+    found = [location for location in (version_location, date_location) if location is not None]
+    first = min(found) if found else None
     return Identity(
         file=file,
         version=version,
         date=date,
-        page=location[0] if location else None,
-        quote=location[1] if location else None,
+        page=first[0] if first else None,
+        quote=first[2] if first else None,
     )
 
 
@@ -153,9 +154,11 @@ def check_gaps(brand: Path) -> tuple[list[Gap], list[Identity]]:
     manifest = Manifest.model_validate_json(path.read_text(encoding="utf-8"))
     gaps = find_gaps(manifest)
     identities = read_identity(brand, manifest)
-    add_questions(brand, gap_questions(gaps, identities))
-    current = {f"gap.{gap.kind}" for gap in gaps}
-    drop_open_questions(brand, [q.id for q in load_questions(brand) if q.id.startswith("gap.") and q.id not in current])
+    wanted = gap_questions(gaps, identities)
+    add_questions(brand, wanted)
+    current = {question.id for question in wanted}
+    stale = [q.id for q in load_questions(brand) if q.id.startswith(("gap.", "identity.")) and q.id not in current]
+    drop_open_questions(brand, stale)
     report = {"gaps": [g.model_dump() for g in gaps], "identity": [i.model_dump() for i in identities]}
     (brand / "theme/ingest/gaps.json").write_text(json.dumps(report, indent=2) + "\n", encoding="utf-8")
     return gaps, identities
