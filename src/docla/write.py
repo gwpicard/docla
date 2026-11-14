@@ -4,7 +4,7 @@ import asyncio
 import os
 import shutil
 import sys
-from collections.abc import Callable
+from collections.abc import Callable, Sequence
 from dataclasses import dataclass
 from functools import partial
 from pathlib import Path
@@ -15,7 +15,7 @@ from pydantic import TypeAdapter
 from docla.agents.cassette import Cassette, Transport
 from docla.agents.client import AnthropicTransport, CassetteTransport, Claude
 from docla.agents.critic import CriticImage, calibrate, corroborate
-from docla.agents.gatherer import Fact, gather
+from docla.agents.gatherer import Fact, gather, with_fact_ids
 from docla.agents.ledger import BudgetExceeded
 from docla.agents.planner import outline_to_document, plan
 from docla.agents.prompts import ROLES
@@ -24,9 +24,9 @@ from docla.agents.summariser import summarise, summary_sources
 from docla.agents.writer import SectionJob, draft, draft_to_section, repair
 from docla.checks.catalogue import all_rules
 from docla.config import ProjectConfig, load_project_config
-from docla.doctypes import load_doctypes
+from docla.doctypes import Doctype, load_brand_doctypes, load_doctypes, load_library_doctypes
 from docla.loop.best_of import best_of_n
-from docla.loop.guards import FactGuard
+from docla.loop.guards import NUMBER, FactGuard, support_tokens
 from docla.loop.heal_log import HealLog
 from docla.loop.look import CriticPage, PageCritic
 from docla.loop.macro import MacroContext, Summariser, build_document
@@ -41,6 +41,7 @@ from docla.source.parser import parse
 from docla.source.patches import TEXT_FIELDS
 from docla.source.serialiser import serialise
 from docla.sources import extract
+from docla.theme import Theme
 from docla.theme.brief import brief_card
 from docla.theme.rubric import load_calibration, load_rubric
 
@@ -181,10 +182,12 @@ def claude_agents(claude: Any, theme: Any, *, config: ProjectConfig | None = Non
 
 
 async def _facts(project: Any, run_dir: Any, agents: Any) -> Any:
+    from docla.tables import typed_table_facts
+
     path = run_dir / "facts.json"
     if path.exists():
-        return TypeAdapter(list[Fact]).validate_json(path.read_text())
-    facts = await agents.gather(extract(project))
+        return with_fact_ids(typed_table_facts(TypeAdapter(list[Fact]).validate_json(path.read_text()), project))
+    facts = with_fact_ids(typed_table_facts(await agents.gather(extract(project)), project))
     run_dir.mkdir(parents=True, exist_ok=True)
     path.write_bytes(TypeAdapter(list[Fact]).dump_json(facts, indent=2))
     return facts
@@ -198,13 +201,19 @@ def _outline_output(file: Any, doc: Any, questions: Any = ()) -> None:
     print(f"approve the outline with: docla write {file} --approve")
 
 
-async def _make_outline(file: Any, doc: Any, agents: Any, run_dir: Any, ids: Any) -> None:
+def _doctypes(theme: Theme) -> dict[str, Doctype]:
+    return {**load_doctypes(), **load_library_doctypes(), **load_brand_doctypes(theme.root)}
+
+
+async def _make_outline(file: Any, doc: Any, agents: Any, run_dir: Any, ids: Any, theme: Theme) -> None:
+    from docla.tables import typed_table_facts
+
     extracted = extract(file.parent)
-    facts = await agents.gather(extracted)
+    facts = with_fact_ids(typed_table_facts(await agents.gather(extracted), file.parent))
     run_dir.mkdir(parents=True, exist_ok=True)
     (run_dir / "facts.json").write_bytes(TypeAdapter(list[Fact]).dump_json(facts, indent=2))
     front = {**doc.front, "format": doc.format}
-    doc, questions = await agents.outline(facts, load_doctypes()[front["doctype"]], front, ids)
+    doc, questions = await agents.outline(facts, _doctypes(theme)[front["doctype"]], front, ids)
     doc, _ = stamp(doc, ids)
     ids.save()
     doc.sources = [Source(key=s.key, text=s.name) for s in extracted]
@@ -221,6 +230,20 @@ class _DraftedWriter:
 
     async def repair(self, job: Any, state: Any, history: Any, *, strategy: Any = None) -> Any:
         return await self.writer.repair(job, state, history, strategy=strategy)
+
+
+def fact_guard_for(doc: Document, facts: Sequence[Fact]) -> FactGuard:
+    metadata = [f"{s.key} {s.text}" for s in doc.sources]
+    metadata += [value for value in doc.front.values() if isinstance(value, str)]
+    evidence = [f.text for f in facts] + metadata
+    exempt = {token for text in metadata for token in support_tokens(text) if NUMBER.fullmatch(token)}
+    return FactGuard(
+        evidence,
+        {s.key for s in doc.sources},
+        facts=facts,
+        numbers_from_facts=any(f.kind != "text" for f in facts),
+        exempt=exempt,
+    )
 
 
 async def run_write(
@@ -243,7 +266,7 @@ async def run_write(
         if doc.sections:
             _outline_output(file, doc)
         else:
-            await _make_outline(file, doc, agents, run_dir, ids)
+            await _make_outline(file, doc, agents, run_dir, ids, theme)
         return 0
     if not doc.sections:
         print("no outline", file=sys.stderr)
@@ -257,22 +280,21 @@ async def run_write(
         facts = await _facts(project, run_dir, agents)
         config = load_project_config(project)
         assets = [project / "assets", theme.root / "assets"]
-        evidence = [f.text for f in facts] + [f"{s.key} {s.text}" for s in doc.sources]
-        evidence += [v for v in doc.front.values() if isinstance(v, str)]
         ctx = LoopContext(
             doc,
             theme,
             run_dir,
             agents.writer(facts, doc),
             assets=assets,
-            fact_guard=FactGuard(evidence, {s.key for s in doc.sources}),
+            fact_guard=fact_guard_for(doc, facts),
+            source_facts=facts,
             micro_attempts=config.loop.micro_attempts,
             best_of_n=partial(best_of_n, n=config.loop.best_of_n),
             heal_log=HealLog(run_dir),
             spent=spent,
         )
         doctype_name = doc.front.get("doctype")
-        doctype = load_doctypes().get(doctype_name) if isinstance(doctype_name, str) else None
+        doctype = _doctypes(theme).get(doctype_name) if isinstance(doctype_name, str) else None
         summaries = summary_sources(doc, doctype) if doctype else {}
         semaphore = asyncio.Semaphore(config.loop.max_parallel_sections)
 
