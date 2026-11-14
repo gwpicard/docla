@@ -3,7 +3,9 @@
 import argparse
 import asyncio
 import re
+import shutil
 import sys
+import tempfile
 from collections import Counter
 from pathlib import Path
 from typing import Any
@@ -12,16 +14,18 @@ import yaml  # type: ignore[import-untyped]
 
 from docla.brand import agents
 from docla.brand.changes import Evidence, begin_change, change_log, record_change
-from docla.brand.claims import extract_claims
+from docla.brand.claims import extract_claims, load_claims
 from docla.brand.departures import _proposal, set_token
 from docla.brand.fonts import check_fonts, font_paths, install_fonts, write_report
 from docla.brand.gaps import check_gaps
 from docla.brand.git import GitError, run_git
+from docla.brand.illustrative import illustrative_questions
 from docla.brand.intake import MANIFEST, material_files, take_in
 from docla.brand.measure import _collect, measure_brand
 from docla.brand.pages import load_manifest, parse_pdfs
-from docla.brand.questions import add_questions, open_questions
+from docla.brand.questions import add_questions, drop_open_questions, load_questions, open_questions
 from docla.brand.segment import load_topics, segment_needed, segment_pages, topic_groups
+from docla.brand.tokenmap import tie_claims
 from docla.brand.workspace import MATERIAL_CLASSES, BrandError, brand_path, default_root, init_brand
 from docla.facts.pdf import PdfPlumberFacts
 from docla.theme import ThemeError
@@ -56,6 +60,9 @@ def add_brand_commands(subparsers: Any) -> None:
     extract = commands.add_parser("extract", help="extract guideline claims")
     extract.add_argument("slug")
     extract.add_argument("--root", type=Path, default=default_root())
+    tie = commands.add_parser("tie", help="tie claims to tokens")
+    tie.add_argument("slug")
+    tie.add_argument("--root", type=Path, default=default_root())
     fonts = commands.add_parser("fonts", help="check brand fonts")
     fonts.add_argument("slug")
     fonts.add_argument("--root", type=Path, default=default_root())
@@ -65,9 +72,83 @@ def add_brand_commands(subparsers: Any) -> None:
     templates = commands.add_parser("templates", help="read PowerPoint templates")
     templates.add_argument("slug")
     templates.add_argument("--root", type=Path, default=default_root())
+    reconcile_parser = commands.add_parser("reconcile", help="reconcile brand sources")
+    reconcile_parser.add_argument("slug")
+    reconcile_parser.add_argument("--root", type=Path, default=default_root())
     measure = commands.add_parser("measure", help="measure brand pages")
     measure.add_argument("slug")
     measure.add_argument("--root", type=Path, default=default_root())
+    synthesise = commands.add_parser("synthesise", help="synthesise brand tokens")
+    synthesise.add_argument("slug")
+    synthesise.add_argument("--root", type=Path, default=default_root())
+
+
+def _synthesise(brand: Path) -> int:
+    from docla.brand.reconcile import load_reconciliation
+    from docla.brand.synth_tokens import synthesise_tokens
+
+    with tempfile.TemporaryDirectory() as directory:
+        temporary = Path(directory)
+        shutil.copytree(brand / "theme", temporary / "theme")
+        synthesise_tokens(temporary)
+    reconciliation = load_reconciliation(brand)
+    begin_change(brand, "synthesise")
+    result = synthesise_tokens(brand)
+    evidence: dict[tuple[str, int | None], Evidence] = {}
+    for item in reconciliation.values:
+        source = item.provenance.source
+        for file in ([source.file] if source.file else []) + source.files:
+            evidence.setdefault((file, source.page), Evidence(file=file, page=source.page, quote=source.quote))
+    record_change(
+        brand,
+        what="Synthesise the brand theme",
+        why="Tokens come from the reconciled sources, each with its label",
+        evidence=list(evidence.values()),
+        before=[],
+        after=[],
+        formats=["slides", "doc"],
+    )
+    for label, count in result.labels.items():
+        print(f"{label}: {count}")
+    for path in result.inferred:
+        print(path)
+    print(f"{len(open_questions(brand))} open questions")
+    return 0
+
+
+def _reconcile(brand: Path) -> int:
+    from docla.brand.measure import MEASURE
+    from docla.brand.reconcile import TEMPLATES, reconcile
+    from docla.brand.tokenmap import TOKEN_CLAIMS
+
+    if not any((brand / path).exists() for path in (MEASURE, TEMPLATES, TOKEN_CLAIMS)):
+        raise BrandError("Run docla brand tie, docla brand templates or docla brand measure first")
+    begin_change(brand, "reconcile")
+    result = reconcile(brand)
+    evidence = [
+        Evidence(
+            file=i.candidates[0].source.file or "theme/ingest/measure.json",
+            page=i.candidates[0].source.page,
+            quote=i.candidates[0].source.quote,
+        )
+        for i in result.values
+        if i.status == "conflict"
+    ]
+    record_change(
+        brand,
+        what="Reconcile the brand's sources",
+        why="Agreements settle values; conflicts become questions",
+        evidence=evidence or [Evidence(file="theme/ingest/reconcile.json")],
+        before=[],
+        after=[],
+        formats=["slides", "doc"],
+    )
+    counts = Counter(i.status for i in result.values)
+    for status in ("agreed", "single", "conflict", "proposed"):
+        print(f"{status}: {counts[status]}")
+    print(f"{len(result.proposed_rules)} proposed rules")
+    print(f"{len(open_questions(brand))} open questions")
+    return 0
 
 
 def _measure(brand: Path) -> int:
@@ -97,10 +178,37 @@ def _measure(brand: Path) -> int:
     return 0
 
 
+def _tie(brand: Path) -> int:
+    load_claims(brand)
+    begin_change(brand, "tie")
+    result = asyncio.run(tie_claims(brand, agents.brand_claude(brand)))
+    evidence = [Evidence(file=i.source.file, page=i.source.page, quote=i.source.quote) for i in result.items]
+    record_change(
+        brand,
+        what="Tie the guidelines' claims to tokens",
+        why="Claims are compared with measurements token by token",
+        evidence=evidence or [Evidence(file="theme/ingest/claims.json")],
+        before=[],
+        after=[],
+        formats=["slides", "doc"],
+    )
+    print(f"{len(result.items)} token values, {len(result.refused)} refused")
+    for item in result.items:
+        print(f"{item.path}  {item.value}")
+    return 0
+
+
 def _extract(brand: Path) -> int:
     topics = load_topics(brand)
     begin_change(brand, "extract")
     result = asyncio.run(extract_claims(brand, agents.brand_claude(brand)))
+    questions = illustrative_questions(result.claims)
+    add_questions(brand, questions)
+    current_ids = {question.id for question in questions}
+    drop_open_questions(
+        brand,
+        [q.id for q in load_questions(brand) if q.id.startswith("claim.illustrative.") and q.id not in current_ids],
+    )
     evidence = [Evidence(file=s.file, page=s.page, quote=s.quote) for claim in result.claims for s in claim.sources[:1]]
     record_change(
         brand,
@@ -112,6 +220,7 @@ def _extract(brand: Path) -> int:
         formats=["slides", "doc"],
     )
     print(f"{len(result.claims)} claims kept, {len(result.dropped)} dropped")
+    print(f"{len(questions)} illustrative claims")
     for topic in topic_groups(topics):
         print(f"{topic}  {sum(claim.topic == topic for claim in result.claims)}")
     return 0
@@ -318,6 +427,8 @@ def run_brand(args: argparse.Namespace) -> int:
             return _segment(brand_path(args.slug, args.root))
         elif args.brand_command == "extract":
             return _extract(brand_path(args.slug, args.root))
+        elif args.brand_command == "tie":
+            return _tie(brand_path(args.slug, args.root))
         elif args.brand_command == "fonts":
             return _fonts(brand_path(args.slug, args.root))
         elif args.brand_command == "gaps":
@@ -326,8 +437,12 @@ def run_brand(args: argparse.Namespace) -> int:
             return _templates(brand_path(args.slug, args.root))
         elif args.brand_command == "set":
             return _set(brand_path(args.slug, args.root), args)
+        elif args.brand_command == "reconcile":
+            return _reconcile(brand_path(args.slug, args.root))
         elif args.brand_command == "measure":
             return _measure(brand_path(args.slug, args.root))
+        elif args.brand_command == "synthesise":
+            return _synthesise(brand_path(args.slug, args.root))
         else:
             records = change_log(brand_path(args.slug, args.root))
             for record in records:

@@ -8,7 +8,7 @@ from pydantic import BaseModel, Field
 
 from docla.model.source import Format
 
-QuestionKind = Literal["font", "gap", "identity", "conflict", "token", "confirm", "rule"]
+QuestionKind = Literal["font", "gap", "identity", "conflict", "token", "confirm", "rule", "illustrative"]
 QUESTIONS = Path("theme/ingest/questions.yaml")
 
 
