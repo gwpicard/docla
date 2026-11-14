@@ -11,6 +11,7 @@ from pydantic import TypeAdapter
 
 from docla.checks.catalogue import all_rules
 from docla.model import Finding, Rule
+from docla.server.themes import document_theme
 from docla.store import load_version
 from docla.store.gate import mark_ready
 from docla.theme.rules import load_theme_rules
@@ -89,7 +90,7 @@ def pages(doc: str, n: int, request: Request) -> Any:
 @router.get("/api/docs/{doc}/versions/{n}/findings")
 def findings(doc: str, n: int, request: Request) -> dict[str, Any]:
     stored = TypeAdapter(list[Finding]).validate_json(_read(_version(request, doc, n) / "findings.json"))
-    rules = all_rules() + load_theme_rules(request.app.state.theme)
+    rules = all_rules() + load_theme_rules(document_theme(request.app.state, request.app.state.docs.load(doc)))
     return {"findings": finding_views(stored, rules)}
 
 
